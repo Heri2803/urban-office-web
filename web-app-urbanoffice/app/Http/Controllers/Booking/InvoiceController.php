@@ -6,17 +6,22 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Transaction;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
 
 class InvoiceController extends Controller
 {
     // Halaman daftar invoice
-    public function index()
+        public function index()
     {
-        $transactions = Transaction::latest()->get();
+        // Ambil semua transaksi milik user yang login, urut terbaru dulu
+        $transactions = Transaction::where('user_id', Auth::id())
+                                ->orderBy('created_at', 'desc')
+                                ->get();
 
         // Kirim ke view daftar invoice
         return view('layouts.dashboard.invoice', compact('transactions'));
     }
+
 
     // Generate & download PDF untuk transaksi tertentu
     public function generate($order_id)

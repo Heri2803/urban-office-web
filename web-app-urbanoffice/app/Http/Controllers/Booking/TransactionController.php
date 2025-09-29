@@ -12,6 +12,8 @@ use Exception;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Midtrans\Notification;
+use Illuminate\Support\Facades\Auth;
+
 
 
 class TransactionController extends Controller
@@ -101,12 +103,8 @@ class TransactionController extends Controller
             'email'         => 'required|email|max:255',
         ]);
 
-        // Skip user validation untuk development/hardcode login system
-        // Set default user ID atau null untuk guest booking
-        $userId = 1; // Default user ID untuk semua booking
-        
-        // ATAU jika ingin menggunakan auth (uncomment jika sudah siap):
-        // $userId = auth()->id() ?? 1; // Fallback ke user ID 1 jika tidak login
+        // ✅ Ambil ID user yang login, fallback ke null (guest)
+        $userId = Auth::id(); // Kalau user login, ini terisi. Kalau tidak, null.
 
         // Hitung nominal
         $amount = $this->calculateAmount($validated['room_type'], $validated);
@@ -248,6 +246,23 @@ public function notificationHandler(Request $request)
     }
 }
 
+public function index()
+{
+    // Ambil semua transaksi user yang login
+    $transactions = Transaction::where('user_id', Auth::id())
+                               ->orderBy('created_at', 'desc')
+                               ->get();
 
+    // Total pendapatan
+    $totalGross = $transactions->sum('gross_amount');
 
+    // Total per room_type
+    $grossByType = $transactions->groupBy('room_type')->map(function($items) {
+        return $items->sum('gross_amount');
+    });
+
+    return view('layouts.dashboard.reward', compact('transactions', 'totalGross', 'grossByType'));
+}
+
+    
 }

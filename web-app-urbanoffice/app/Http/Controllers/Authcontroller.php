@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
@@ -19,24 +20,16 @@ class AuthController extends Controller
     }
 
     // Proses login (pakai database)
-    public function login(Request $request)
+        public function login(Request $request)
     {
-        $request->validate([
+        $credentials = $request->validate([
             'email'    => 'required|email',
             'password' => 'required|min:6',
         ]);
+        
 
-        $user = User::where('email', $request->email)->first();
-
-        if ($user && Hash::check($request->password, $user->password)) {
-            // Simpan ke session
-            session([
-                'user_logged_in' => true,
-                'user_id'        => $user->id,
-                'user_email'     => $user->email,
-                'user_name'      => $user->name,
-                'login_time'     => now()->toDateTimeString()
-            ]);
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
 
             return redirect()->route('dashboard.home')
                 ->with('success', 'Login berhasil!');

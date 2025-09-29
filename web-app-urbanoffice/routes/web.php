@@ -6,13 +6,20 @@ use Midtrans\Config;
 use Midtrans\Snap;
 use App\Http\Controllers\Booking\TransactionController;
 use App\Http\Controllers\Booking\InvoiceController;
-
+use App\Http\Controllers\Profile\ProfileController;
+use App\Http\Controllers\Mails\MailController;
+use App\Http\Controllers\Mitra\MitraController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 
 
 Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
 Route::post('/midtrans/callback', [TransactionController::class, 'callback'])->name('midtrans.callback');
 Route::post('/midtrans/notification', [TransactionController::class, 'notificationHandler']);
 Route::get('/invoice/{order_id}', [InvoiceController::class, 'generate'])->name('invoice.generate');
+Route::get('/profile/{id}/edit', [ProfileController::class, 'edit'])->name('profile.edit')->middleware('auth');
+Route::put('/profile/{id}', [ProfileController::class, 'update'])->name('profile.update')->middleware('auth');
+Route::get('/profile-status', [ProfileController::class, 'showDashboard'])->name('profile.dashboard')->middleware('auth');
+Route::post('/dashboard/mitra', [MitraController::class, 'store'])->name('dashboard.mitra');
 
 Route::get('/test-midtrans', function () {
     \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');
@@ -38,7 +45,7 @@ Route::get('/test-midtrans', function () {
 
 // Root route - redirect berdasarkan status login
 Route::get('/', function () {
-    if (session('user_logged_in')) {
+    if (Auth::check()) {
         return redirect()->route('dashboard.home');
     }
     return redirect()->route('beforelogin');
@@ -59,6 +66,23 @@ Route::get('/forgotpassword', function () {
     return view('layouts.auth.forgotpassword');
 })->name('password.request');
 
+// Route API/POST untuk mengirim OTP
+Route::post('/forgot-password/send-otp', [ForgotPasswordController::class, 'sendOtp'])->name('password.send_otp');
+
+// Route API/POST untuk verifikasi OTP (dari modal)
+Route::post('/forgot-password/verify-otp', [ForgotPasswordController::class, 'verifyOtp'])->name('password.verify_otp');
+
+// Route standar Laravel untuk form Ganti Password (setelah verifikasi OTP berhasil)
+// Ini harus merujuk ke method yang menangani tampilan form reset password (biasanya di Auth Controller)
+Route::get('/reset-password/{token}', function ($token) {
+    // Anda harus membuat view ini untuk form ganti password
+    return view('layouts.auth.reset-password', ['token' => $token, 'email' => request()->email]); 
+})->name('password.reset');
+
+Route::post('/reset-password', [ForgotPasswordController::class, 'store'])
+    ->name('password.update');
+
+
 // Login routes dengan controller
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -73,7 +97,7 @@ Route::get('/components/sidebar', function () {
 })->name('sidebar');
 
 // Dashboard Routes (DILINDUNGI AUTH GUARD) - Semua route dashboard wajib login
-Route::prefix('dashboard')->name('dashboard.')->middleware('auth.guard')->group(function () {
+Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(function () {
     
     Route::get('/home', function () {
         $user = App\Http\Controllers\AuthController::getUser();
@@ -85,21 +109,11 @@ Route::prefix('dashboard')->name('dashboard.')->middleware('auth.guard')->group(
         return view('layouts.dashboard.calls', compact('user'));
     })->name('calls');
 
-    Route::get('/mails', function () {
-        $user = App\Http\Controllers\AuthController::getUser();
-        return view('layouts.dashboard.mails', compact('user'));
-    })->name('mails');
+    Route::get('/mails', [MailController::class, 'mailContent'])->name('mails');
 
-    Route::get('/invoice', function () {
-        $user = App\Http\Controllers\AuthController::getUser();
-        $transactions = App\Models\Transaction::latest()->get();
-        return view('layouts.dashboard.invoice', compact('user', 'transactions'));
-    })->name('invoice');
+    Route::get('/invoice', [InvoiceController::class, 'index'])->name('invoice');
 
-    Route::get('/reward', function () {
-        $user = App\Http\Controllers\AuthController::getUser();
-        return view('layouts.dashboard.reward', compact('user'));
-    })->name('reward');
+    Route::get('/reward', [TransactionController::class, 'index'])->name('reward');
 
     Route::get('/bookingform', function () {
         $user = App\Http\Controllers\AuthController::getUser();
@@ -132,6 +146,11 @@ Route::prefix('dashboard')->name('dashboard.')->middleware('auth.guard')->group(
     })->name('profile');
 
 });
+
+Route::middleware(['auth'])->group(function() {
+    Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
+});
+
 
 // Route khusus untuk testing (bisa dihapus nanti)
 Route::get('/test-session', function () {

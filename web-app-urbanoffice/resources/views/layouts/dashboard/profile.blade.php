@@ -19,27 +19,37 @@
                     {{-- Profile Image --}}
                     <div class="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-full overflow-hidden border-4 border-white shadow-lg animate-slide-in-left cursor-pointer"
                          onclick="toggleUserPopup()">
-                        <img 
-                            src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
+                        @auth
+                        <img
+                            src="{{ Auth::user()->profile_photo ? asset('storage/' . Auth::user()->profile_photo) : 'https://via.placeholder.com/150' }}"
                             alt="Profile"
-                            class="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+                            class="w-full h-full object-cover"
                         />
+                    @else
+                        <img
+                            src="https://via.placeholder.com/150"
+                            alt="Guest"
+                            class="w-full h-full object-cover"
+                        />
+                    @endauth
                     </div>
                     
                     {{-- Profile Info --}}
                     <div class="text-white flex-1 animate-slide-in-up">
                         <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold">
-                            Selamat Datang {{ $user->name ?? 'Georgius Mario' }}
+                            Selamat Datang {{ Auth::user()->name ?? 'Guest' }}
                         </h1>
                         <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mt-2">
                             <span class="inline-flex items-center bg-green-500 text-white text-xs sm:text-sm px-3 py-1 rounded-full font-medium w-fit">
-                                {{ $user->package ?? 'Virtual Office' }}
+                                {{ Auth::user()->paket ?? 'Virtual Office' }}
                             </span>
                             <span class="text-sm sm:text-base opacity-90 break-all sm:break-normal">
-                                {{ $user->phone ?? '08212345678' }} / {{ Str::limit($user->email ?? 'Georgius.mirac...', 15) }}
+                                {{ Auth::user()->telephone ?? '08212345678' }} / 
+                                {{ Str::limit(Auth::user()->email ?? 'example@email.com', 15) }}
                             </span>
                         </div>
                     </div>
+
                 </div>
                 
                 {{-- Detail Button --}}
@@ -124,7 +134,7 @@
                     <div>
                         <p class="text-xs sm:text-sm text-gray-500">Telepon</p>
                         <p class="text-sm sm:text-base text-gray-800">
-                            {{ optional(Auth::user())->phone ?? '-' }}
+                            {{ optional(Auth::user())->telephone ?? '-' }}
                         </p>
                     </div>
                 </div>
@@ -135,7 +145,7 @@
                     <div>
                         <p class="text-xs sm:text-sm text-gray-500">Alamat</p>
                         <p class="text-sm sm:text-base text-gray-800">
-                            {{ optional(Auth::user())->address ?? '-' }}
+                            {{ optional(Auth::user())->alamat ?? '-' }}
                         </p>
                     </div>
                 </div>
@@ -146,7 +156,7 @@
                     <div>
                         <p class="text-xs sm:text-sm text-gray-500">Paket</p>
                         <p class="text-sm sm:text-base text-gray-800">
-                            {{ optional(Auth::user())->package ?? '-' }}
+                            {{ optional(Auth::user())->paket ?? '-' }}
                         </p>
                     </div>
                 </div>
@@ -161,14 +171,17 @@
                         </p>
                     </div>
                 </div>
-            </div>
 
-                
-                {{-- Action Buttons --}}
-                
+                {{-- Tombol Edit Profil --}}
+                <div class="mt-6 flex justify-center">
+                    <a href="{{ route('profile.edit', Auth::id()) }}"
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base rounded-lg shadow-md transition">
+                    ✏️ Edit Profil
+                    </a>
+                </div>
+            </div>
             </div>
         </div>
-
 
         {{-- FAQ Section --}}
         <div class="p-4 sm:p-6 lg:p-8 animate-fade-in-up">
