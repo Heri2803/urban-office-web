@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Midtrans\Notification;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 
 
@@ -145,6 +146,11 @@ class TransactionController extends Controller
                 'first_name'    => $transaction->nama_lengkap,
                 'email'         => $transaction->email,
                 'phone'         => $transaction->phone ?? '',
+            ],
+            'callbacks' => [
+                'finish' => route('payment.finish') . '?order_id=' . $orderId,
+                'error' => route('payment.error') . '?order_id=' . $orderId,
+                'pending' => route('payment.unfinish') . '?order_id=' . $orderId,
             ]
         ];
 
@@ -264,5 +270,104 @@ public function index()
     return view('layouts.dashboard.reward', compact('transactions', 'totalGross', 'grossByType'));
 }
 
-    
+public function paymentFinish(Request $request)
+    {
+        Log::info('Payment Finish', $request->all());
+        
+        // Ambil order_id dari query parameter
+        $orderId = $request->query('order_id');
+        
+        if ($orderId) {
+            // Update status transaksi jika perlu
+            $transaction = Transaction::where('order_id', $orderId)->first();
+            
+            if ($transaction) {
+                // ✅ AUTO-LOGIN USER JIKA BELUM LOGIN
+                if (!Auth::check() && $transaction->user_id) {
+                    $user = User::find($transaction->user_id);
+                    if ($user) {
+                        Auth::login($user, true); // true = remember me
+                        Log::info("User auto-logged in: {$user->id}");
+                    }
+                }
+                
+                // Cek status dari Midtrans
+                $this->checkMidtransStatus($orderId);
+            }
+        }
+        
+        // Redirect ke dashboard mails dengan session message
+        return redirect()->route('dashboard.mails')
+            ->with('success', 'Pembayaran berhasil! Silakan cek status transaksi Anda.');
+    }
+
+    public function paymentError(Request $request)
+    {
+        Log::info('Payment Error', $request->all());
+        
+        $orderId = $request->query('order_id');
+        
+        // ✅ AUTO-LOGIN USER
+        if ($orderId) {
+            $transaction = Transaction::where('order_id', $orderId)->first();
+            
+            if ($transaction && !Auth::check() && $transaction->user_id) {
+                $user = User::find($transaction->user_id);
+                if ($user) {
+                    Auth::login($user, true);
+                    Log::info("User auto-logged in: {$user->id}");
+                }
+            }
+        }
+        
+        return redirect()->route('dashboard.mails')
+            ->with('error', 'Terjadi kesalahan dalam proses pembayaran. Silakan coba lagi.');
+    }
+
+    public function paymentUnfinish(Request $request)
+    {
+        Log::info('Payment Unfinish', $request->all());
+        
+        $orderId = $request->query('order_id');
+        
+        // ✅ AUTO-LOGIN USER
+        if ($orderId) {
+            $transaction = Transaction::where('order_id', $orderId)->first();
+            
+            if ($transaction && !Auth::check() && $transaction->user_id) {
+                $user = User::find($transaction->user_id);
+                if ($user) {
+                    Auth::login($user, true);
+                    Log::info("User auto-logged in: {$user->id}");
+                }
+            }
+        }
+        
+        return redirect()->route('dashboard.mails')
+            ->with('warning', 'Pembayaran belum selesai. Anda dapat melanjutkan pembayaran nanti.');
+    }
+
+    // Helper method untuk cek status
+    private function checkMidtransStatus($orderId)
+    {
+        try {
+            // ✅ Tambahkan config Midtrans
+            \Midtrans\Config::$serverKey = config('midtrans.server_key');
+            \Midtrans\Config::$isProduction = config('midtrans.is_production');
+            
+            $status = \Midtrans\Transaction::status($orderId);
+            
+            $transaction = Transaction::where('order_id', $orderId)->first();
+            
+            if ($transaction) {
+                $transaction->status = $status->transaction_status;
+                $transaction->payment_type = $status->payment_type ?? null;
+                $transaction->save();
+                
+                Log::info("Transaction status updated: {$orderId} - {$status->transaction_status}");
+            }
+        } catch (\Exception $e) {
+            Log::error('Midtrans status check failed: ' . $e->getMessage());
+        }
+    }
 }

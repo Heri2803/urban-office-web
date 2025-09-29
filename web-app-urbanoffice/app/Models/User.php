@@ -25,6 +25,7 @@ class User extends Authenticatable
         'alamat',
         'paket',
         'profile_photo',
+        'google_id',
     ];
 
     /**

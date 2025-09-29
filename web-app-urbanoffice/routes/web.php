@@ -10,6 +10,7 @@ use App\Http\Controllers\Profile\ProfileController;
 use App\Http\Controllers\Mails\MailController;
 use App\Http\Controllers\Mitra\MitraController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\GoogleController;
 
 
 Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
@@ -20,6 +21,15 @@ Route::get('/profile/{id}/edit', [ProfileController::class, 'edit'])->name('prof
 Route::put('/profile/{id}', [ProfileController::class, 'update'])->name('profile.update')->middleware('auth');
 Route::get('/profile-status', [ProfileController::class, 'showDashboard'])->name('profile.dashboard')->middleware('auth');
 Route::post('/dashboard/mitra', [MitraController::class, 'store'])->name('dashboard.mitra');
+Route::get('auth/google', [GoogleController::class, 'redirectToGoogle']);
+Route::get('auth/callback', [GoogleController::class, 'handleGoogleCallback']);
+Route::get('/midtrans/return', [PaymentController::class, 'handleReturn'])->name('midtrans.return');
+
+Route::prefix('payment')->name('payment.')->group(function () {
+    Route::get('/finish', [TransactionController::class, 'paymentFinish'])->name('finish');
+    Route::get('/error', [TransactionController::class, 'paymentError'])->name('error');
+    Route::get('/unfinish', [TransactionController::class, 'paymentUnfinish'])->name('unfinish');
+});
 
 Route::get('/test-midtrans', function () {
     \Midtrans\Config::$serverKey = env('MIDTRANS_SERVER_KEY');

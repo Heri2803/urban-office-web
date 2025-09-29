@@ -1,5 +1,5 @@
 {{-- resources/views/components/sidebar.blade.php --}}
-<div x-data="()" x-init="initSidebar()" class="sidebar-wrapper">
+<div class="sidebar-wrapper">
     <!-- Desktop & Tablet Sidebar -->
     <div class="hidden md:flex md:flex-col md:fixed md:inset-y-0 md:left-0 lg:w-64 md:w-52 md:bg-white md:border-r md:border-gray-200 md:shadow-sm">
         <!-- Logo -->

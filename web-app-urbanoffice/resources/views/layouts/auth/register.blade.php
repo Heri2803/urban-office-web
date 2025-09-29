@@ -7,6 +7,7 @@
     <title>Register - {{ config('app.name', 'Urban Office') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="icon" type="image/png" href="{{ asset('assets/LOGO_URBAN_OFFICE.png?v=1') }}">
 </head>
 <body class="font-sans antialiased min-h-screen">
 

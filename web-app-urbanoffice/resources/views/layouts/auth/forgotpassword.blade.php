@@ -7,6 +7,7 @@
     <title>Lupa Password - Urban Office</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="icon" type="image/png" href="{{ asset('assets/LOGO_URBAN_OFFICE.png?v=1') }}">
 </head>
 <body class="font-sans antialiased min-h-screen" x-data="{ otpModal: false, email: '', countdown: 0 }">
 
@@ -20,13 +21,13 @@
     </div>
 
     <!-- Back Button -->
-    <div class="absolute top-6 left-6 z-10">
+    <!-- <div class="absolute top-6 left-6 z-10">
         <a href="{{ route('beforelogin') }}" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors">
             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
         </a>
-    </div>
+    </div> -->
 
     <!-- Header Logo & Text -->
     <div class="absolute top-6 md:top-8 left-1/2 transform -translate-x-1/2 text-center z-30">

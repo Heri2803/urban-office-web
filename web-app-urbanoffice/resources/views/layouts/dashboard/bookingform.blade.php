@@ -1,8 +1,6 @@
 @extends('layouts.app') {{-- layout utama --}}
 
-@section('head')
-<script src="https://cdn.tailwindcss.com"></script>
-@endsection
+
 
 @section('content')
 <div class="flex min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -237,6 +235,7 @@
                         </div>
 
                         {{-- Button --}}
+                        
                         <div class="transition-all duration-500 ease-out opacity-100 translate-y-0" 
                             style="transition-delay: 1100ms;">
                             <button @click="submitBooking"
@@ -252,6 +251,9 @@
                                 </span>
                             </button>
                         </div>
+                        
+
+                        {{-- Info Tambahan --}}
 
                         <div class="text-center mt-4 transition-all duration-500 ease-out opacity-100 translate-y-0" 
                             style="transition-delay: 1200ms;">
@@ -261,8 +263,6 @@
                             </p>
                         </div>
                     </div>
-
-
                 </div>
             </div>
 
@@ -452,27 +452,33 @@ function bookingForm() {
                         throw new Error('Midtrans Snap belum di-load. Pastikan script Snap sudah dimuat.');
                     }
 
+                    
+
                     // Panggil Snap pop-up
                     snap.pay(result.snap_token, {
                         onSuccess: (response) => {
                             console.log('Payment success:', response);
                             alert('Pembayaran berhasil!');
                             // PERBAIKAN: Redirect ke halaman invoice dengan order_id
+                        
                             window.location.href = `/dashboard/invoice/`;
                         },
                         onPending: (response) => {
                             console.log('Payment pending:', response);
                             alert('Pembayaran pending! Silakan selesaikan pembayaran Anda.');
                             // Optional: redirect ke halaman invoice juga untuk pending
+                            
                             window.location.href = `/dashboard/invoice/`;
                         },
                         onError: (response) => {
                             console.error('Payment error:', response);
                             alert('Terjadi kesalahan pembayaran! Silakan coba lagi.');
+                      
                         },
                         onClose: () => {
                             console.log('Payment popup closed');
                             alert('Anda menutup popup pembayaran tanpa menyelesaikan transaksi.');
+                            // Optional: redirect ke halaman invoice untuk menyelesaikan pembayaran nanti
                         }
                     });
                 } else {
