@@ -83,9 +83,17 @@ Route::get('/superadmin/voucher-promo/usage', function () {
 })->name('superadmin.voucher-promo.usage');
 
 // Halaman Laporan
-Route::get('/superadmin/reports', function () {
-    return view('superadmin.reports');
-})->name('superadmin.reports');
+Route::get('/superadmin/reports/revenue', function () {
+    return view('layouts.superadmin.report-revenue');
+})->name('superadmin.reports.revenue');
+
+Route::get('/superadmin/reports/occupancy', function () {
+    return view('layouts.superadmin.report-occupancy');
+})->name('superadmin.reports.occupancy');
+
+Route::get('/superadmin/approval/pending', function () {
+    return view('layouts.superadmin.approval-pending');
+})->name('superadmin.approval.pending');
 
 // Halaman Profil
 Route::get('/superadmin/profile', function () {

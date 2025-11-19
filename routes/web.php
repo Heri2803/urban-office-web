@@ -11,10 +11,29 @@ use App\Http\Controllers\Mails\MailController;
 use App\Http\Controllers\Mitra\MitraController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\GoogleController;
+use Illuminate\Support\Facades\Artisan;
+use App\Models\Mitra;
+use App\Mail\MitraNotificationMail;
 use Illuminate\Support\Facades\Mail;
-use App\Http\Controllers\XenditController;
+use App\Mail\TransactionSettledMail;
+use App\Models\Transaction;
+use App\Http\Controllers\Booking\BookingApiController;
+use App\Http\Controllers\Booking\ServicePriceController;
+use App\Http\Controllers\Booking\PaymentController;
+use App\Http\Controllers\Backend\MitraPanel\MitraAccessController;
 
 
+    Route::get('cities', [BookingApiController::class, 'getCities']);
+    Route::get('locations', [BookingApiController::class, 'getLocations']);
+    Route::get('rooms', [BookingApiController::class, 'getRooms']);
+    Route::get('rooms/{id}', [BookingApiController::class, 'getRoomDetails']);
+    Route::get('room-types', [BookingApiController::class, 'getRoomTypes']);
+    Route::get('service-prices/{roomId}', [BookingApiController::class, 'getServicePriceByRoom']);
+    Route::get('/get-service-price', [ServicePriceController::class, 'getServicePrice']);
+    Route::get('/virtual-office-packages', [ServicePriceController::class, 'getVirtualOfficePackages']);
+    Route::get('/coworking-passes', [App\Http\Controllers\Booking\ServicePriceController::class, 'getCoworkingPasses']);
+    // Event Space Prices
+    Route::get('/event-space-prices', [App\Http\Controllers\Booking\ServicePriceController::class, 'getEventSpacePrices']);
 
 Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
 Route::post('/midtrans/callback', [TransactionController::class, 'callback'])->name('midtrans.callback');
@@ -28,21 +47,14 @@ Route::get('auth/google', [GoogleController::class, 'redirectToGoogle']);
 Route::get('auth/callback', [GoogleController::class, 'handleGoogleCallback']);
 Route::get('/midtrans/return', [PaymentController::class, 'handleReturn'])->name('midtrans.return');
 
-
-
-Route::get('/payment', function () {
-    return view('payments.form');
-})->name('payment.form');
-
-Route::post('/payment/create', [XenditController::class, 'createInvoice'])->name('payment.create');
-Route::get('/payment/success', [XenditController::class, 'success'])->name('payment.success');
-Route::get('/payment/failed', [XenditController::class, 'failed'])->name('payment.failed');
-Route::post('/xendit/create-invoice', [XenditController::class, 'createInvoice'])->name('xendit.createInvoice');
-
-Route::get('/xendit-test', function () {
-    return view('xendit-test');
+Route::prefix('payment')->name('payment.')->group(function () {
+    Route::get('/finish', [TransactionController::class, 'paymentFinish'])->name('finish');
+    Route::get('/error', [TransactionController::class, 'paymentError'])->name('error');
+    Route::get('/unfinish', [TransactionController::class, 'paymentUnfinish'])->name('unfinish');
 });
 
+Route::post('/transactions/v2', [TransactionController::class, 'storeV2'])
+    ->name('transactions.store.v2');
 
 // Root route - redirect berdasarkan status login
 Route::get('/', function () {
@@ -97,13 +109,18 @@ Route::get('/components/sidebar', function () {
            ->header('Content-Type', 'text/html');
 })->name('sidebar');
 
+Route::get('/transaction/{id}', [TransactionController::class, 'show'])
+    ->name('dashboard.transaction.show');
+
+Route::get('/check-mitra-status', [MitraAccessController::class, 'checkStatus'])
+    ->name('check.mitra.status')
+    ->middleware('auth');
+
 // Dashboard Routes (DILINDUNGI AUTH GUARD) - Semua route dashboard wajib login
 Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(function () {
     
-    Route::get('/home', function () {
-        $user = App\Http\Controllers\AuthController::getUser();
-        return view('layouts.dashboard.home', compact('user'));
-    })->name('home');
+    Route::get('/home', [App\Http\Controllers\AuthController::class, 'hide'])
+        ->name('home');
 
     Route::get('/calls', function () {
         $user = App\Http\Controllers\AuthController::getUser();
@@ -126,18 +143,21 @@ Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(functi
         return view('layouts.dashboard.bookinginvoice', compact('user'));
     })->name('bookinginvoice');
 
+    Route::get('/mitra/access', [MitraAccessController::class, 'accessMitra'])
+        ->name('mitra.access');
+
     Route::get('/mitra', function () {
-        $user = App\Http\Controllers\AuthController::getUser();
+        $user = auth()->user(); // ✅ GUNAKAN auth() HELPER
         return view('layouts.dashboard.mitra', compact('user'));
     })->name('mitra');
 
     Route::get('/prosesmitra', function () {
-        $user = App\Http\Controllers\AuthController::getUser();
+        $user = auth()->user(); // ✅ GUNAKAN auth() HELPER
         return view('layouts.dashboard.prosesmitra', compact('user'));
     })->name('prosesmitra');
 
     Route::get('/mitraform', function () {
-        $user = App\Http\Controllers\AuthController::getUser();
+        $user = auth()->user(); // ✅ GUNAKAN auth() HELPER
         return view('layouts.dashboard.mitraform', compact('user'));
     })->name('mitraform');
 
@@ -151,6 +171,16 @@ Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(functi
 Route::middleware(['auth'])->group(function() {
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
 });
+
+Route::get('/clear-cache', function () {
+    Artisan::call('config:clear');
+    Artisan::call('cache:clear');
+    Artisan::call('route:clear');
+    Artisan::call('view:clear');
+    Artisan::call('config:cache');
+    return "Cache Laravel sudah dibersihkan ðŸš€";
+});
+
 
 // Route untuk clear session manual (untuk development)
 Route::get('/clear-session', function () {

@@ -20,9 +20,37 @@ class Mitra extends Model
         'status',
     ];
 
-    // Opsional: Pastikan kolom tanggal adalah Carbon instance
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Relasi ke user (satu mitra punya satu user)
+     */
+    public function user()
+    {
+        return $this->hasOne(User::class, 'mitra_id');
+    }
+
+    public function locations()
+    {
+        return $this->hasMany(Location::class);
+    }
+
+    /**
+     * Cek apakah mitra sudah approved/active
+     */
+    public function isApproved()
+    {
+        return in_array($this->status, ['approved', 'active']);
+    }
+
+    /**
+     * Cek apakah status pending
+     */
+    public function isPending()
+    {
+        return $this->status === 'pending';
+    }
 }

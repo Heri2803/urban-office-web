@@ -4,343 +4,430 @@
     <meta charset="utf-8">
     <title>Invoice {{ $transaction->order_id }}</title>
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0; 
-            padding: 20px; 
-            color: #333;
-            line-height: 1.6;
+        @media print {
+            body { 
+                margin: 0;
+                padding: 0;
+            }
+            .print-container {
+                page-break-after: avoid;
+            }
         }
         
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+        
+        .print-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header */
         .header {
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 3px solid #2c5aa0;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #ff6b35;
         }
         
         .logo-section {
             display: flex;
             align-items: center;
+            gap: 10px;
         }
         
         .logo {
-            width: 80px;
-            height: auto;
-            margin-right: 15px;
+            width: 45px;
+            height: 45px;
         }
         
         .company-info {
-            font-size: 14px;
+            font-size: 10px;
             color: #666;
+            line-height: 1.5;
+        }
+        
+        .company-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+        
+        .invoice-title-section {
+            text-align: right;
         }
         
         .invoice-title {
-            text-align: right;
-            color: #2c5aa0;
-        }
-        
-        .invoice-title h1 {
-            margin: 0;
-            font-size: 2.5em;
+            font-size: 28px;
             font-weight: 300;
+            color: #ff6b35;
+            margin-bottom: 3px;
         }
         
-        .invoice-number {
+        .invoice-meta {
+            font-size: 10px;
             color: #666;
-            font-size: 16px;
-            margin: 5px 0;
+            line-height: 1.6;
         }
         
-        .invoice-content {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 30px;
-        }
-        
-        .customer-info, .booking-info {
-            width: 48%;
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #2c5aa0;
-        }
-        
-        .info-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #2c5aa0;
+        /* Info Table */
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
             margin-bottom: 15px;
-            border-bottom: 2px solid #e9ecef;
-            padding-bottom: 8px;
+            border: 1px solid #ddd;
         }
         
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            padding: 5px 0;
+        .info-table thead th {
+            background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+            color: white;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 11px;
+            border-right: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .info-table thead th:last-child {
+            border-right: none;
+        }
+        
+        .info-table tbody td {
+            padding: 10px;
+            vertical-align: top;
+            border-right: 1px solid #e5e5e5;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        
+        .info-table tbody td:last-child {
+            border-right: none;
+        }
+        
+        .info-item {
+            margin-bottom: 8px;
+        }
+        
+        .info-item:last-child {
+            margin-bottom: 0;
         }
         
         .info-label {
-            font-weight: 600;
-            color: #555;
-            width: 40%;
+            font-size: 9px;
+            color: #888;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
         
         .info-value {
+            font-size: 11px;
             color: #333;
-            width: 60%;
-            text-align: right;
-        }
-        
-        .status-paid {
-            background: #28a745;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        .status-pending {
-            background: #ffc107;
-            color: #333;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        .status-failed {
-            background: #dc3545;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        .summary-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 30px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        
-        .summary-table th {
-            background: #2c5aa0;
-            color: white;
-            padding: 15px;
-            text-align: left;
             font-weight: 600;
         }
         
-        .summary-table td {
-            padding: 15px;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        .summary-table tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .total-row {
-            background: #f8f9fa;
-            font-weight: bold;
-            font-size: 1.2em;
-        }
-        
-        .total-amount {
-            color: #2c5aa0;
-            font-size: 1.3em;
-        }
-        
-        .footer {
-            margin-top: 40px;
-            text-align: center;
-            color: #666;
-            font-size: 12px;
-            border-top: 1px solid #e9ecef;
-            padding-top: 20px;
-        }
-        
-        .virtual-office-info {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 0 8px 8px 0;
-        }
-        
-        .pkp-status {
+        /* Status Badges */
+        .status-badge {
             display: inline-block;
-            padding: 6px 15px;
-            border-radius: 25px;
-            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 9px;
             font-weight: bold;
             text-transform: uppercase;
         }
         
+        .status-paid {
+            background: #10b981;
+            color: white;
+        }
+        
+        .status-pending {
+            background: #fbbf24;
+            color: #78350f;
+        }
+        
+        .status-failed {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .pkp-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: bold;
+        }
+        
         .pkp-yes {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: #d1fae5;
+            color: #065f46;
         }
         
         .pkp-no {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        /* Summary Table */
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+        }
+        
+        .summary-table thead th {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: white;
+            padding: 8px 12px;
+            font-weight: 600;
+            font-size: 11px;
+        }
+        
+        .summary-table thead th:first-child {
+            text-align: left;
+        }
+        
+        .summary-table thead th:last-child {
+            text-align: right;
+        }
+        
+        .summary-table tbody td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        
+        .summary-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .service-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 11px;
+        }
+        
+        .service-detail {
+            font-size: 9px;
+            color: #666;
+            margin-top: 3px;
+        }
+        
+        .total-row {
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+        }
+        
+        .total-label {
+            font-weight: bold;
+            color: #333;
+            font-size: 12px;
+        }
+        
+        .total-amount {
+            font-weight: bold;
+            color: #ff6b35;
+            font-size: 14px;
+            text-align: right;
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding-top: 12px;
+            border-top: 1px solid #e5e5e5;
+            font-size: 9px;
+            color: #888;
+            line-height: 1.6;
+        }
+        
+        .footer-contact {
+            margin-top: 8px;
+            color: #666;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
-    <!-- Header dengan Logo -->
-    <div class="header">
-        <div class="logo-section">
-            <img src="{{ public_path('assets/LOGO_URBAN_OFFICE.png') }}" alt="Urban Office Logo" class="logo">
-            <div class="company-info">
-                <strong>Urban Office</strong><br>
-                Professional Co-working Space<br>
-                {{ $transaction->city ?? 'Jakarta' }}
+    <div class="print-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo-section">
+                <img src="{{ public_path('assets/LOGO_URBAN_OFFICE.png') }}" alt="Urban Office" class="logo">
+                <div class="company-info">
+                    <div class="company-name">Urban Office</div>
+                    {{-- PERUBAHAN: Menggunakan relasi city dari city_id --}}
+                    <div>{{ $transaction->city->name ?? 'Jakarta' }}</div>
+                </div>
             </div>
-        </div>
-        <div class="invoice-title">
-            <h1>INVOICE</h1>
-            <div class="invoice-number">#{{ $transaction->order_id }}</div>
-            <div style="font-size: 14px; color: #666;">
-                {{ date('d F Y', strtotime($transaction->created_at ?? now())) }}
-            </div>
-        </div>
-    </div>
-
-    <!-- Informasi Customer dan Booking -->
-    <div class="invoice-content">
-        <div class="customer-info">
-            <div class="info-title">Informasi Pelanggan</div>
-            <div class="info-row">
-                <span class="info-label">Nama Lengkap:</span>
-                <span class="info-value">{{ $transaction->nama_lengkap }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">No. Telepon:</span>
-                <span class="info-value">{{ $transaction->phone ?? '-' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Kota:</span>
-                <span class="info-value">{{ $transaction->city ?? '-' }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Status Pembayaran:</span>
-                <span class="info-value">
-                    @if($transaction->status == 'paid' || $transaction->status == 'settlement')
-                        <span class="status-paid">LUNAS</span>
-                    @elseif($transaction->status == 'pending')
-                        <span class="status-pending">PENDING</span>
-                    @else
-                        <span class="status-failed">GAGAL</span>
-                    @endif
-                </span>
+            <div class="invoice-title-section">
+                <div class="invoice-title">INVOICE</div>
+                <div class="invoice-meta">
+                    <div><strong>#{{ $transaction->order_id }}</strong></div>
+                    <div>{{ date('d F Y', strtotime($transaction->created_at ?? now())) }}</div>
+                </div>
             </div>
         </div>
 
-        <div class="booking-info">
-            <div class="info-title">Detail Booking</div>
-            <div class="info-row">
-                <span class="info-label">Tipe Ruangan:</span>
-                <span class="info-value">{{ $transaction->room_type ?? '-' }}</span>
+        <!-- Info Table -->
+        <table class="info-table">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">INFORMASI PELANGGAN</th>
+                    <th style="width: 25%;">DETAIL BOOKING</th>
+                    <th style="width: 25%;">LAYANAN</th>
+                    <th style="width: 25%;">STATUS</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <!-- Customer Info -->
+                    <td>
+                        <div class="info-item">
+                            <div class="info-label">Nama Lengkap</div>
+                            <div class="info-value">{{ $transaction->nama_lengkap }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">No. Telepon</div>
+                            <div class="info-value">{{ $transaction->phone ?? '-' }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Kota</div>
+                            {{-- PERUBAHAN: Menggunakan relasi city dari city_id --}}
+                            <div class="info-value">{{ $transaction->city->name ?? '-' }}</div>
+                        </div>
+                    </td>
+
+                    <!-- Booking Info -->
+                    <td>
+                        <div class="info-item">
+                            <div class="info-label">Tipe Ruangan</div>
+                            <div class="info-value">{{ $transaction->room_type ?? '-' }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Jumlah Orang</div>
+                            <div class="info-value">{{ $transaction->jumlah_orang ?? '-' }} orang</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Tanggal Booking</div>
+                            <div class="info-value">{{ $transaction->booking_date ? date('d M Y', strtotime($transaction->booking_date)) : '-' }}</div>
+                        </div>
+                        @if(isset($transaction->jam))
+                        <div class="info-item">
+                            <div class="info-label">Jam</div>
+                            <div class="info-value">{{ $transaction->jam }}</div>
+                        </div>
+                        @endif
+                    </td>
+
+                    <!-- Service Info -->
+                    <td>
+                        @if($transaction->room_type == 'Virtual Office')
+                            @if(isset($transaction->paket))
+                            <div class="info-item">
+                                <div class="info-label">Paket</div>
+                                <div class="info-value">{{ $transaction->paket }}</div>
+                            </div>
+                            @endif
+                            
+                            @if(isset($transaction->bulan))
+                            <div class="info-item">
+                                <div class="info-label">Durasi</div>
+                                <div class="info-value">{{ $transaction->bulan }} Bulan</div>
+                            </div>
+                            @elseif(isset($transaction->tahun))
+                            <div class="info-item">
+                                <div class="info-label">Durasi</div>
+                                <div class="info-value">{{ $transaction->tahun }} Tahun</div>
+                            </div>
+                            @endif
+                            
+                            @if(isset($transaction->status_pkp))
+                            <div class="info-item">
+                                <div class="info-label">Status PKP</div>
+                                <div class="info-value">
+                                    <span class="pkp-badge {{ $transaction->status_pkp == 'Ya' ? 'pkp-yes' : 'pkp-no' }}">
+                                        {{ $transaction->status_pkp == 'Ya' ? 'PKP' : 'Non-PKP' }}
+                                    </span>
+                                </div>
+                            </div>
+                            @endif
+                        @else
+                            <div style="color: #ccc; font-style: italic;">-</div>
+                        @endif
+                    </td>
+
+                    <!-- Status -->
+                    <td>
+                        <div class="info-item">
+                            <div class="info-label">Pembayaran</div>
+                            <div class="info-value">
+                                @if($transaction->status == 'paid' || $transaction->status == 'settlement')
+                                    <span class="status-badge status-paid">Lunas</span>
+                                @elseif($transaction->status == 'pending')
+                                    <span class="status-badge status-pending">Pending</span>
+                                @else
+                                    <span class="status-badge status-failed">Gagal</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Order ID</div>
+                            <div class="info-value" style="font-family: monospace; font-size: 10px;">{{ $transaction->order_id }}</div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Summary Table -->
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>KETERANGAN</th>
+                    <th style="width: 30%;">JUMLAH</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div class="service-name">{{ $transaction->room_type ?? 'Layanan' }}</div>
+                        @if($transaction->room_type == 'Virtual Office' && isset($transaction->paket))
+                            <div class="service-detail">Paket: {{ $transaction->paket }}</div>
+                        @endif
+                        @if(isset($transaction->booking_date))
+                            <div class="service-detail">{{ date('d F Y', strtotime($transaction->booking_date)) }}</div>
+                        @endif
+                    </td>
+                    <td style="text-align: right; color: #555;">Rp {{ number_format($transaction->gross_amount, 0, ',', '.') }}</td>
+                </tr>
+                <tr class="total-row">
+                    <td class="total-label">TOTAL PEMBAYARAN</td>
+                    <td class="total-amount">Rp {{ number_format($transaction->gross_amount, 0, ',', '.') }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div>Terima kasih telah menggunakan layanan Urban Office</div>
+            <div style="color: #aaa; margin-top: 3px;">Invoice ini dibuat secara otomatis dan sah tanpa tanda tangan</div>
+            <div class="footer-contact">
+                Urban Office • info@urbanoffice.com • www.urbanoffice.com
             </div>
-            <div class="info-row">
-                <span class="info-label">Jumlah Orang:</span>
-                <span class="info-value">{{ $transaction->jumlah_orang ?? '-' }} orang</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Tanggal Booking:</span>
-                <span class="info-value">
-                    {{ $transaction->booking_date ? date('d F Y', strtotime($transaction->booking_date)) : '-' }}
-                </span>
-            </div>
-            @if(isset($transaction->jam))
-            <div class="info-row">
-                <span class="info-label">Jam:</span>
-                <span class="info-value">{{ $transaction->jam }}</span>
-            </div>
-            @endif
         </div>
-    </div>
-
-    <!-- Informasi Khusus Virtual Office -->
-    @if($transaction->room_type == 'Virtual Office')
-    <div class="virtual-office-info">
-        <h4 style="margin: 0 0 15px 0; color: #1976d2;">Informasi Virtual Office</h4>
-        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-            @if(isset($transaction->paket))
-            <div style="margin-bottom: 10px;">
-                <strong>Paket:</strong> {{ $transaction->paket }}
-                @if(isset($transaction->bulan))
-                    - {{ $transaction->bulan }} Bulan
-                @elseif(isset($transaction->tahun))
-                    - {{ $transaction->tahun }} Tahun
-                @endif
-            </div>
-            @endif
-            
-            @if(isset($transaction->status_pkp))
-            <div style="margin-bottom: 10px;">
-                <strong>Status PKP:</strong>
-                <span class="pkp-status {{ $transaction->status_pkp == 'Ya' ? 'pkp-yes' : 'pkp-no' }}">
-                    {{ $transaction->status_pkp == 'Ya' ? 'PKP' : 'Non-PKP' }}
-                </span>
-            </div>
-            @endif
-        </div>
-    </div>
-    @endif
-
-    <!-- Tabel Ringkasan -->
-    <table class="summary-table">
-        <thead>
-            <tr>
-                <th style="width: 60%;">Keterangan</th>
-                <th style="width: 40%; text-align: right;">Jumlah</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>
-                    <strong>{{ $transaction->room_type ?? 'Layanan' }}</strong>
-                    @if($transaction->room_type == 'Virtual Office' && isset($transaction->paket))
-                        <br><small style="color: #666;">Paket: {{ $transaction->paket }}</small>
-                    @endif
-                    @if(isset($transaction->booking_date))
-                        <br><small style="color: #666;">{{ date('d F Y', strtotime($transaction->booking_date)) }}</small>
-                    @endif
-                </td>
-                <td style="text-align: right;">Rp {{ number_format($transaction->gross_amount, 0, ',', '.') }}</td>
-            </tr>
-            <tr class="total-row">
-                <td><strong>TOTAL PEMBAYARAN</strong></td>
-                <td style="text-align: right;" class="total-amount">
-                    <strong>Rp {{ number_format($transaction->gross_amount, 0, ',', '.') }}</strong>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-
-    <!-- Footer -->
-    <div class="footer">
-        <p>Terima kasih telah menggunakan layanan Urban Office</p>
-        <p>Invoice ini dibuat secara otomatis dan sah tanpa tanda tangan</p>
-        <p style="margin-top: 15px;">
-            <strong>Urban Office</strong> | 
-            Email: info@urbanoffice.com | 
-            Website: www.urbanoffice.com
-        </p>
     </div>
 </body>
 </html>

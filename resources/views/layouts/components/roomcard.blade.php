@@ -1,7 +1,6 @@
 {{-- resources/views/layouts/components/roomcard.blade.php --}}
 
 @php
-    // Data untuk setiap room type dengan gambar dan benefit yang spesifik
     $allRoomData = $allRoomData ?? [
         'Virtual Office' => [
             'images' => [
@@ -25,6 +24,17 @@
                 'Wi-Fi berkecepatan tinggi dan layanan catering tersedia'
             ],
         ],
+        'Private Office' => [
+            'images' => [
+                'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&h=600&fit=crop&auto=format',
+                'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=800&h=600&fit=crop&auto=format'
+            ],
+            'benefits' => [
+                'Ruang kerja private dengan privasi maksimal',
+                'Workspace fleksibel dengan suasana kerja yang produktif',
+                'Akses 24/7 dengan keamanan terjamin dan cleaning service'
+            ],
+        ],
         'Coworking Space' => [
             'images' => [
                 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&h=600&fit=crop&auto=format',
@@ -46,13 +56,24 @@
                 'Kapasitas hingga 100 orang dengan tata letak fleksibel',
                 'Sound system profesional, lighting, dan dukungan teknis'
             ],
+        ],
+        'Day Pass' => [
+            'images' => [
+                'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&h=600&fit=crop&auto=format',
+                'https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=800&h=600&fit=crop&auto=format'
+            ],
+            'benefits' => [
+                'Akses coworking space untuk 1 hari penuh',
+                'Wifi super cepat dan unlimited coffee',
+                'Cocok untuk freelancer atau remote worker'
+            ],
         ]
     ];
-    $roomType = $roomType ?? 'Virtual Office';
 @endphp
 
+{{-- ✅ Ubah x-data untuk watch parent variable --}}
 <div 
-    x-data="roomCardComponent(@js($allRoomData), @js($roomType))" 
+    x-data="roomCardComponent(@js($allRoomData))" 
     x-init="init()" 
     x-cloak
     class="bg-white shadow-lg hover:shadow-xl rounded-xl overflow-hidden transition-all duration-700 ease-out transform"
@@ -77,10 +98,9 @@
             </template>
         </div>
 
-        <!-- Navigation buttons - hidden on mobile, shown on tablet+ -->
+        {{-- Navigation & Dots (tetap sama) --}}
         <template x-if="currentRoom.images && currentRoom.images.length > 1">
             <div>
-                <!-- Prev button -->
                 <button 
                     @click="prevImage" 
                     class="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 
@@ -95,7 +115,6 @@
                     </svg>
                 </button>
 
-                <!-- Next button -->
                 <button 
                     @click="nextImage" 
                     class="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 
@@ -112,7 +131,6 @@
             </div>
         </template>
 
-        <!-- Dots indicator -->
         <div x-show="currentRoom.images && currentRoom.images.length > 1" 
              class="absolute bottom-3 sm:bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
             <template x-for="(image, index) in currentRoom.images" :key="index">
@@ -125,7 +143,6 @@
             </template>
         </div>
 
-        <!-- Room type badge -->
         <div class="absolute top-3 sm:top-4 left-3 sm:left-4">
             <span class="bg-orange-500 text-white px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium shadow-lg backdrop-blur-sm"
                   x-text="roomType">
@@ -133,13 +150,12 @@
         </div>
     </div>
 
-    <!-- Content -->
+    {{-- Content (tetap sama) --}}
     <div class="p-4 sm:p-5 md:p-6">
         <h3 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 mb-4 sm:mb-5 border-l-4 border-orange-500 pl-3 sm:pl-4" 
             x-text="roomType">
         </h3>
         
-        <!-- Benefits -->
         <div class="space-y-3 sm:space-y-4">
             <template x-for="(benefit, index) in currentRoom.benefits" :key="index">
                 <div 
@@ -156,7 +172,6 @@
             </template>
         </div>
 
-        <!-- Extra Info -->
         <div 
             class="mt-5 sm:mt-6 p-3 sm:p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg 
                    transition-all duration-500 ease-out hover:shadow-md border-l-2 border-orange-200"
@@ -169,7 +184,6 @@
             </p>
         </div>
 
-        <!-- Additional features for larger screens -->
         <div class="hidden md:block mt-4 pt-4 border-t border-gray-100">
             <div class="flex items-center justify-between text-sm text-gray-600">
                 <div class="flex items-center space-x-4">
@@ -189,10 +203,10 @@
 </div>
 
 <script>
-function roomCardComponent(allRoomData, roomType) {
+function roomCardComponent(allRoomData) {
     return {
         allRoomData,
-        roomType,
+        roomType: 'Virtual Office', // Default awal
         currentRoom: {},
         currentImageIndex: 0,
         isVisible: false,
@@ -200,15 +214,41 @@ function roomCardComponent(allRoomData, roomType) {
 
         init() {
             this.updateRoom();
-            // Trigger entrance animation
             this.$nextTick(() => {
                 setTimeout(() => {
                     this.isVisible = true;
                 }, 100);
             });
             
-            // Start auto-slide for images if more than 1
             this.startAutoSlide();
+
+            // ✅ TAMBAHKAN: Listen room type change (dari selectRoomType)
+            window.addEventListener('room-type-selected', (event) => {
+                const newRoomType = event.detail.roomType;
+                this.changeRoomType(newRoomType);
+            });
+
+            // ✅ TAMBAHKAN: Listen specific room images (dari onRoomChange) - untuk future
+            window.addEventListener('room-images-loaded', (event) => {
+                const { roomType, images, benefits } = event.detail;
+                
+                // Override dengan gambar spesifik room
+                this.roomType = roomType;
+                this.currentRoom = {
+                    images: images,
+                    benefits: benefits.length > 0 ? benefits : (this.allRoomData[roomType]?.benefits || [])
+                };
+                this.currentImageIndex = 0;
+                this.resetAutoSlide();
+                
+                // Trigger animation
+                this.isVisible = false;
+                this.$nextTick(() => {
+                    setTimeout(() => {
+                        this.isVisible = true;
+                    }, 50);
+                });
+            });
         },
 
         updateRoom() {
@@ -236,10 +276,15 @@ function roomCardComponent(allRoomData, roomType) {
         },
 
         startAutoSlide() {
+            // Clear existing interval first
+            if (this.autoSlideInterval) {
+                clearInterval(this.autoSlideInterval);
+            }
+            
             if (this.currentRoom.images && this.currentRoom.images.length > 1) {
                 this.autoSlideInterval = setInterval(() => {
                     this.nextImage();
-                }, 5000); // Change image every 5 seconds
+                }, 5000);
             }
         },
 
@@ -251,16 +296,23 @@ function roomCardComponent(allRoomData, roomType) {
         },
 
         handleError(event) {
-            console.log('Image failed to load:', event.target.src);
-            // You can set a fallback image here if needed
+            console.log('❌ Image failed to load:', event.target.src);
             event.target.src = '/images/fallback-room.jpg';
         },
 
-        // Method to be called from parent component when room type changes
         changeRoomType(newRoomType) {
+            console.log('🔄 Changing room type from', this.roomType, 'to', newRoomType);
             this.roomType = newRoomType;
             this.updateRoom();
             this.resetAutoSlide();
+            
+            // Trigger animation
+            this.isVisible = false;
+            this.$nextTick(() => {
+                setTimeout(() => {
+                    this.isVisible = true;
+                }, 50);
+            });
         }
     }
 }

@@ -6,7 +6,7 @@
     <title>{{ config('app.name', 'Laravel App') }}</title>
 
     {{-- Favicon --}}
-    <link rel="icon" type="image/png" href="{{ asset('assets/LOGO_URBAN_OFFICE.png?v=1') }}">
+    <link rel="icon" type="image/png" href="{{ asset('/assets/LOGO_URBAN_OFFICE.png?v=1') }}">
 
     {{-- Tailwind CSS & Vite --}}
     @vite('resources/css/app.css')
@@ -15,22 +15,61 @@
     {{-- CSRF Token --}}
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    {{-- PENTING: AlpineJS perlu dimuat di sini (jika tidak dimuat via app.js) --}}
-    {{-- CATATAN: Jika Anda sudah mengimpor Alpine di resources/js/app.js, hapus baris di bawah ini. --}}
-    <script src="//unpkg.com/alpinejs" defer></script> 
+    {{-- AlpineJS (jika belum diimpor via app.js) --}}
+    <script src="//unpkg.com/alpinejs" defer></script>
+
+     {{-- ✅ STYLE GLOBAL - UPDATE INI SAJA --}}
+    <style>
+        html, body {
+            overflow-x: hidden !important;
+            width: 100% !important;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        
+        #info-section .info-card {
+            min-width: 0;
+            flex-shrink: 0;
+        }
+    
+        /* ✅ SOLUSI UTAMA: Override margin bottom untuk mobile */
+        @media (max-width: 767px) {
+            /* Target semua halaman content */
+            .flex-1.ml-0 {
+                margin-bottom: 2.5rem !important; /* 96px - cukup untuk bottom nav */
+            }
+            
+            /* Pastikan konten tidak tertutup */
+            .md\:ml-60, .lg\:ml-64, .xl\:ml-64 {
+                margin-left: 0 !important;
+            }
+        }
+        
+        /* Pastikan bottom nav tetap di atas */
+        .sidebar-wrapper > div.md\:hidden {
+            z-index: 9999 !important;
+        }
+    </style>
 
     @yield('head')
-</head>
-<body class="antialiased bg-gray-50 text-gray-900">
 
-    {{-- SidebarData dengan Alpine.data() HARUS BERADA DI ATAS KOMPONEN x-data --}}
-    {{-- Ini adalah perbaikan utama untuk urutan loading --}}
+    {{-- ✅ Inisialisasi Alpine Data (HARUS di atas elemen x-data yang memakainya) --}}
     <script>
         document.addEventListener('alpine:init', () => {
-            Alpine.data('sidebar', () => ({
-                activeItem: 'Beranda',
-                // Variabel menuItems didefinisikan dengan benar di sini
-                menuItems: [
+    Alpine.data('layout', () => ({
+        // Variabel Global
+        isSidebarHidden: false,
+
+        // Variabel Sidebar
+        activeItem: 'Beranda',
+        isSidebarOpen: true,
+
+        menuItems: [
                 {
                     name: 'Beranda',
                     href: '/dashboard/home',
@@ -77,65 +116,89 @@
                             </svg>`
                 }
             ],
-                // Fungsi init() menggantikan x-init="initSidebar()"
-                init() {
-                    // Loop untuk memastikan aksi logout didefinisikan
-                    this.menuItems = this.menuItems.map(item => {
-                        if (item.isAction && item.name === 'Logout') {
-                            item.action = () => this.handleLogout();
-                        }
-                        return item;
-                    });
 
-                    // Logika untuk menentukan item aktif
-                    const currentPath = window.location.pathname;
-                    const active = this.menuItems.find(item => item.href === currentPath);
-                    if (active) this.activeItem = active.name;
-                },
-                setActiveItem(name) {
-                    this.activeItem = name;
-                },
-                handleLogout() {
-                    // Logika Logout (dibiarkan tidak berubah karena sudah benar)
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = '/logout';
-
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                    const csrfInput = document.createElement('input');
-                    csrfInput.type = 'hidden';
-                    csrfInput.name = '_token';
-                    csrfInput.value = csrfToken;
-                    form.appendChild(csrfInput);
-
-                    document.body.appendChild(form);
-                    form.submit();
-                },
-                // Getter methods (dibiarkan tidak berubah)
-                getDesktopButtonClass(name) {
-                    return this.activeItem === name
-                        ? 'bg-orange-100 text-orange-600'
-                        : 'text-gray-700 hover:bg-gray-50';
-                },
-                getMobileButtonClass(name) {
-                    return this.activeItem === name
-                        ? 'bg-orange-50 border-orange-500 text-orange-700'
-                        : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800';
-                },
-                getIconClass(name) {
-                    return this.activeItem === name
-                        ? 'text-orange-600'
-                        : 'text-gray-400 group-hover:text-gray-500';
-                },
-                getTextClass(name) {
-                    return this.activeItem === name
-                        ? 'text-orange-600'
-                        : 'text-gray-900 group-hover:text-gray-700';
+        init() {
+            // Logout Action
+            this.menuItems = this.menuItems.map(item => {
+                if (item.isAction && item.name === 'Logout') {
+                    item.action = () => this.handleLogout();
                 }
-            }))
-        });
+                return item;
+            });
+
+            // Set Active Menu
+            const currentPath = window.location.pathname;
+            const active = this.menuItems.find(item => item.href === currentPath);
+            if (active) this.activeItem = active.name;
+
+            // Load Sidebar State
+            const savedState = localStorage.getItem('sidebarOpen');
+            if (savedState !== null) {
+                this.isSidebarOpen = JSON.parse(savedState);
+            }
+        },
+
+        // ✅ TAMBAHKAN FUNGSI INI
+        setActiveItem(itemName) {
+            this.activeItem = itemName;
+            // Simpan ke localStorage agar tetap konsisten
+            localStorage.setItem('activeMenuItem', itemName);
+        },
+
+        toggleSidebar() {
+            this.isSidebarOpen = !this.isSidebarOpen;
+            localStorage.setItem('sidebarOpen', JSON.stringify(this.isSidebarOpen));
+        },
+
+        handleLogout() {
+            // Set active item ke Logout sebelum logout
+            this.setActiveItem('Logout');
+            
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/logout';
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = csrfToken;
+
+            form.appendChild(csrfInput);
+            document.body.appendChild(form);
+            form.submit();
+        },
+
+        getDesktopButtonClass(name) {
+            return this.activeItem === name
+                ? 'bg-orange-100 text-orange-600'
+                : 'text-gray-700 hover:bg-gray-50';
+        },
+
+        getIconClass(name) {
+            return this.activeItem === name
+                ? 'text-orange-600'
+                : 'text-gray-400 group-hover:text-gray-500';
+        },
+
+        getTextClass(name) {
+            return this.activeItem === name
+                ? 'text-orange-600'
+                : 'text-gray-900 group-hover:text-gray-700';
+        },
+
+        getMobileButtonClass(name) {
+            return this.activeItem === name
+                ? 'text-orange-600'
+                : 'text-gray-500 hover:text-orange-500';
+        },
+    }));
+});
     </script>
-    
+</head>
+
+<body class="antialiased bg-gray-50 text-gray-900" x-data="layout">
+
     {{-- Sidebar (ELEMEN x-data HARUS ADA SETELAH SCRIPT DEFINISINYA) --}}
     <div x-data="sidebar" class="sidebar-wrapper">
         @include('layouts.components.sidebar')
@@ -146,8 +209,11 @@
         @yield('content')
     </div>
 
-    {{-- Footer --}}
+    {{-- ✅ Footer & komponen tambahan --}}
     @yield('footer')
+    @include('layouts.components.maintanance-modal')
+    @include('layouts.components.commingsoon-modal')
+    @include('layouts.components.promo-modal')
 
 </body>
 </html>

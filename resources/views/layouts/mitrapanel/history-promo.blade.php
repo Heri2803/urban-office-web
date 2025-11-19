@@ -49,14 +49,14 @@
 
     {{-- Filter Bar --}}
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             
             {{-- Filter Lokasi --}}
             <div class="relative">
                 <label class="block text-xs font-medium text-gray-700 mb-1">Lokasi</label>
                 <select x-model="filters.location" 
                         @change="applyFilters"
-                        class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        class="w-full px-2 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition">
                     <option value="all">Semua Lokasi</option>
                     <option value="jakarta-pusat">Jakarta Pusat</option>
                     <option value="surabaya">Surabaya</option>
@@ -69,7 +69,7 @@
                 <label class="block text-xs font-medium text-gray-700 mb-1">Status</label>
                 <select x-model="filters.status" 
                         @change="applyFilters"
-                        class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        class="w-full px-2 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition">
                     <option value="all">Semua Status</option>
                     <option value="active">Aktif</option>
                     <option value="ended">Berakhir</option>
@@ -82,7 +82,7 @@
                 <label class="block text-xs font-medium text-gray-700 mb-1">Layanan</label>
                 <select x-model="filters.service" 
                         @change="applyFilters"
-                        class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        class="w-full px-2 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition">
                     <option value="all">Semua Layanan</option>
                     <option value="all-services">All Services</option>
                     <option value="private-office">Private Office</option>
@@ -97,72 +97,72 @@
             <div class="relative">
                 <label class="block text-xs font-medium text-gray-700 mb-1">Cari Promo</label>
                 <input type="text" 
-                       x-model="filters.search" 
-                       @input="applyFilters"
-                       placeholder="Nama atau kode promo..."
-                       class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    x-model="filters.search" 
+                    @input="applyFilters"
+                    placeholder="Nama atau kode promo..."
+                    class="w-full px-2 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition">
             </div>
 
         </div>
     </div>
 
     {{-- Summary Cards --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
+    
         {{-- Total Promo --}}
-        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm p-5 text-white">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium opacity-90">Total Promo</span>
-                <div class="p-2 bg-white bg-opacity-20 rounded-lg">
-                    <svg class="w-5 h-5" fill="#FFA500" viewBox="0 0 20 20">
-                        <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
-                    </svg>
-                </div>
+        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm p-4 text-white relative">
+            <div class="absolute top-3 right-3 bg-white bg-opacity-20 p-1.5 rounded-lg">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="#FFA500" viewBox="0 0 20 20">
+                    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+                </svg>
             </div>
-            <p class="text-3xl font-bold" x-text="summary.totalPromos"></p>
-            <p class="text-xs opacity-75 mt-1">Promo yang pernah berjalan</p>
+            <div class="pr-10">
+                <p class="text-sm font-medium opacity-90">Total Promo</p>
+                <p class="text-lg sm:text-xl lg:text-2xl font-bold mt-1" x-text="summary.totalPromos"></p>
+                <p class="text-xs opacity-75 mt-0.5">Promo yang pernah berjalan</p>
+            </div>
         </div>
 
         {{-- Promo Aktif --}}
-        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm p-5 text-white">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium opacity-90">Promo Aktif</span>
-                <div class="p-2 bg-white bg-opacity-20 rounded-lg">
-                    <svg class="w-5 h-5" fill="#FFA500" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
+        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm p-4 text-white relative">
+            <div class="absolute top-3 right-3 bg-white bg-opacity-20 p-1.5 rounded-lg">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="#FFA500" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
             </div>
-            <p class="text-3xl font-bold" x-text="summary.activePromos"></p>
-            <p class="text-xs opacity-75 mt-1">Sedang berjalan</p>
+            <div class="pr-10">
+                <p class="text-sm font-medium opacity-90">Promo Aktif</p>
+                <p class="text-lg sm:text-xl lg:text-2xl font-bold mt-1" x-text="summary.activePromos"></p>
+                <p class="text-xs opacity-75 mt-0.5">Sedang berjalan</p>
+            </div>
         </div>
 
         {{-- Rata-rata Dampak --}}
-        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm p-5 text-white">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium opacity-90">Rata-rata Dampak</span>
-                <div class="p-2 bg-white bg-opacity-20 rounded-lg">
-                    <svg class="w-5 h-5" fill="#FFA500" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
+        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm p-4 text-white relative">
+            <div class="absolute top-3 right-3 bg-white bg-opacity-20 p-1.5 rounded-lg">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="#FFA500" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/>
+                </svg>
             </div>
-            <p class="text-3xl font-bold" x-text="summary.avgImpact + '%'"></p>
-            <p class="text-xs opacity-75 mt-1">Peningkatan transaksi</p>
+            <div class="pr-10">
+                <p class="text-sm font-medium opacity-90">Rata-rata Dampak</p>
+                <p class="text-lg sm:text-xl lg:text-2xl font-bold mt-1" x-text="summary.avgImpact + '%'"></p>
+                <p class="text-xs opacity-75 mt-0.5">Peningkatan transaksi</p>
+            </div>
         </div>
 
         {{-- Best Promo --}}
-        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm p-5 text-white">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium opacity-90">Promo Terbaik</span>
-                <div class="p-2 bg-white bg-opacity-20 rounded-lg">
-                    <svg class="w-5 h-5" fill="#FFA500" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                    </svg>
-                </div>
+        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm p-4 text-white relative">
+            <div class="absolute top-3 right-3 bg-white bg-opacity-20 p-1.5 rounded-lg">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="#FFA500" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
             </div>
-            <p class="text-xl font-semibold truncate" x-text="summary.bestPromo.name"></p>
-            <p class="text-xs opacity-75 mt-1" x-text="'+' + summary.bestPromo.impact + '% impact'"></p>
+            <div class="pr-10">
+                <p class="text-sm font-medium opacity-90">Promo Terbaik</p>
+                <p class="text-base sm:text-lg font-semibold truncate mt-1" x-text="summary.bestPromo.name"></p>
+                <p class="text-xs opacity-75 mt-0.5" x-text="'+' + summary.bestPromo.impact + '% impact'"></p>
+            </div>
         </div>
 
     </div>
@@ -587,6 +587,7 @@ function historyPromoData() {
         // State
         showModal: false,
         selectedPromo: null,
+        loading: false,
         
         // Filters
         filters: {
@@ -596,248 +597,49 @@ function historyPromoData() {
             search: ''
         },
         
-        // Data Promo (10 promo dengan 3 lokasi)
-        promos: [
-            {
-                id: 1,
-                name: 'Grand Opening Surabaya',
-                code: 'GRANDOPEN',
-                service: 'All Services',
-                location: 'Surabaya',
-                startDate: '1 Sep 2024',
-                endDate: '30 Sep 2024',
-                status: 'ended',
-                impact: {
-                    transactionIncrease: 120.5,
-                    revenueIncrease: 95.2,
-                    afterEffect: 25.3,
-                    before: { transactions: 45, revenue: 8500000 },
-                    during: { transactions: 99, revenue: 16600000, promoUsage: 85 },
-                    after: { transactions: 56, revenue: 10500000 }
-                }
-            },
-            {
-                id: 2,
-                name: 'Diskon Coworking 20%',
-                code: 'COWORK20',
-                service: 'Coworking Space',
-                location: 'Jakarta Pusat',
-                startDate: '1 Okt 2024',
-                endDate: '7 Okt 2024',
-                status: 'active',
-                impact: {
-                    transactionIncrease: 76.8,
-                    revenueIncrease: 53.3,
-                    afterEffect: null,
-                    before: { transactions: 82, revenue: 12300000 },
-                    during: { transactions: 145, revenue: 18850000, promoUsage: 105 },
-                    after: null
-                }
-            },
-            {
-                id: 3,
-                name: 'Flash Sale Meeting Room',
-                code: 'FLASH15',
-                service: 'Meeting Room',
-                location: 'Bandung',
-                startDate: '15 Ags 2024',
-                endDate: '31 Ags 2024',
-                status: 'ended',
-                impact: {
-                    transactionIncrease: 45.2,
-                    revenueIncrease: 32.8,
-                    afterEffect: 12.5,
-                    before: { transactions: 62, revenue: 12400000 },
-                    during: { transactions: 90, revenue: 16470000, promoUsage: 68 },
-                    after: { transactions: 70, revenue: 13800000 }
-                }
-            },
-            {
-                id: 4,
-                name: 'Promo Akhir Tahun',
-                code: 'ENDYEAR24',
-                service: 'All Services',
-                location: 'Jakarta Pusat',
-                startDate: '20 Des 2024',
-                endDate: '31 Des 2024',
-                status: 'upcoming',
-                impact: null
-            },
-            {
-                id: 5,
-                name: 'Weekend Promo Private Office',
-                code: 'WEEKEND30',
-                service: 'Private Office',
-                location: 'Surabaya',
-                startDate: '1 Jul 2024',
-                endDate: '31 Jul 2024',
-                status: 'ended',
-                impact: {
-                    transactionIncrease: 28.4,
-                    revenueIncrease: 18.7,
-                    afterEffect: 8.2,
-                    before: { transactions: 38, revenue: 19000000 },
-                    during: { transactions: 49, revenue: 22550000, promoUsage: 32 },
-                    after: { transactions: 41, revenue: 20100000 }
-                }
-            },
-            {
-                id: 6,
-                name: 'Virtual Office Bundling',
-                code: 'VOBUNDLE',
-                service: 'Virtual Office',
-                location: 'Bandung',
-                startDate: '1 Jun 2024',
-                endDate: '15 Jun 2024',
-                status: 'ended',
-                impact: {
-                    transactionIncrease: 8.3,
-                    revenueIncrease: 5.2,
-                    afterEffect: 2.1,
-                    before: { transactions: 24, revenue: 6000000 },
-                    during: { transactions: 26, revenue: 6312000, promoUsage: 18 },
-                    after: { transactions: 25, revenue: 6050000 }
-                }
-            },
-            {
-                id: 7,
-                name: 'Event Space Super Promo',
-                code: 'EVENT40',
-                service: 'Event Space',
-                location: 'Jakarta Pusat',
-                startDate: '1 Mei 2024',
-                endDate: '31 Mei 2024',
-                status: 'ended',
-                impact: {
-                    transactionIncrease: -12.5,
-                    revenueIncrease: -18.3,
-                    afterEffect: -5.2,
-                    before: { transactions: 8, revenue: 24000000 },
-                    during: { transactions: 7, revenue: 19600000, promoUsage: 5 },
-                    after: { transactions: 8, revenue: 22500000 }
-                }
-            },
-            {
-                id: 8,
-                name: 'Ramadan Special',
-                code: 'RAMADAN25',
-                service: 'All Services',
-                location: 'Surabaya',
-                startDate: '11 Mar 2024',
-                endDate: '10 Apr 2024',
-                status: 'ended',
-                impact: {
-                    transactionIncrease: 65.8,
-                    revenueIncrease: 52.4,
-                    afterEffect: 18.7,
-                    before: { transactions: 95, revenue: 28500000 },
-                    during: { transactions: 157, revenue: 43430000, promoUsage: 128 },
-                    after: { transactions: 113, revenue: 33200000 }
-                }
-            },
-            {
-                id: 9,
-                name: 'New Member Discount',
-                code: 'NEWMEM10',
-                service: 'Coworking Space',
-                location: 'Bandung',
-                startDate: '1 Okt 2024',
-                endDate: '15 Okt 2024',
-                status: 'active',
-                impact: {
-                    transactionIncrease: 42.1,
-                    revenueIncrease: 35.8,
-                    afterEffect: null,
-                    before: { transactions: 57, revenue: 8550000 },
-                    during: { transactions: 81, revenue: 11610000, promoUsage: 62 },
-                    after: null
-                }
-            },
-            {
-                id: 10,
-                name: 'Loyalty Cashback',
-                code: 'LOYAL50K',
-                service: 'All Services',
-                location: 'Jakarta Pusat',
-                startDate: '1 Feb 2024',
-                endDate: '29 Feb 2024',
-                status: 'ended',
-                impact: {
-                    transactionIncrease: 15.7,
-                    revenueIncrease: 12.3,
-                    afterEffect: 6.5,
-                    before: { transactions: 108, revenue: 32400000 },
-                    during: { transactions: 125, revenue: 36390000, promoUsage: 89 },
-                    after: { transactions: 115, revenue: 34100000 }
-                }
-            }
-        ],
+        // Data
+        promos: [],
+        summary: {
+            totalPromos: 0,
+            activePromos: 0,
+            avgImpact: 0,
+            bestPromo: { name: '-', impact: 0 }
+        },
         
         // Computed
         get filteredPromos() {
-            return this.promos.filter(promo => {
-                // Filter location
-                if (this.filters.location !== 'all') {
-                    if (promo.location.toLowerCase().replace(/\s+/g, '-') !== this.filters.location) {
-                        return false;
-                    }
-                }
-                
-                // Filter status
-                if (this.filters.status !== 'all' && promo.status !== this.filters.status) {
-                    return false;
-                }
-                
-                // Filter service
-                if (this.filters.service !== 'all') {
-                    if (this.filters.service === 'all-services' && promo.service !== 'All Services') {
-                        return false;
-                    } else if (this.filters.service !== 'all-services') {
-                        const serviceMap = {
-                            'private-office': 'Private Office',
-                            'virtual-office': 'Virtual Office',
-                            'coworking-space': 'Coworking Space',
-                            'meeting-room': 'Meeting Room',
-                            'event-space': 'Event Space'
-                        };
-                        if (promo.service !== serviceMap[this.filters.service] && promo.service !== 'All Services') {
-                            return false;
-                        }
-                    }
-                }
-                
-                // Search
-                if (this.filters.search) {
-                    const search = this.filters.search.toLowerCase();
-                    return promo.name.toLowerCase().includes(search) || 
-                           promo.code.toLowerCase().includes(search);
-                }
-                
-                return true;
-            });
-        },
-        
-        get summary() {
-            const activePromos = this.promos.filter(p => p.status === 'active').length;
-            const promosWithImpact = this.promos.filter(p => p.impact !== null);
-            const avgImpact = promosWithImpact.length > 0
-                ? Math.round(promosWithImpact.reduce((sum, p) => sum + p.impact.transactionIncrease, 0) / promosWithImpact.length * 10) / 10
-                : 0;
-            const bestPromo = promosWithImpact.reduce((best, current) => 
-                (!best || current.impact.transactionIncrease > best.impact.transactionIncrease) ? current : best
-            , null);
-            
-            return {
-                totalPromos: this.promos.length,
-                activePromos: activePromos,
-                avgImpact: avgImpact,
-                bestPromo: bestPromo ? { name: bestPromo.name, impact: bestPromo.impact.transactionIncrease } : { name: '-', impact: 0 }
-            };
+            return this.promos;
         },
         
         // Methods
+        async init() {
+            await this.loadPromoHistory();
+        },
+        
+        async loadPromoHistory() {
+            this.loading = true;
+            try {
+                const params = new URLSearchParams(this.filters);
+                const response = await fetch(`/mitrapanel/api/promo-history?${params}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.promos = result.data;
+                    this.summary = result.summary;
+                } else {
+                    console.error('Failed to load promo history:', result.message);
+                    alert('Gagal memuat data promo: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Network error:', error);
+                alert('Error jaringan saat memuat data promo');
+            } finally {
+                this.loading = false;
+            }
+        },
+        
         applyFilters() {
-            // Filters already reactive
+            this.loadPromoHistory();
         },
         
         viewDetail(promo) {
@@ -854,6 +656,8 @@ function historyPromoData() {
         },
         
         getInsight(promo) {
+            if (!promo.impact) return 'Belum ada data dampak transaksi';
+            
             const impact = promo.impact.transactionIncrease;
             if (impact > 50) {
                 return `Promo ini sangat sukses dengan peningkatan transaksi ${impact}%. Sangat disarankan untuk menjalankan promo serupa di periode mendatang.`;
@@ -868,19 +672,61 @@ function historyPromoData() {
             }
         },
         
-        exportPDF() {
-            alert(`Export PDF untuk:\n- Total: ${this.filteredPromos.length} promo\n- Filter: ${JSON.stringify(this.filters, null, 2)}`);
-            // TODO: Implementasi export PDF
+        async exportPDF() {
+            try {
+                const response = await fetch('/mitrapanel/api/export/promo-history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        ...this.filters,
+                        type: 'pdf'
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert(`Export berhasil! ${result.data_count} data promo akan di-export.`);
+                } else {
+                    alert('Export gagal: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Error saat export data');
+            }
         },
         
-        exportExcel() {
-            alert(`Export Excel untuk:\n- Total: ${this.filteredPromos.length} promo\n- Filter: ${JSON.stringify(this.filters, null, 2)}`);
-            // TODO: Implementasi export Excel
+        async exportExcel() {
+            try {
+                const response = await fetch('/mitrapanel/api/export/promo-history', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        ...this.filters,
+                        type: 'excel'
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert(`Export berhasil! ${result.data_count} data promo akan di-export.`);
+                } else {
+                    alert('Export gagal: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Error saat export data');
+            }
         },
         
         exportDetailPDF(promo) {
-            alert(`Export detail PDF untuk:\n${promo.name} (${promo.code})`);
-            // TODO: Implementasi export detail PDF
+            alert(`Export detail PDF untuk: ${promo.name} (${promo.code})`);
+            // TODO: Implement detail PDF export
         }
     }
 }

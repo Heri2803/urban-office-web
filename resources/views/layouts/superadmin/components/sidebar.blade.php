@@ -162,10 +162,9 @@
           </svg>
         </button>
         <div x-show="open" x-cloak x-transition class="pl-4 mt-2 space-y-1 text-sm">
-          <a href="#" class="block px-2 py-1 rounded hover:bg-gray-100">Revenue Reports</a>
-          <a href="#" class="block px-2 py-1 rounded hover:bg-gray-100">Occupancy Reports</a>
+          <a href="{{ route('superadmin.reports.revenue') }}" class="block px-2 py-1 rounded hover:bg-gray-100">Revenue Reports</a>
+          <a href="{{ route('superadmin.reports.occupancy') }}" class="block px-2 py-1 rounded hover:bg-gray-100">Occupancy Reports</a>
           <a href="#" class="block px-2 py-1 rounded hover:bg-gray-100">Customer Reports</a>
-          <a href="#" class="block px-2 py-1 rounded hover:bg-gray-100">Admin Performance</a>
         </div>
       </div>
 
@@ -176,7 +175,7 @@
           <span class="ml-2 text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">3</span>
         </button>
         <div x-show="open" x-cloak x-transition class="pl-4 mt-2 space-y-1 text-sm">
-          <a href="#" class="block px-2 py-1 rounded hover:bg-gray-100">Pending Approvals</a>
+          <a href="{{ route('superadmin.approval.pending') }}" class="block px-2 py-1 rounded hover:bg-gray-100">Pending Approvals</a>
           <a href="#" class="block px-2 py-1 rounded hover:bg-gray-100">Approval History</a>
         </div>
       </div>

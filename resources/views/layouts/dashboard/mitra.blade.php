@@ -1,9 +1,132 @@
 @extends('layouts.app')
 
 @section('content')
-<div x-data="{ isVisible: false }" x-init="setTimeout(() => isVisible = true, 100)" class="flex min-h-screen bg-gray-50">
+<div x-data="mitraPage()" x-init="setTimeout(() => isVisible = true, 100)" class="flex min-h-screen bg-gray-50">
 
-    {{-- Content --}}
+    {{-- Modal untuk Masuk sebagai Mitra --}}
+    <div x-show="showMitraModal" 
+         x-cloak
+         @click.away="showMitraModal = false"
+         class="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+        
+        <div x-show="showMitraModal"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-90"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-90"
+             class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-5">
+            
+            {{-- Header Modal --}}
+            <div class="flex items-center space-x-3 border-b border-gray-100 pb-4">
+                <span class="text-2xl text-orange-500">🏢</span>
+                <h3 class="text-lg font-semibold text-gray-900">Masuk sebagai Mitra</h3>
+            </div>
+
+            {{-- Content berdasarkan status user --}}
+            <template x-if="userStatus === 'mitra'">
+                <div class="space-y-4">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            <span class="text-green-800 font-medium">Akun Mitra Terdeteksi</span>
+                        </div>
+                        <p class="text-green-600 text-sm mt-2">Anda memiliki akses ke Panel Mitra Urban Office</p>
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-2">
+                        <button @click="showMitraModal = false" 
+                                type="button"
+                                class="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition">
+                            Batal
+                        </button>
+                        <a href="{{ route('mitrapanel.dashboard') }}" 
+                           class="flex-1 px-4 py-2 bg-orange-600 text-orange text-sm font-medium rounded-lg hover:bg-orange-700 transition text-center">
+                            🚀 Buka Panel Mitra
+                        </a>
+                    </div>
+                </div>
+            </template>
+
+            <template x-if="userStatus === 'pending'">
+                <div class="space-y-4">
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                            </svg>
+                            <span class="text-yellow-800 font-medium">Menunggu Approval</span>
+                        </div>
+                        <p class="text-yellow-600 text-sm mt-2">Pendaftaran mitra Anda sedang dalam proses review oleh tim kami</p>
+                    </div>
+                    
+                    <button @click="showMitraModal = false" 
+                            type="button"
+                            class="w-full px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 transition">
+                        Mengerti
+                    </button>
+                </div>
+            </template>
+
+            <template x-if="userStatus === 'customer'">
+                <div class="space-y-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                            </svg>
+                            <span class="text-blue-800 font-medium">Jadi Mitra Urban Office</span>
+                        </div>
+                        <p class="text-blue-600 text-sm mt-2">Daftarkan properti Anda sekarang dan mulai dapatkan penghasilan tambahan</p>
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-2">
+                        <button @click="showMitraModal = false" 
+                                type="button"
+                                class="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition">
+                            Nanti Saja
+                        </button>
+                        {{-- GUNAKAN ROUTE YANG SAMA --}}
+                        <a href="{{ route('dashboard.prosesmitra') }}" 
+                        class="flex-1 px-4 py-2 bg-orange-600 text-orange text-sm font-medium rounded-lg hover:bg-orange-700 transition text-center">
+                            📝 Daftar Sekarang
+                        </a>
+                    </div>
+                </div>
+            </template>
+
+            <template x-if="userStatus === 'guest'">
+                <div class="space-y-4">
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-gray-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                            </svg>
+                            <span class="text-gray-800 font-medium">Login Diperlukan</span>
+                        </div>
+                        <p class="text-gray-600 text-sm mt-2">Silakan login terlebih dahulu untuk mengakses Panel Mitra</p>
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-2">
+                        <button @click="showMitraModal = false" 
+                                type="button"
+                                class="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition">
+                            Batal
+                        </button>
+                        <a href="{{ route('login') }}" 
+                           class="flex-1 px-4 py-2 bg-orange-600 text-orange text-sm font-medium rounded-lg hover:bg-orange-700 transition text-center">
+                            🔐 Login
+                        </a>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    {{-- Content (tetap sama) --}}
     <div class="flex-1 ml-0 md:ml-52 lg:ml-64 xl:ml-64 mb-18 pb-14 md:pb-0">
 
         {{-- Header with Background - Reduced Size by 30% --}}
@@ -113,36 +236,37 @@
                 </div>
             </div>
 
-            {{-- Alternative layout for tablet: 2+1 arrangement --}}
-            <div class="hidden">
-                {{-- Top row: 2 cards side by side --}}
-                <div class="grid md:grid-cols-2 gap-6 mb-6">
-                    {{-- Card 1 & 2 content here --}}
-                </div>
-                {{-- Bottom row: 1 card full width --}}
-                <div class="grid md:grid-cols-1 gap-6 mb-8">
-                    {{-- Card 3 content here --}}
-                </div>
-            </div>
-
-            {{-- CTA Button --}}
+            {{-- CTA Buttons Section --}}
             <div 
-                class="text-center mb-8 md:mb-16 lg:mb-20 transition-all duration-700 ease-out"
+                class="text-center mb-8 md:mb-16 lg:mb-20 transition-all duration-700 ease-out space-y-4 md:space-y-0 md:space-x-6 md:flex md:justify-center md:items-center"
                 :class="isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-8 scale-95'"
                 style="transition-delay: 600ms">
-                <a href="{{ route('dashboard.prosesmitra') }}">
-                    <button class="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 md:py-5 lg:py-6 px-6 md:px-12 lg:px-16 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 text-sm md:text-lg lg:text-xl">
-                        <span class="flex items-center justify-center">
-                            <svg class="w-4 h-4 md:w-6 md:h-6 lg:w-7 lg:h-7 mr-2 md:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            Masuk sebagai Mitra
-                        </span>
-                    </button>
+                
+            
+                {{-- Button 1: Masuk sebagai Mitra (Modal Check) --}}
+                <button @click="handleMitraAccess()"
+                        class="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 md:py-4 lg:py-5 px-6 md:px-10 lg:px-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 text-sm md:text-base lg:text-lg w-full md:w-auto">
+                    <span class="flex items-center justify-center">
+                        <svg class="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Masuk sebagai Mitra
+                    </span>
+                </button>
+
+                {{-- Button 2: Daftar Jadi Mitra (Direct Link) --}}
+                <a href="{{ route('dashboard.prosesmitra') }}"
+                class="bg-white border-2 border-orange-500 text-orange-600 hover:bg-orange-50 font-bold py-3 md:py-4 lg:py-5 px-6 md:px-10 lg:px-12 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 text-sm md:text-base lg:text-lg w-full md:w-auto inline-block">
+                    <span class="flex items-center justify-center">
+                        <svg class="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Daftar Jadi Mitra
+                    </span>
                 </a>
             </div>
 
-            {{-- Additional Features Section - Enhanced --}}
+            {{-- Additional Features Section --}}
             <div 
                 class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-2 md:gap-4 lg:gap-10 mt-8 transition-all duration-700 ease-out px-4 md:px-0"
                 :class="isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'"
@@ -195,4 +319,62 @@
         </div>
     </div>
 </div>
+
+<!-- Di sebelum penutup </body> -->
+<script>
+document.addEventListener('alpine:init', () => {
+    Alpine.data('mitraPage', () => ({
+        isVisible: false,
+        showMitraModal: false,
+        userStatus: 'guest', // guest, mitra, pending, customer
+        isChecking: false,
+        
+        init() {
+            this.checkUserStatus();
+            setTimeout(() => {
+                this.isVisible = true;
+            }, 100);
+        },
+        
+        async checkUserStatus() {
+            try {
+                const response = await fetch('/check-mitra-status');
+                const data = await response.json();
+                
+                // Tentukan status berdasarkan response
+                if (!data.has_mitra_access) {
+                    this.userStatus = 'customer';
+                } else {
+                    this.userStatus = 'mitra';
+                }
+                
+                console.log('User status:', this.userStatus);
+                
+            } catch (error) {
+                console.error('Error checking user status:', error);
+                this.userStatus = 'guest';
+            }
+        },
+        
+        handleMitraAccess() {
+            // Langsung buka modal untuk cek status user
+            this.showMitraModal = true;
+        },
+        
+        proceedToRegistration() {
+            this.showMitraModal = false;
+            window.location.href = "{{ route('dashboard.prosesmitra') }}";
+        },
+        
+        closeModal() {
+            this.showMitraModal = false;
+        },
+        
+        goToMitraPanel() {
+            this.showMitraModal = false;
+            window.location.href = "{{ route('mitrapanel.dashboard') }}";
+        }
+    }));
+});
+</script>
 @endsection

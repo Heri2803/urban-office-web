@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Booking; // Ganti dengan namespace controller Anda yang sebenarnya
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 

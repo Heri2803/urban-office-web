@@ -110,9 +110,9 @@
                     Service Photos
                 </a>
                 
-                <a href="{{ route('admin.content.banners') }}" 
-                   class="block px-2 py-1.5 rounded transition {{ request()->routeIs('admin.content.banners') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }}">
-                    Banner Promo
+                <a href="{{ route('banners.index') }}" 
+                    class="block px-2 py-1.5 rounded transition {{ request()->routeIs('banners.*') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }}">
+                        Banner Promo
                 </a>
                 
                 <a href="{{ route('admin.content.highlights') }}" 
@@ -285,7 +285,7 @@
                        class="block px-2 py-1.5 rounded transition {{ request()->routeIs('admin.content.service-photos') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }}">
                         Service Photos
                     </a>
-                    <a href="{{ route('admin.content.banners') }}" 
+                    <a href="{{ route('banners.index') }}" 
                        @click="sidebarOpen = false"
                        class="block px-2 py-1.5 rounded transition {{ request()->routeIs('admin.content.banners') ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600 hover:bg-gray-50' }}">
                         Banner Promo

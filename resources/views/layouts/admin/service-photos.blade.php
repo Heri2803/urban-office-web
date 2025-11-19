@@ -1,5 +1,4 @@
-{{-- resources/views/admin/content/service-photos.blade.php --}}
-
+{{-- resources/views/layouts/admin/service-photos.blade.php --}}
 @extends('layouts.admin')
 
 @section('title', 'Service Photos')
@@ -11,7 +10,7 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <h1 class="text-2xl md:text-3xl font-bold text-gray-800">📸 Service Photos</h1>
-            <p class="text-sm text-gray-500 mt-1">Upload and manage photos for each service</p>
+            <p class="text-sm text-gray-500 mt-1">Upload and manage photos for each room type</p>
         </div>
         <button 
             @click="openUploadModal()" 
@@ -24,34 +23,34 @@
 
     {{-- Stats Cards --}}
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <template x-for="service in services" :key="service.id">
+        <template x-for="roomType in roomTypes" :key="roomType.id">
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-xl" x-text="service.icon"></span>
-                    <span class="text-xs font-semibold text-gray-500" x-text="getPhotoCount(service.id)"></span>
+                    <span class="text-xl" x-text="getRoomIcon(roomType.name)"></span>
+                    <span class="text-xs font-semibold text-gray-500" x-text="getPhotoCount(roomType.id)"></span>
                 </div>
-                <p class="text-xs font-medium text-gray-700" x-text="service.name"></p>
+                <p class="text-xs font-medium text-gray-700" x-text="roomType.name"></p>
             </div>
         </template>
     </div>
 
-    {{-- Service Tabs --}}
+    {{-- Room Type Tabs --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 ">
         {{-- Tab Headers --}}
         <div class="border-b border-gray-200 overflow-x-auto">
             <nav class="flex min-w-max md:min-w-0">
-                <template x-for="service in services" :key="service.id">
+                <template x-for="roomType in roomTypes" :key="roomType.id">
                     <button 
-                        @click="activeTab = service.id"
-                        :class="activeTab === service.id ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        @click="activeTab = roomType.id"
+                        :class="activeTab === roomType.id ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                         class="px-1 md:px-6 py-3 md:py-4 border-b-2 font-medium text-sm whitespace-nowrap transition"
                     >
-                        <span x-text="service.icon"></span>
-                        <span x-text="service.name"></span>
+                        <span x-text="getRoomIcon(roomType.name)"></span>
+                        <span x-text="roomType.name"></span>
                         <span 
                             class="px-1.5 py-0.5 text-xs rounded-full"
-                            :class="activeTab === service.id ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'"
-                            x-text="getPhotoCount(service.id)"
+                            :class="activeTab === roomType.id ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'"
+                            x-text="getPhotoCount(roomType.id)"
                         ></span>
                     </button>
                 </template>
@@ -60,56 +59,25 @@
 
         {{-- Tab Content --}}
         <div class="p-4 md:p-6">
-            <template x-for="service in services" :key="service.id">
-                <div x-show="activeTab === service.id" x-transition>
-                    
-                    {{-- Upload Section --}}
-                    <div class="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-dashed border-blue-300 rounded-xl p-6 text-center">
-                        <div class="flex flex-col items-center gap-3">
-                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-3xl">
-                                📤
-                            </div>
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-800 mb-1">Upload Photos</h3>
-                                <p class="text-sm text-gray-600 mb-3">
-                                    Drag & drop or click to browse<br>
-                                    <span class="text-xs text-gray-500">JPG, PNG (Max 5MB per file)</span>
-                                </p>
-                            </div>
-                            <input 
-                                type="file" 
-                                x-ref="fileInput"
-                                @change="handleFileSelect($event, service.id)" 
-                                accept="image/jpeg,image/png,image/jpg"
-                                multiple
-                                class="hidden"
-                            >
-                            <button 
-                                @click="$refs.fileInput.click()"
-                                class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-                            >
-                                Browse Files
-                            </button>
-                        </div>
-                    </div>
-
+            <template x-for="roomType in roomTypes" :key="roomType.id">
+                <div x-show="activeTab === roomType.id" x-transition>
                     {{-- Photo Gallery --}}
                     <div>
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-semibold text-gray-800">
-                                <span x-text="service.icon"></span>
-                                <span x-text="service.name + ' Gallery'"></span>
-                                <span class="text-sm text-gray-500 ml-2" x-text="'(' + getServicePhotos(service.id).length + ' photos)'"></span>
+                                <span x-text="getRoomIcon(roomType.name)"></span>
+                                <span x-text="roomType.name + ' Gallery'"></span>
+                                <span class="text-sm text-gray-500 ml-2" x-text="'(' + getRoomTypePhotos(roomType.id).length + ' photos)'"></span>
                             </h3>
                         </div>
 
                         {{-- Photo Grid --}}
                         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            <template x-for="photo in getServicePhotos(service.id)" :key="photo.id">
+                            <template x-for="photo in getRoomTypePhotos(roomType.id)" :key="photo.id">
                                 <div class="group relative bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300">
                                     {{-- Primary Badge --}}
                                     <div 
-                                        x-show="photo.isPrimary"
+                                        x-show="photo.is_primary"
                                         class="absolute top-2 left-2 z-10 px-2 py-1 bg-yellow-400 text-yellow-900 text-xs font-bold rounded-full flex items-center gap-1"
                                     >
                                         <span>⭐</span>
@@ -130,18 +98,18 @@
                                         <p class="text-sm font-medium text-gray-800 truncate mb-1" x-text="photo.filename"></p>
                                         <div class="flex items-center justify-between text-xs text-gray-500 mb-3">
                                             <span x-text="formatFileSize(photo.size)"></span>
-                                            <span x-text="photo.uploadedAt"></span>
+                                            <span x-text="photo.uploaded_at"></span>
                                         </div>
 
                                         {{-- Action Buttons --}}
                                         <div class="flex gap-2">
                                             <button 
                                                 @click="setPrimaryPhoto(photo)"
-                                                :class="photo.isPrimary ? 'bg-yellow-100 text-yellow-700 cursor-default' : 'bg-gray-100 text-gray-700 hover:bg-yellow-100 hover:text-yellow-700'"
+                                                :class="photo.is_primary ? 'bg-yellow-100 text-yellow-700 cursor-default' : 'bg-gray-100 text-gray-700 hover:bg-yellow-100 hover:text-yellow-700'"
                                                 class="flex-1 px-3 py-2 rounded-lg text-xs font-medium transition"
-                                                :disabled="photo.isPrimary"
+                                                :disabled="photo.is_primary"
                                             >
-                                                <span x-text="photo.isPrimary ? '⭐ Primary' : '☆ Set Primary'"></span>
+                                                <span x-text="photo.is_primary ? '⭐ Primary' : '☆ Set Primary'"></span>
                                             </button>
                                         </div>
 
@@ -162,27 +130,6 @@
                                     </div>
                                 </div>
                             </template>
-                        </div>
-
-                        {{-- Empty State --}}
-                        <div 
-                            x-show="getServicePhotos(service.id).length === 0"
-                            class="text-center py-16 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300"
-                        >
-                            <div class="text-gray-400">
-                                <div class="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center text-5xl">
-                                    📷
-                                </div>
-                                <p class="text-lg font-medium text-gray-600 mb-2">No photos uploaded yet</p>
-                                <p class="text-sm text-gray-500 mb-4">Upload your first photo to get started</p>
-                                <button 
-                                    @click="$refs.fileInput.click()"
-                                    class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium inline-flex items-center gap-2"
-                                >
-                                    <span>➕</span>
-                                    <span>Upload Photo</span>
-                                </button>
-                            </div>
                         </div>
                     </div>
 
@@ -206,13 +153,13 @@
                     </button>
                 </div>
 
-                {{-- Service Selection --}}
+                {{-- Room Type Selection --}}
                 <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Service</label>
-                    <select x-model="uploadServiceId" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        <option value="">-- Choose Service --</option>
-                        <template x-for="service in services" :key="service.id">
-                            <option :value="service.id" x-text="service.icon + ' ' + service.name"></option>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Room Type</label>
+                    <select x-model="uploadRoomTypeId" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">-- Choose Room Type --</option>
+                        <template x-for="roomType in roomTypes" :key="roomType.id">
+                            <option :value="roomType.id" x-text="roomType.name"></option>
                         </template>
                     </select>
                 </div>
@@ -227,7 +174,7 @@
                         multiple
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
-                    <p class="text-xs text-gray-500 mt-2">JPG, PNG (Max 5MB per file). You can select multiple files.</p>
+                    <p class="text-xs text-gray-500 mt-2">JPG, PNG (Max 2MB per file). You can select multiple files.</p>
                 </div>
 
                 {{-- Preview Grid --}}
@@ -256,8 +203,8 @@
                 <div class="flex gap-3">
                     <button 
                         @click="uploadPhotos()"
-                        :disabled="!uploadServiceId || selectedFiles.length === 0 || uploading"
-                        :class="(!uploadServiceId || selectedFiles.length === 0 || uploading) ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'"
+                        :disabled="!uploadRoomTypeId || selectedFiles.length === 0 || uploading"
+                        :class="(!uploadRoomTypeId || selectedFiles.length === 0 || uploading) ? 'bg-gray-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'"
                         class="flex-1 px-6 py-3 text-white rounded-lg font-semibold transition"
                     >
                         <span x-show="!uploading">Upload Photos</span>
@@ -298,9 +245,58 @@
                 <template x-if="editingPhoto">
                     <div class="space-y-4">
                         {{-- Photo Preview --}}
-                        <div class="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                        <div class="aspect-video bg-gray-100 rounded-lg overflow-hidden relative">
                             <img :src="editingPhoto.url" :alt="editingPhoto.filename" class="w-full h-full object-cover">
+                            
+                            {{-- ✅ UPDATE PHOTO BUTTON --}}
+                            <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                <button 
+                                    @click="$refs.editFileInput.click()"
+                                    class="px-4 py-2 bg-white text-gray-800 rounded-lg font-medium hover:bg-gray-100 transition flex items-center gap-2"
+                                >
+                                    <span>🔄</span>
+                                    <span>Change Photo</span>
+                                </button>
+                            </div>
                         </div>
+
+                        {{-- ✅ HIDDEN FILE INPUT FOR PHOTO UPDATE --}}
+                        <input 
+                            type="file" 
+                            x-ref="editFileInput"
+                            @change="handlePhotoUpdate($event)"
+                            accept="image/jpeg,image/png,image/jpg"
+                            class="hidden"
+                        >
+
+                        {{-- Current Photo Info --}}
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <p class="text-xs text-gray-600 mb-1">Current Photo</p>
+                            <p class="text-sm font-medium text-gray-800" x-text="editingPhoto.filename"></p>
+                            <p class="text-xs text-gray-500" x-text="formatFileSize(editingPhoto.size)"></p>
+                        </div>
+
+                        {{-- New Photo Preview (jika ada) --}}
+                        <template x-if="newPhotoFile">
+                            <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                                <p class="text-sm font-medium text-blue-800 mb-2">New Photo Preview</p>
+                                <div class="flex items-center gap-4">
+                                    <div class="w-16 h-16 bg-blue-100 rounded-lg overflow-hidden">
+                                        <img :src="newPhotoFile.preview" class="w-full h-full object-cover">
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-800" x-text="newPhotoFile.name"></p>
+                                        <p class="text-xs text-gray-500" x-text="formatFileSize(newPhotoFile.size)"></p>
+                                    </div>
+                                    <button 
+                                        @click="newPhotoFile = null"
+                                        class="text-red-500 hover:text-red-700"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
 
                         {{-- Filename --}}
                         <div>
@@ -330,7 +326,7 @@
                                 <p class="text-xs text-gray-600">This photo will be featured first</p>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" x-model="editingPhoto.isPrimary" class="sr-only peer">
+                                <input type="checkbox" x-model="editingPhoto.is_primary" class="sr-only peer">
                                 <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-yellow-400"></div>
                             </label>
                         </div>
@@ -339,9 +335,18 @@
                         <div class="flex gap-3">
                             <button 
                                 @click="savePhotoEdit()"
-                                class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold transition"
+                                :disabled="updatingPhoto"
+                                :class="updatingPhoto ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'"
+                                class="flex-1 px-6 py-3 text-white rounded-lg font-semibold transition flex items-center justify-center gap-2"
                             >
-                                Save Changes
+                                <span x-show="!updatingPhoto">Save Changes</span>
+                                <span x-show="updatingPhoto" class="flex items-center gap-2">
+                                    <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Saving...
+                                </span>
                             </button>
                             <button 
                                 @click="showEditModal = false"
@@ -422,7 +427,8 @@
 <script>
 function servicePhotos() {
     return {
-        activeTab: 'meeting-room',
+        // State management
+        activeTab: null,
         showUploadModal: false,
         showEditModal: false,
         showDeleteModal: false,
@@ -430,42 +436,153 @@ function servicePhotos() {
         toastMessage: '',
         toastType: 'success',
         uploading: false,
-        uploadServiceId: '',
+        uploadRoomTypeId: '',
         selectedFiles: [],
         editingPhoto: null,
         deletingPhoto: null,
 
-        services: [
-            { id: 'meeting-room', name: 'Meeting Room', icon: '🏢' },
-            { id: 'private-office', name: 'Private Office', icon: '🚪' },
-            { id: 'sharing-room', name: 'Sharing Room', icon: '👥' },
-            { id: 'virtual-office', name: 'Virtual Office', icon: '💼' },
-            { id: 'coworking-space', name: 'Coworking Space', icon: '🖥️' },
-            { id: 'event-space', name: 'Event Space', icon: '🎉' }
-        ],
+        // Edit modal properties
+        newPhotoFile: null,
+        updatingPhoto: false,
 
+        roomTypes: [],
         photos: [],
-        photoIdCounter: 1,
 
-        init() {
-            this.generateDummyPhotos();
+        // API endpoints
+        api: {
+            roomTypes: '{{ route('service-photos.api.room-types') }}',
+            photos: '{{ route('service-photos.api.photos') }}',
+            upload: '{{ route('service-photos.api.upload') }}',
         },
 
-        generateDummyPhotos() {
-            // Generate 3-5 dummy photos for each service
-            this.services.forEach((service, serviceIndex) => {
-                const photoCount = Math.floor(Math.random() * 3) + 3; // 3-5 photos
+        async init() {
+            try {
+                await this.loadRoomTypes();
+                await this.loadPhotos();
+                
+                if (this.roomTypes.length > 0 && !this.activeTab) {
+                    this.activeTab = this.roomTypes[0].id;
+                }
+            } catch (error) {
+                console.error('Initialization error:', error);
+                await this.loadDummyData();
+            }
+        },
+
+        async loadRoomTypes() {
+            try {
+                const response = await fetch(this.api.roomTypes);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (Array.isArray(data)) {
+                    this.roomTypes = data;
+                } else if (data.roomTypes) {
+                    this.roomTypes = data.roomTypes;
+                } else {
+                    this.roomTypes = [];
+                }
+                
+                if (this.roomTypes.length === 0) {
+                    this.roomTypes = this.getFallbackRoomTypes();
+                }
+                
+            } catch (error) {
+                console.error('Error loading room types:', error);
+                this.roomTypes = this.getFallbackRoomTypes();
+            }
+        },
+
+        getRoomIcon(roomTypeName) {
+            const icons = {
+                'Meeting Room': '🏢',
+                'Private Office': '🚪',
+                'Sharing Room': '👥',
+                'Virtual Office': '💼',
+                'Coworking Space': '🖥️',
+                'Event Space': '🎉'
+            };
+            return icons[roomTypeName] || '📷';
+        },
+
+        getFallbackRoomTypes() {
+            return [
+                { id: 1, name: 'Meeting Room', description: 'Professional meeting rooms' },
+                { id: 2, name: 'Private Office', description: 'Dedicated private offices' },
+                { id: 3, name: 'Sharing Room', description: 'Shared workspace environments' },
+                { id: 4, name: 'Virtual Office', description: 'Virtual office solutions' },
+                { id: 5, name: 'Coworking Space', description: 'Flexible coworking spaces' },
+                { id: 6, name: 'Event Space', description: 'Event and conference spaces' }
+            ];
+        },
+
+        async loadPhotos() {
+            try {
+                const response = await fetch(this.api.photos);
+                if (!response.ok) throw new Error('Failed to load photos');
+                
+                const photosData = await response.json();
+                
+                this.photos = photosData.map(photo => {
+                    let imageUrl;
+                    
+                    if (photo.file_path) {
+                        imageUrl = '/storage/' + photo.file_path;
+                    } else if (photo.file_url) {
+                        imageUrl = photo.file_url;
+                    } else {
+                        imageUrl = 'https://via.placeholder.com/400x300/f3f4f6/9ca3af?text=No+Image';
+                    }
+                    
+                    return {
+                        id: photo.id,
+                        room_type_id: photo.room_type_id,
+                        filename: photo.filename || photo.original_name,
+                        url: imageUrl,
+                        size: photo.file_size || photo.size,
+                        caption: photo.caption || '',
+                        is_primary: photo.is_primary || false,
+                        uploaded_at: this.formatUploadTime(photo.created_at || photo.uploaded_at),
+                        original_name: photo.original_name,
+                        file_path: photo.file_path
+                    };
+                });
+                
+            } catch (error) {
+                console.error('Error loading photos:', error);
+                this.loadDummyPhotos();
+            }
+        },
+
+        async loadDummyData() {
+            this.roomTypes = this.getFallbackRoomTypes();
+            this.loadDummyPhotos();
+            
+            if (this.roomTypes.length > 0) {
+                this.activeTab = this.roomTypes[0].id;
+            }
+        },
+
+        loadDummyPhotos() {
+            this.photos = [];
+            let photoId = 1;
+            
+            this.roomTypes.forEach((roomType, index) => {
+                const photoCount = Math.floor(Math.random() * 3) + 2;
                 for (let i = 0; i < photoCount; i++) {
                     this.photos.push({
-                        id: this.photoIdCounter++,
-                        serviceId: service.id,
-                        filename: `${service.id}-photo-${i + 1}.jpg`,
-                        url: `https://picsum.photos/seed/${serviceIndex}${i}/400/300`,
-                        size: Math.floor(Math.random() * 4000000) + 1000000, // 1-5MB
-                        caption: i === 0 ? `Beautiful ${service.name.toLowerCase()} space` : '',
-                        isPrimary: i === 0,
-                        uploadedAt: this.getRandomDate(),
-                        uploadedBy: 'Admin User'
+                        id: photoId++,
+                        room_type_id: roomType.id,
+                        filename: `${roomType.name.toLowerCase().replace(' ', '-')}-photo-${i + 1}.jpg`,
+                        url: `https://picsum.photos/seed/${roomType.name}${i}/400/300`,
+                        size: Math.floor(Math.random() * 3000000) + 1000000,
+                        caption: i === 0 ? `Beautiful ${roomType.name.toLowerCase()} space` : '',
+                        is_primary: i === 0,
+                        uploaded_at: this.getRandomDate(),
                     });
                 }
             });
@@ -478,22 +595,22 @@ function servicePhotos() {
             return days === 0 ? 'Today' : days === 1 ? 'Yesterday' : `${days} days ago`;
         },
 
-        getPhotoCount(serviceId) {
-            return this.photos.filter(p => p.serviceId === serviceId).length;
+        getPhotoCount(roomTypeId) {
+            return this.photos.filter(p => p.room_type_id === roomTypeId).length;
         },
 
-        getServicePhotos(serviceId) {
-            return this.photos.filter(p => p.serviceId === serviceId);
+        getRoomTypePhotos(roomTypeId) {
+            return this.photos.filter(p => p.room_type_id === roomTypeId);
         },
 
         openUploadModal() {
-            this.uploadServiceId = this.activeTab;
+            this.uploadRoomTypeId = this.activeTab;
             this.selectedFiles = [];
             this.showUploadModal = true;
         },
 
-        handleFileSelect(event, serviceId) {
-            this.uploadServiceId = serviceId;
+        handleFileSelect(event, roomTypeId) {
+            this.uploadRoomTypeId = roomTypeId;
             this.selectedFiles = [];
             this.processFiles(event.target.files);
         },
@@ -505,19 +622,16 @@ function servicePhotos() {
 
         processFiles(files) {
             Array.from(files).forEach(file => {
-                // Validate file type
                 if (!file.type.match('image/(jpeg|jpg|png)')) {
                     this.showToastMessage('Invalid file type. Only JPG and PNG allowed.', 'error');
                     return;
                 }
 
-                // Validate file size (5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                    this.showToastMessage(`${file.name} is too large. Max 5MB allowed.`, 'error');
+                if (file.size > 2 * 1024 * 1024) {
+                    this.showToastMessage(`${file.name} is too large. Max 2MB allowed.`, 'error');
                     return;
                 }
 
-                // Create preview
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     this.selectedFiles.push({
@@ -535,73 +649,213 @@ function servicePhotos() {
             this.selectedFiles.splice(index, 1);
         },
 
-        uploadPhotos() {
-            if (!this.uploadServiceId || this.selectedFiles.length === 0) return;
+        async uploadPhotos() {
+            if (!this.uploadRoomTypeId || this.selectedFiles.length === 0) return;
 
             this.uploading = true;
 
-            // Simulate upload with timeout
-            setTimeout(() => {
-                this.selectedFiles.forEach(file => {
-                    this.photos.push({
-                        id: this.photoIdCounter++,
-                        serviceId: this.uploadServiceId,
-                        filename: file.name,
-                        url: file.preview,
-                        size: file.size,
-                        caption: '',
-                        isPrimary: this.getPhotoCount(this.uploadServiceId) === 0,
-                        uploadedAt: 'Just now',
-                        uploadedBy: 'Admin User'
+            try {
+                for (const fileData of this.selectedFiles) {
+                    const formData = new FormData();
+                    formData.append('room_type_id', this.uploadRoomTypeId);
+                    formData.append('photo', fileData.file);
+                    formData.append('caption', '');
+
+                    const response = await fetch(this.api.upload, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: formData
                     });
-                });
 
-                this.uploading = false;
-                this.showUploadModal = false;
-                this.selectedFiles = [];
-                this.activeTab = this.uploadServiceId;
-                this.showToastMessage(`${this.selectedFiles.length || 'Photos'} uploaded successfully!`, 'success');
-            }, 2000);
-        },
-
-        editPhoto(photo) {
-            this.editingPhoto = { ...photo };
-            this.showEditModal = true;
-        },
-
-        savePhotoEdit() {
-            const index = this.photos.findIndex(p => p.id === this.editingPhoto.id);
-            if (index !== -1) {
-                // If setting as primary, unset previous primary
-                if (this.editingPhoto.isPrimary) {
-                    this.photos.forEach(p => {
-                        if (p.serviceId === this.editingPhoto.serviceId && p.id !== this.editingPhoto.id) {
-                            p.isPrimary = false;
-                        }
-                    });
+                    const result = await response.json();
+                    
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.message || `Upload failed for ${fileData.name}`);
+                    }
                 }
 
-                this.photos[index] = { ...this.editingPhoto };
-                this.showEditModal = false;
-                this.showToastMessage('Photo updated successfully!', 'success');
+                await this.loadPhotos();
+                this.showUploadModal = false;
+                this.selectedFiles = [];
+                this.showToastMessage('Photos uploaded successfully!', 'success');
+                this.activeTab = this.uploadRoomTypeId;
+                
+            } catch (error) {
+                console.error('Upload error:', error);
+                this.showToastMessage('Upload failed: ' + error.message, 'error');
+            } finally {
+                this.uploading = false;
             }
         },
 
-        setPrimaryPhoto(photo) {
-            if (photo.isPrimary) return;
+        editPhoto(photo) {
+            console.log('🖼️ Editing photo:', photo);
+            
+            this.editingPhoto = { 
+                ...photo,
+                // Pastikan filename selalu ada
+                filename: photo.filename || photo.original_name || `photo-${photo.id}.jpg`
+            };
+            
+            this.newPhotoFile = null;
+            this.showEditModal = true;
+            
+            console.log('📝 Editing photo data:', this.editingPhoto);
+        },
 
-            // Unset previous primary
-            this.photos.forEach(p => {
-                if (p.serviceId === photo.serviceId) {
-                    p.isPrimary = false;
+        handlePhotoUpdate(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                this.newPhotoFile = null; // Pastikan di-set null jika tidak ada file
+                return;
+            }
+
+            if (!file.type.match('image/(jpeg|jpg|png)')) {
+                this.showToastMessage('Invalid file type. Only JPG and PNG allowed.', 'error');
+                this.newPhotoFile = null; // Reset ke null
+                return;
+            }
+
+            if (file.size > 2 * 1024 * 1024) {
+                this.showToastMessage('File is too large. Max 2MB allowed.', 'error');
+                this.newPhotoFile = null; // Reset ke null
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                this.newPhotoFile = {
+                    file: file,
+                    name: file.name,
+                    size: file.size,
+                    preview: e.target.result
+                };
+            };
+            reader.readAsDataURL(file);
+
+            event.target.value = '';
+        },
+
+        async savePhotoEdit() {
+            this.updatingPhoto = true;
+
+            try {
+                // Siapkan data dengan type yang benar
+                const requestData = {
+                    filename: this.editingPhoto.filename?.trim(),
+                    caption: this.editingPhoto.caption || '',
+                    is_primary: Boolean(this.editingPhoto.is_primary)
+                };
+
+                console.log('📤 Data untuk update:', requestData);
+
+                // Validasi manual sebelum kirim
+                if (!requestData.filename || requestData.filename.trim() === '') {
+                    throw new Error('Filename is required');
                 }
-            });
 
-            // Set new primary
-            const index = this.photos.findIndex(p => p.id === photo.id);
-            if (index !== -1) {
-                this.photos[index].isPrimary = true;
+                const formData = new FormData();
+                
+                // ✅ TAMBAHKAN INI - Method spoofing untuk Laravel
+                formData.append('_method', 'PUT');
+                
+                // Append data sebagai string
+                formData.append('filename', requestData.filename);
+                formData.append('caption', requestData.caption);
+                formData.append('is_primary', requestData.is_primary ? '1' : '0');
+
+                // Handle file upload jika ada
+                if (this.newPhotoFile && this.newPhotoFile.file) {
+                    formData.append('new_photo', this.newPhotoFile.file);
+                    console.log('📎 File included:', this.newPhotoFile.name);
+                }
+
+                // Debug formData
+                console.log('📦 FormData contents:');
+                for (let [key, value] of formData.entries()) {
+                    if (value instanceof File) {
+                        console.log(`${key}:`, `File - ${value.name} (${value.size} bytes)`);
+                    } else {
+                        console.log(`${key}:`, `"${value}"`);
+                    }
+                }
+
+                // ✅ UBAH METHOD JADI POST
+                const response = await fetch(`/service-photos/api/${this.editingPhoto.id}`, {
+                    method: 'POST', // ← GANTI DARI PUT KE POST
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest'
+                        // ❌ JANGAN tambahkan Content-Type, biar browser yang handle
+                    },
+                    body: formData
+                });
+
+                // Handle response
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('❌ Server error response:', errorData);
+                    
+                    if (response.status === 422) {
+                        throw new Error(errorData.message || 'Validation failed');
+                    }
+                    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.message || 'Failed to update photo');
+                }
+
+                console.log('✅ Update berhasil:', result);
+                
+                await this.loadPhotos();
+                this.showEditModal = false;
+                this.newPhotoFile = null;
+                this.showToastMessage('Photo updated successfully!', 'success');
+                
+            } catch (error) {
+                console.error('❌ Update error:', error);
+                this.showToastMessage('Failed to update photo: ' + error.message, 'error');
+            } finally {
+                this.updatingPhoto = false;
+            }
+        },
+
+        cancelEdit() {
+            this.showEditModal = false;
+            this.newPhotoFile = null;
+            this.editingPhoto = null;
+        },
+
+        async setPrimaryPhoto(photo) {
+            if (photo.is_primary) return;
+
+            try {
+                const response = await fetch(`{{ route('service-photos.api.set-primary', '') }}/${photo.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const result = await response.json();
+                
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Failed to set primary photo');
+                }
+
+                await this.loadPhotos();
                 this.showToastMessage('Primary photo updated!', 'success');
+                
+            } catch (error) {
+                console.error('Set primary error:', error);
+                this.showToastMessage('Failed to set primary photo: ' + error.message, 'error');
             }
         },
 
@@ -610,33 +864,57 @@ function servicePhotos() {
             this.showDeleteModal = true;
         },
 
-        confirmDelete() {
-            const index = this.photos.findIndex(p => p.id === this.deletingPhoto.id);
-            if (index !== -1) {
-                const wasPrimary = this.photos[index].isPrimary;
-                const serviceId = this.photos[index].serviceId;
-                
-                this.photos.splice(index, 1);
-
-                // If deleted photo was primary, set first remaining photo as primary
-                if (wassPrimary) {
-                    const remainingPhotos = this.photos.filter(p => p.serviceId === serviceId);
-                    if (remainingPhotos.length > 0) {
-                        remainingPhotos[0].isPrimary = true;
+        async confirmDelete() {
+            try {
+                const response = await fetch(`{{ route('service-photos.api.destroy', '') }}/${this.deletingPhoto.id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest'
                     }
+                });
+
+                const result = await response.json();
+                
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Failed to delete photo');
                 }
 
+                await this.loadPhotos();
                 this.showDeleteModal = false;
                 this.showToastMessage('Photo deleted successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Delete error:', error);
+                this.showToastMessage('Failed to delete photo: ' + error.message, 'error');
             }
         },
 
         formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
+            if (!bytes || bytes === 0) return '0 Bytes'; // Tambahkan pengecekan null
             const k = 1024;
             const sizes = ['Bytes', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        },
+
+        formatUploadTime(timestamp) {
+            if (!timestamp) return 'Recently';
+            
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins} minutes ago`;
+            if (diffHours < 24) return `${diffHours} hours ago`;
+            if (diffDays === 1) return 'Yesterday';
+            if (diffDays < 7) return `${diffDays} days ago`;
+            
+            return date.toLocaleDateString();
         },
 
         showToastMessage(message, type = 'success') {
@@ -657,4 +935,5 @@ function servicePhotos() {
 [x-cloak] { display: none !important; }
 </style>
 @endpush
+
 @endsection

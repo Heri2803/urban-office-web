@@ -1,731 +1,799 @@
 @extends('layouts.superadmin')
 
+@section('title', 'Voucher Usage Report')
+
 @section('content')
-<main x-data="usageReports()" x-init="init()" class="p-4 sm:p-6 lg:p-10 space-y-6 bg-gray-50 min-h-screen">
-
-    {{-- Header & Actions --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-        <div>
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-800">📊 Voucher Usage Reports</h1>
-            <p class="text-sm text-gray-500 mt-1">Track and analyze voucher performance</p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-            <button @click="exportReport('pdf')" class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 flex items-center">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-                Export PDF
-            </button>
-            <button @click="exportReport('excel')" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 flex items-center">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Export Excel
-            </button>
-            <button @click="scheduleReport()" class="px-4 py-2 border border-gray-300 bg-white rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hidden sm:flex items-center">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Schedule Email
-            </button>
-        </div>
-    </div>
-
-    {{-- Filter Section --}}
-    <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4 sm:p-6">
-        <h2 class="text-lg font-semibold text-gray-700 mb-4">📅 Report Period & Filters</h2>
-        
-        <div class="space-y-4">
-            {{-- Date Range --}}
+<div class="container-fluid px-4 py-6">
+    <!-- Header Section -->
+    <div class="mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Report Period</label>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <input type="date" x-model="filters.startDate" 
-                           class="w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    <input type="date" x-model="filters.endDate" 
-                           class="w-full rounded-lg border-gray-300 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                </div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">🎟️ Voucher Usage Report</h1>
+                <p class="text-gray-600">Monitor voucher redemption and usage across all branches</p>
             </div>
-
-            {{-- Quick Select --}}
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Quick Select</label>
-                <div class="flex flex-wrap gap-2">
-                    <button @click="setQuickDate('today')" 
-                            class="px-3 py-1 text-sm border rounded-lg hover:bg-gray-50"
-                            :class="quickDateActive === 'today' ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'border-gray-300'">
-                        Today
-                    </button>
-                    <button @click="setQuickDate('week')" 
-                            class="px-3 py-1 text-sm border rounded-lg hover:bg-gray-50"
-                            :class="quickDateActive === 'week' ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'border-gray-300'">
-                        This Week
-                    </button>
-                    <button @click="setQuickDate('month')" 
-                            class="px-3 py-1 text-sm border rounded-lg hover:bg-gray-50"
-                            :class="quickDateActive === 'month' ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'border-gray-300'">
-                        This Month
-                    </button>
-                    <button @click="setQuickDate('lastMonth')" 
-                            class="px-3 py-1 text-sm border rounded-lg hover:bg-gray-50"
-                            :class="quickDateActive === 'lastMonth' ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'border-gray-300'">
-                        Last Month
-                    </button>
-                    <button @click="setQuickDate('quarter')" 
-                            class="px-3 py-1 text-sm border rounded-lg hover:bg-gray-50"
-                            :class="quickDateActive === 'quarter' ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'border-gray-300'">
-                        This Quarter
-                    </button>
-                    <button @click="setQuickDate('year')" 
-                            class="px-3 py-1 text-sm border rounded-lg hover:bg-gray-50"
-                            :class="quickDateActive === 'year' ? 'bg-indigo-50 border-indigo-500 text-indigo-700' : 'border-gray-300'">
-                        This Year
-                    </button>
-                </div>
-            </div>
-
-            {{-- Filters --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Voucher Code</label>
-                    <select x-model="filters.voucherCode" class="w-full rounded-lg border-gray-300 text-sm">
-                        <option value="">All Vouchers</option>
-                        <template x-for="voucher in availableVouchers" :key="voucher">
-                            <option :value="voucher" x-text="voucher"></option>
-                        </template>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Mitra</label>
-                    <select x-model="filters.mitra" class="w-full rounded-lg border-gray-300 text-sm">
-                        <option value="">All Mitra</option>
-                        <option value="PT SBY Office">PT SBY Office</option>
-                        <option value="PT JKT Workspace">PT JKT Workspace</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Branch</label>
-                    <select x-model="filters.branch" class="w-full rounded-lg border-gray-300 text-sm">
-                        <option value="">All Branches</option>
-                        <option value="Surabaya Center">Surabaya Center</option>
-                        <option value="Jakarta Selatan">Jakarta Selatan</option>
-                        <option value="Surabaya Timur">Surabaya Timur</option>
-                        <option value="Jakarta Barat">Jakarta Barat</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Service Type</label>
-                    <select x-model="filters.service" class="w-full rounded-lg border-gray-300 text-sm">
-                        <option value="">All Services</option>
-                        <option value="Meeting Room">Meeting Room</option>
-                        <option value="Private Office">Private Office</option>
-                        <option value="Coworking Space">Coworking Space</option>
-                        <option value="Event Space">Event Space</option>
-                    </select>
-                </div>
-            </div>
-
-            {{-- Action Buttons --}}
-            <div class="flex justify-end space-x-3 pt-2">
-                <button @click="resetFilters()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
-                    Reset
+            <div class="relative">
+                <button id="exportBtn" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Export Report
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
                 </button>
-                <button @click="generateReport()" class="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">
-                    Generate Report
-                </button>
-            </div>
-        </div>
-    </div>
-
-    {{-- Summary Dashboard --}}
-    <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl shadow-md border border-indigo-200 p-4 sm:p-6">
-        <h2 class="text-lg font-bold text-indigo-900 mb-4">📈 Overall Performance</h2>
-        <p class="text-sm text-indigo-700 mb-4" x-text="'Period: ' + filters.startDate + ' to ' + filters.endDate"></p>
-        
-        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-            <div class="bg-white rounded-xl p-4 shadow-sm">
-                <p class="text-xs text-gray-500 mb-1">Total Attempts</p>
-                <p class="text-2xl font-bold text-gray-900" x-text="summary.totalAttempts.toLocaleString('id-ID')"></p>
-            </div>
-            <div class="bg-white rounded-xl p-4 shadow-sm">
-                <p class="text-xs text-gray-500 mb-1">Successful</p>
-                <p class="text-2xl font-bold text-green-600" x-text="summary.successful.toLocaleString('id-ID')"></p>
-            </div>
-            <div class="bg-white rounded-xl p-4 shadow-sm">
-                <p class="text-xs text-gray-500 mb-1">Failed/Invalid</p>
-                <p class="text-2xl font-bold text-red-600" x-text="summary.failed.toLocaleString('id-ID')"></p>
-            </div>
-            <div class="bg-white rounded-xl p-4 shadow-sm">
-                <p class="text-xs text-gray-500 mb-1">Total Discount</p>
-                <p class="text-xl sm:text-2xl font-bold text-indigo-600" x-text="'Rp ' + summary.totalDiscount.toLocaleString('id-ID')"></p>
-            </div>
-            <div class="bg-white rounded-xl p-4 shadow-sm">
-                <p class="text-xs text-gray-500 mb-1">Avg. Discount</p>
-                <p class="text-xl sm:text-2xl font-bold text-purple-600" x-text="'Rp ' + summary.avgDiscount.toLocaleString('id-ID')"></p>
-            </div>
-            <div class="bg-white rounded-xl p-4 shadow-sm">
-                <p class="text-xs text-gray-500 mb-1">Conversion Rate</p>
-                <p class="text-2xl font-bold text-orange-600" x-text="summary.conversionRate + '%'"></p>
-            </div>
-        </div>
-
-        {{-- Top Performing Voucher --}}
-        <div class="mt-4 bg-white rounded-xl p-4">
-            <p class="text-sm font-semibold text-gray-700 mb-2">💡 Top Performing Voucher</p>
-            <div class="flex justify-between items-center">
-                <div>
-                    <p class="font-bold text-indigo-600" x-text="summary.topVoucher.code"></p>
-                    <p class="text-xs text-gray-500" x-text="summary.topVoucher.redemptions + ' redemptions'"></p>
-                </div>
-                <p class="text-lg font-bold text-green-600" x-text="'Rp ' + summary.topVoucher.discount.toLocaleString('id-ID')"></p>
-            </div>
-        </div>
-    </div>
-
-    {{-- Charts Section --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {{-- Redemption Trends Chart --}}
-        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4 sm:p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-700">📊 Redemption Trends</h3>
-                <select x-model="chartType" class="text-sm border-gray-300 rounded-lg">
-                    <option value="line">Line</option>
-                    <option value="bar">Bar</option>
-                    <option value="area">Area</option>
-                </select>
-            </div>
-            <div class="h-64 flex items-end justify-between space-x-1 sm:space-x-2">
-                <template x-for="(day, index) in chartData.daily" :key="index">
-                    <div class="flex-1 flex flex-col items-center">
-                        <div class="w-full bg-gradient-to-t from-indigo-500 to-indigo-400 rounded-t hover:from-indigo-600 hover:to-indigo-500 transition-all cursor-pointer relative group"
-                             :style="'height: ' + (day.value / chartData.maxValue * 100) + '%'">
-                            <div class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap">
-                                <span x-text="day.value"></span> redemptions
-                            </div>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-2" x-text="day.label"></p>
-                    </div>
-                </template>
-            </div>
-        </div>
-
-        {{-- Voucher Performance Comparison --}}
-        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4 sm:p-6">
-            <h3 class="text-lg font-semibold text-gray-700 mb-4">📊 Voucher Performance</h3>
-            <div class="space-y-3">
-                <template x-for="voucher in voucherPerformance" :key="voucher.code">
-                    <div>
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="font-medium text-gray-700" x-text="voucher.code"></span>
-                            <span class="font-bold text-indigo-600" x-text="voucher.redemptions"></span>
-                        </div>
-                        <div class="w-full bg-gray-200 rounded-full h-6 relative overflow-hidden">
-                            <div class="h-6 rounded-full flex items-center px-3 transition-all"
-                                 :style="'width: ' + voucher.percentage + '%; background: linear-gradient(to right, ' + voucher.color + ', ' + voucher.colorDark + ')'">
-                                <span class="text-white text-xs font-bold" x-show="voucher.percentage > 20" x-text="voucher.percentage + '%'"></span>
-                            </div>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </div>
-    </div>
-
-    {{-- Usage by Service Type --}}
-    <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4 sm:p-6">
-        <h3 class="text-lg font-semibold text-gray-700 mb-4">📊 Usage by Service Type</h3>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <template x-for="service in serviceUsage" :key="service.name">
-                <div class="text-center">
-                    <div class="relative inline-flex items-center justify-center w-24 h-24 sm:w-28 sm:h-28">
-                        <svg class="transform -rotate-90 w-24 h-24 sm:w-28 sm:h-28">
-                            <circle cx="56" cy="56" r="45" stroke="#e5e7eb" stroke-width="10" fill="none"/>
-                            <circle cx="56" cy="56" r="45" :stroke="service.color" stroke-width="10" fill="none"
-                                    :stroke-dasharray="2 * 3.14159 * 45"
-                                    :stroke-dashoffset="2 * 3.14159 * 45 * (1 - service.percentage / 100)"
-                                    class="transition-all duration-1000"/>
+                <!-- Export Dropdown -->
+                <div id="exportDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                    <button class="exportOption w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700 flex items-center gap-2" data-format="excel">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
-                        <span class="absolute text-lg font-bold" :style="'color: ' + service.color" x-text="service.percentage + '%'"></span>
-                    </div>
-                    <p class="text-sm font-medium text-gray-700 mt-2" x-text="service.name"></p>
-                    <p class="text-xs text-gray-500" x-text="service.count + ' uses'"></p>
-                </div>
-            </template>
-        </div>
-    </div>
-
-    {{-- Top Performers --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {{-- Top Branches --}}
-        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4 sm:p-6">
-            <h3 class="text-lg font-semibold text-gray-700 mb-4">📍 Top Branches by Usage</h3>
-            <div class="space-y-3">
-                <template x-for="(branch, index) in topBranches" :key="branch.name">
-                    <div class="flex items-center space-x-3">
-                        <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-white"
-                             :class="index === 0 ? 'bg-yellow-500' : index === 1 ? 'bg-gray-400' : index === 2 ? 'bg-orange-600' : 'bg-gray-300'"
-                             x-text="index + 1">
-                        </div>
-                        <div class="flex-1">
-                            <p class="font-medium text-gray-900" x-text="branch.name"></p>
-                            <div class="flex items-center space-x-2 mt-1">
-                                <div class="flex-1 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-indigo-600 h-2 rounded-full" :style="'width: ' + branch.percentage + '%'"></div>
-                                </div>
-                                <span class="text-sm font-medium text-gray-600" x-text="branch.count"></span>
-                            </div>
-                        </div>
-                        <span class="text-sm text-gray-500" x-text="branch.percentage + '%'"></span>
-                    </div>
-                </template>
-            </div>
-        </div>
-
-        {{-- Customer Insights --}}
-        <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4 sm:p-6">
-            <h3 class="text-lg font-semibold text-gray-700 mb-4">👥 Customer Insights</h3>
-            <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-blue-50 rounded-lg p-4">
-                        <p class="text-xs text-blue-700 mb-1">New Customers</p>
-                        <p class="text-2xl font-bold text-blue-600" x-text="customerInsights.newCustomers"></p>
-                        <p class="text-xs text-gray-500 mt-1" x-text="customerInsights.newPercentage + '% of total'"></p>
-                    </div>
-                    <div class="bg-green-50 rounded-lg p-4">
-                        <p class="text-xs text-green-700 mb-1">Returning</p>
-                        <p class="text-2xl font-bold text-green-600" x-text="customerInsights.returning"></p>
-                        <p class="text-xs text-gray-500 mt-1" x-text="customerInsights.returningPercentage + '% of total'"></p>
-                    </div>
-                </div>
-                <div class="border-t pt-4">
-                    <div class="flex justify-between text-sm mb-2">
-                        <span class="text-gray-600">Avg. Transaction with Voucher</span>
-                        <span class="font-bold text-gray-900" x-text="'Rp ' + customerInsights.avgWithVoucher.toLocaleString('id-ID')"></span>
-                    </div>
-                    <div class="flex justify-between text-sm mb-2">
-                        <span class="text-gray-600">Avg. Transaction without</span>
-                        <span class="font-bold text-gray-900" x-text="'Rp ' + customerInsights.avgWithout.toLocaleString('id-ID')"></span>
-                    </div>
-                    <div class="flex items-center justify-between bg-green-50 rounded-lg p-3 mt-3">
-                        <span class="text-sm font-medium text-green-700">Transaction Increase</span>
-                        <span class="text-lg font-bold text-green-600" x-text="'↑ ' + customerInsights.increase + '%'"></span>
-                    </div>
+                        Export to Excel
+                    </button>
+                    <button class="exportOption w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700 flex items-center gap-2" data-format="pdf">
+                        <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                        Export to PDF
+                    </button>
+                    <button class="exportOption w-full text-left px-4 py-2 hover:bg-gray-50 text-sm text-gray-700 flex items-center gap-2" data-format="csv">
+                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Export to CSV
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- Failed Redemptions --}}
-    <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4 sm:p-6">
-        <h3 class="text-lg font-semibold text-gray-700 mb-4">❌ Failed Redemption Analysis</h3>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
-            <div class="bg-red-50 rounded-lg p-3 text-center">
-                <p class="text-2xl font-bold text-red-600" x-text="failedReasons.expired"></p>
-                <p class="text-xs text-gray-600 mt-1">Expired</p>
-            </div>
-            <div class="bg-orange-50 rounded-lg p-3 text-center">
-                <p class="text-2xl font-bold text-orange-600" x-text="failedReasons.limitReached"></p>
-                <p class="text-xs text-gray-600 mt-1">Limit Reached</p>
-            </div>
-            <div class="bg-yellow-50 rounded-lg p-3 text-center">
-                <p class="text-2xl font-bold text-yellow-600" x-text="failedReasons.invalidCode"></p>
-                <p class="text-xs text-gray-600 mt-1">Invalid Code</p>
-            </div>
-            <div class="bg-purple-50 rounded-lg p-3 text-center">
-                <p class="text-2xl font-bold text-purple-600" x-text="failedReasons.minNotMet"></p>
-                <p class="text-xs text-gray-600 mt-1">Min. Not Met</p>
-            </div>
-            <div class="bg-pink-50 rounded-lg p-3 text-center">
-                <p class="text-2xl font-bold text-pink-600" x-text="failedReasons.notApplicable"></p>
-                <p class="text-xs text-gray-600 mt-1">Not Applicable</p>
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow-sm p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Total Vouchers</p>
+                    <p class="text-3xl font-bold text-gray-900">150</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
+                    </svg>
+                </div>
             </div>
         </div>
-        <button @click="viewDetailedLog()" class="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
-            View Detailed Log
-        </button>
+
+        <div class="bg-white rounded-lg shadow-sm p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Active</p>
+                    <p class="text-3xl font-bold text-green-600">45</p>
+                    <p class="text-xs text-gray-500 mt-1">30%</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Redeemed</p>
+                    <p class="text-3xl font-bold text-blue-600">89</p>
+                    <p class="text-xs text-gray-500 mt-1">59%</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Expired</p>
+                    <p class="text-3xl font-bold text-red-600">16</p>
+                    <p class="text-xs text-gray-500 mt-1">11%</p>
+                </div>
+                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
     </div>
 
-    {{-- Detailed Usage Table --}}
-    <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4 sm:p-6">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 space-y-2 sm:space-y-0">
-            <h3 class="text-lg font-semibold text-gray-700">📋 Redemption History (<span x-text="getFilteredHistory().length"></span>)</h3>
-            <div class="flex items-center space-x-2">
-                <label class="text-sm text-gray-600">Show:</label>
-                <select x-model="historyPerPage" @change="currentHistoryPage = 1" class="text-sm border-gray-300 rounded-lg">
-                    <option value="10">10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
+    <!-- Filters Section -->
+    <div class="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="date" id="startDate" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                    <input type="date" id="endDate" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Mitra</label>
+                <select id="mitraFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">All Mitra</option>
+                    <option value="1">PT Workspace Indonesia</option>
+                    <option value="2">CV Ruang Kreatif</option>
+                    <option value="3">PT Office Hub</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Branch</label>
+                <select id="branchFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">All Branches</option>
+                    <option value="1">Surabaya - Gubeng</option>
+                    <option value="2">Jakarta - Senayan</option>
+                    <option value="3">Bandung - Dago</option>
                 </select>
             </div>
         </div>
 
-        {{-- Cards Grid for All Devices --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <template x-for="history in getCurrentPageHistory()" :key="history.id">
-                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-lg transition-shadow hover:border-indigo-300">
-                    {{-- Header: Date & Voucher Code --}}
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="flex-1">
-                            <p class="font-bold text-indigo-600 text-lg" x-text="history.voucherCode"></p>
-                            <p class="text-xs text-gray-500 mt-1">
-                                <span x-text="history.date"></span> • <span x-text="history.time"></span>
-                            </p>
-                        </div>
-                        <div class="bg-green-50 px-3 py-1 rounded-lg">
-                            <p class="text-xs text-green-700 font-medium">Success</p>
-                        </div>
-                    </div>
-
-                    {{-- Booking Info --}}
-                    <div class="space-y-2 mb-3 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">Booking ID:</span>
-                            <span class="font-medium text-gray-900" x-text="history.bookingId"></span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-500">Customer:</span>
-                            <span class="font-medium text-gray-900" x-text="history.customerName"></span>
-                        </div>
-                    </div>
-
-                    {{-- Service & Branch --}}
-                    <div class="grid grid-cols-2 gap-2 mb-3">
-                        <div class="bg-blue-50 rounded-lg p-2">
-                            <p class="text-xs text-blue-700 mb-1">Service</p>
-                            <p class="text-sm font-medium text-blue-900" x-text="history.service"></p>
-                        </div>
-                        <div class="bg-purple-50 rounded-lg p-2">
-                            <p class="text-xs text-purple-700 mb-1">Branch</p>
-                            <p class="text-sm font-medium text-purple-900" x-text="history.branch"></p>
-                        </div>
-                    </div>
-
-                    {{-- Discount Amount --}}
-                    <div class="pt-3 border-t border-gray-200">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-600">Discount Given</span>
-                            <span class="text-xl font-bold text-green-600" x-text="'Rp ' + history.discount.toLocaleString('id-ID')"></span>
-                        </div>
-                    </div>
-                </div>
-            </template>
-        </div>
-
-        {{-- Empty State --}}
-        <div x-show="getCurrentPageHistory().length === 0" class="text-center py-12">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <p class="mt-2 text-sm text-gray-500">No redemption history found for selected filters.</p>
-        </div>
-
-        {{-- Pagination --}}
-        <div class="mt-6 flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0 border-t pt-4">
-            <div class="text-sm text-gray-700">
-                Showing <span class="font-medium" x-text="getHistoryPaginationInfo().start"></span> 
-                to <span class="font-medium" x-text="getHistoryPaginationInfo().end"></span> 
-                of <span class="font-medium" x-text="getHistoryPaginationInfo().total"></span> records
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Voucher Type</label>
+                <select id="typeFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">All Types</option>
+                    <option value="free">Free Meeting Room 1H</option>
+                    <option value="percent10">10% Discount</option>
+                    <option value="percent20">20% Discount</option>
+                    <option value="fixed">Fixed Amount</option>
+                </select>
             </div>
-            <div class="flex items-center space-x-2">
-                <button @click="changeHistoryPage(currentHistoryPage - 1)" 
-                        :disabled="currentHistoryPage === 1"
-                        class="px-3 py-2 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
-                    Previous
-                </button>
-                
-                {{-- Desktop: Show page numbers --}}
-                <div class="hidden sm:flex items-center space-x-1">
-                    <template x-for="page in getHistoryPageNumbers()" :key="page">
-                        <button @click="changeHistoryPage(page)"
-                                class="px-3 py-2 border rounded-lg text-sm"
-                                :class="page === currentHistoryPage ? 'bg-indigo-600 text-white border-indigo-600' : 'hover:bg-gray-100'">
-                            <span x-text="page"></span>
-                        </button>
-                    </template>
-                </div>
 
-                {{-- Mobile: Show current page --}}
-                <div class="sm:hidden px-4 py-2 text-sm font-medium">
-                    <span x-text="currentHistoryPage"></span> / <span x-text="getHistoryTotalPages()"></span>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select id="statusFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="redeemed">Redeemed</option>
+                    <option value="expired">Expired</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="Code or customer..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
                 </div>
-                
-                <button @click="changeHistoryPage(currentHistoryPage + 1)" 
-                        :disabled="currentHistoryPage === getHistoryTotalPages()"
-                        class="px-3 py-2 border rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
-                    Next
+            </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+            <button id="applyFilterBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                Apply Filter
+            </button>
+            <button id="resetFilterBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors">
+                Reset Filter
+            </button>
+        </div>
+    </div>
+
+    <!-- Usage Per Branch Chart -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Voucher Usage Per Branch (Last 30 Days)</h2>
+        <div class="h-64">
+            <canvas id="usageChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Voucher Performance -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-lg shadow-sm p-5">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">🏆 Top Voucher</h3>
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">FREEMR1H</span>
+                    <span class="text-sm font-semibold text-gray-900">45 uses</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">DISCOUNT20</span>
+                    <span class="text-sm font-semibold text-gray-900">32 uses</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">WELCOME10</span>
+                    <span class="text-sm font-semibold text-gray-900">28 uses</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-5">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">🏢 Top Branch</h3>
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Surabaya - Gubeng</span>
+                    <span class="text-sm font-semibold text-gray-900">38 vouchers</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Jakarta - Senayan</span>
+                    <span class="text-sm font-semibold text-gray-900">29 vouchers</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Bandung - Dago</span>
+                    <span class="text-sm font-semibold text-gray-900">22 vouchers</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm p-5">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">📊 By Service</h3>
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Meeting Room</span>
+                    <span class="text-sm font-semibold text-gray-900">52 (58%)</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Private Office</span>
+                    <span class="text-sm font-semibold text-gray-900">22 (25%)</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Event Space</span>
+                    <span class="text-sm font-semibold text-gray-900">15 (17%)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voucher Usage Grid -->
+    <div class="mb-4">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Voucher Usage Details</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <!-- Voucher Card 1 - Redeemed -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <p class="text-white text-lg font-bold">FREEMR1H001</p>
+                        <p class="text-blue-100 text-xs">Free Meeting Room 1 Hour</p>
+                    </div>
+                    <span class="px-2 py-1 bg-white text-blue-600 text-xs font-semibold rounded-full">
+                        Redeemed
+                    </span>
+                </div>
+                <div class="flex items-center gap-2 text-white text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    <span>Budi Santoso</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="space-y-2 mb-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Branch:</span>
+                        <span class="text-gray-900 font-medium">Surabaya - Gubeng</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Service:</span>
+                        <span class="text-gray-900 font-medium">Meeting Room</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Original:</span>
+                        <span class="text-gray-900">Rp 100,000</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Discount:</span>
+                        <span class="text-green-600 font-semibold">-Rp 100,000</span>
+                    </div>
+                    <div class="flex justify-between text-sm pt-2 border-t">
+                        <span class="text-gray-600 font-medium">Final:</span>
+                        <span class="text-gray-900 font-bold">Rp 0</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500 pt-1">
+                        <span>Redeemed:</span>
+                        <span>Oct 15, 2025</span>
+                    </div>
+                </div>
+                <button class="viewVoucherBtn w-full px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium">
+                    View Details
+                </button>
+            </div>
+        </div>
+
+        <!-- Voucher Card 2 - Redeemed -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+            <div class="bg-gradient-to-r from-green-500 to-green-600 p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <p class="text-white text-lg font-bold">DISCOUNT20</p>
+                        <p class="text-green-100 text-xs">20% Discount</p>
+                    </div>
+                    <span class="px-2 py-1 bg-white text-green-600 text-xs font-semibold rounded-full">
+                        Redeemed
+                    </span>
+                </div>
+                <div class="flex items-center gap-2 text-white text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    <span>Siti Rahayu</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="space-y-2 mb-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Branch:</span>
+                        <span class="text-gray-900 font-medium">Jakarta - Senayan</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Service:</span>
+                        <span class="text-gray-900 font-medium">Private Office</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Original:</span>
+                        <span class="text-gray-900">Rp 3,500,000</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Discount:</span>
+                        <span class="text-green-600 font-semibold">-Rp 700,000</span>
+                    </div>
+                    <div class="flex justify-between text-sm pt-2 border-t">
+                        <span class="text-gray-600 font-medium">Final:</span>
+                        <span class="text-gray-900 font-bold">Rp 2,800,000</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500 pt-1">
+                        <span>Redeemed:</span>
+                        <span>Oct 14, 2025</span>
+                    </div>
+                </div>
+                <button class="viewVoucherBtn w-full px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium">
+                    View Details
+                </button>
+            </div>
+        </div>
+
+        <!-- Voucher Card 3 - Active -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+            <div class="bg-gradient-to-r from-purple-500 to-purple-600 p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <p class="text-white text-lg font-bold">WELCOME10</p>
+                        <p class="text-purple-100 text-xs">10% Welcome Discount</p>
+                    </div>
+                    <span class="px-2 py-1 bg-white text-purple-600 text-xs font-semibold rounded-full">
+                        Active
+                    </span>
+                </div>
+                <div class="flex items-center gap-2 text-white text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span>Not yet redeemed</span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="space-y-2 mb-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Valid Until:</span>
+                        <span class="text-gray-900 font-medium">Dec 31, 2025</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Usage Limit:</span>
+                        <span class="text-gray-900 font-medium">0/50 used</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Discount:</span>
+                        <span class="text-purple-600 font-semibold">10%</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Applicable:</span>
+                        <span class="text-gray-900 text-xs">All Services</span>
+                    </div>
+                    <div class="flex justify-between text-sm pt-2 border-t">
+                        <span class="text-gray-600 font-medium">Status:</span>
+                        <span class="text-green-600 font-bold">Available</span>
+                    </div>
+                </div>
+                <button class="viewVoucherBtn w-full px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium">
+                    View Details
                 </button>
             </div>
         </div>
     </div>
 
-</main>
+    <!-- Pagination -->
+    <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
+        <p class="text-sm text-gray-600">Showing 3 of 89 vouchers</p>
+        <div class="flex gap-2">
+            <button class="paginationBtn px-3 py-1 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
+                Previous
+            </button>
+            <button class="paginationBtn px-3 py-1 bg-blue-600 text-white rounded-lg text-sm">1</button>
+            <button class="paginationBtn px-3 py-1 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50">2</button>
+            <button class="paginationBtn px-3 py-1 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
+                Next
+            </button>
+        </div>
+    </div>
+</div>
 
-<script>
-    function usageReports() {
-        return {
-            quickDateActive: 'month',
-            chartType: 'line',
-            historyPerPage: 10,
-            currentHistoryPage: 1,
+<!-- Voucher Details Modal -->
+<div id="voucherDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">Voucher Details</h3>
+                <button class="closeVoucherDetailBtn text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
 
-            filters: {
-                startDate: '',
-                endDate: '',
-                voucherCode: '',
-                mitra: '',
-                branch: '',
-                service: ''
-            },
+            <!-- Voucher Header -->
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white mb-6">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <p class="text-2xl font-bold mb-1">FREEMR1H001</p>
+                        <p class="text-blue-100">Free Meeting Room 1 Hour</p>
+                    </div>
+                    <span class="px-3 py-1 bg-white text-blue-600 text-sm font-semibold rounded-full">
+                        Redeemed
+                    </span>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="font-semibold">100% Discount - FREE</span>
+                </div>
+            </div>
 
-            availableVouchers: ['WELCOME2025', 'FREEMR1H', 'FLASH20', 'LOYALTY50', 'EARLYBIRD'],
+            <!-- Details Grid -->
+            <div class="space-y-6">
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Voucher Information</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Discount Value:</span>
+                            <span class="text-gray-900 font-medium">100% (FREE)</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Valid Period:</span>
+                            <span class="text-gray-900 font-medium">Oct 1 - Dec 31, 2025</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Usage Limit:</span>
+                            <span class="text-gray-900 font-medium">1/1 (Single Use)</span>
+                        </div>
+                    </div>
+                </div>
 
-            summary: {
-                totalAttempts: 2450,
-                successful: 2234,
-                failed: 216,
-                totalDiscount: 12500000,
-                avgDiscount: 5598,
-                conversionRate: 91.2,
-                topVoucher: {
-                    code: 'WELCOME2025',
-                    redemptions: 234,
-                    discount: 4200000
-                }
-            },
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Redemption Details</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Customer:</span>
+                            <span class="text-gray-900 font-medium">Budi Santoso</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Email:</span>
+                            <span class="text-gray-900 font-medium">budi@example.com</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Booking ID:</span>
+                            <span class="text-gray-900 font-medium">#MR-001</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Branch:</span>
+                            <span class="text-gray-900 font-medium">Surabaya - Gubeng</span>
+                        </div>
+                    </div>
+                </div>
 
-            chartData: {
-                maxValue: 250,
-                daily: []
-            },
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Transaction Details</h4>
+                    <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Original Price:</span>
+                            <span class="text-gray-900">Rp 100,000</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Discount:</span>
+                            <span class="text-green-600 font-semibold">-Rp 100,000</span>
+                        </div>
+                        <div class="flex justify-between text-sm pt-2 border-t border-gray-300">
+                            <span class="text-gray-900 font-semibold">Final:</span>
+                            <span class="text-gray-900 font-bold text-lg">Rp 0</span>
+                        </div>
+                    </div>
+                </div>
 
-            voucherPerformance: [
-                { code: 'WELCOME2025', redemptions: 234, percentage: 100, color: '#4f46e5', colorDark: '#4338ca' },
-                { code: 'FREEMR1H', redemptions: 120, percentage: 51, color: '#0ea5e9', colorDark: '#0284c7' },
-                { code: 'FLASH20', redemptions: 98, percentage: 42, color: '#8b5cf6', colorDark: '#7c3aed' },
-                { code: 'LOYALTY50', redemptions: 76, percentage: 32, color: '#ec4899', colorDark: '#db2777' },
-                { code: 'EARLYBIRD', redemptions: 45, percentage: 19, color: '#f59e0b', colorDark: '#d97706' }
-            ],
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Additional Info</h4>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Redeemed:</span>
+                            <span class="text-gray-900 font-medium">Oct 15, 2025 14:30</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Processed By:</span>
+                            <span class="text-gray-900 font-medium">Admin Budi</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-            serviceUsage: [
-                { name: 'Meeting Room', percentage: 35, count: 780, color: '#4f46e5' },
-                { name: 'Private Office', percentage: 25, count: 558, color: '#0ea5e9' },
-                { name: 'Coworking', percentage: 20, count: 447, color: '#10b981' },
-                { name: 'Event Space', percentage: 12, count: 268, color: '#f59e0b' },
-                { name: 'Sharing Room', percentage: 5, count: 112, color: '#8b5cf6' },
-                { name: 'Virtual Office', percentage: 3, count: 67, color: '#ec4899' }
-            ],
-
-            topBranches: [
-                { name: 'Surabaya Center', count: 345, percentage: 42 },
-                { name: 'Jakarta Selatan', count: 289, percentage: 35 },
-                { name: 'Surabaya Timur', count: 123, percentage: 15 },
-                { name: 'Jakarta Barat', count: 67, percentage: 8 }
-            ],
-
-            customerInsights: {
-                newCustomers: 456,
-                newPercentage: 56,
-                returning: 358,
-                returningPercentage: 44,
-                avgWithVoucher: 450000,
-                avgWithout: 380000,
-                increase: 18.4
-            },
-
-            failedReasons: {
-                expired: 89,
-                limitReached: 67,
-                invalidCode: 34,
-                minNotMet: 18,
-                notApplicable: 8
-            },
-
-            redemptionHistory: [],
-
-            init() {
-                this.setQuickDate('month');
-                this.generateChartData();
-                this.generateRedemptionHistory();
-            },
-
-            setQuickDate(period) {
-                this.quickDateActive = period;
-                const today = new Date();
-                const endDate = today.toISOString().split('T')[0];
-
-                let startDate;
-                switch(period) {
-                    case 'today':
-                        startDate = endDate;
-                        break;
-                    case 'week':
-                        const weekAgo = new Date(today);
-                        weekAgo.setDate(weekAgo.getDate() - 7);
-                        startDate = weekAgo.toISOString().split('T')[0];
-                        break;
-                    case 'month':
-                        const monthAgo = new Date(today.getFullYear(), today.getMonth(), 1);
-                        startDate = monthAgo.toISOString().split('T')[0];
-                        break;
-                    case 'lastMonth':
-                        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                        startDate = lastMonth.toISOString().split('T')[0];
-                        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
-                        this.filters.endDate = lastMonthEnd.toISOString().split('T')[0];
-                        this.filters.startDate = startDate;
-                        return;
-                    case 'quarter':
-                        const quarter = Math.floor(today.getMonth() / 3);
-                        const quarterStart = new Date(today.getFullYear(), quarter * 3, 1);
-                        startDate = quarterStart.toISOString().split('T')[0];
-                        break;
-                    case 'year':
-                        const yearStart = new Date(today.getFullYear(), 0, 1);
-                        startDate = yearStart.toISOString().split('T')[0];
-                        break;
-                }
-
-                this.filters.startDate = startDate;
-                this.filters.endDate = endDate;
-            },
-
-            resetFilters() {
-                this.filters = {
-                    startDate: this.filters.startDate,
-                    endDate: this.filters.endDate,
-                    voucherCode: '',
-                    mitra: '',
-                    branch: '',
-                    service: ''
-                };
-            },
-
-            generateReport() {
-                alert('Generating report with current filters...\n\nPeriod: ' + this.filters.startDate + ' to ' + this.filters.endDate);
-                // Simulate report generation
-                this.generateChartData();
-            },
-
-            generateChartData() {
-                this.chartData.daily = [];
-                const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                days.forEach(day => {
-                    this.chartData.daily.push({
-                        label: day,
-                        value: Math.floor(Math.random() * 200) + 50
-                    });
-                });
-            },
-
-            generateRedemptionHistory() {
-                const vouchers = ['WELCOME2025', 'FREEMR1H', 'FLASH20', 'LOYALTY50', 'EARLYBIRD'];
-                const services = ['Meeting Room', 'Private Office', 'Coworking Space', 'Event Space'];
-                const branches = ['Surabaya Center', 'Jakarta Selatan', 'Surabaya Timur', 'Jakarta Barat'];
-                const customers = ['John Doe', 'Jane Smith', 'Ahmad Wijaya', 'Siti Rahayu', 'Budi Santoso', 'Dewi Lestari'];
-
-                this.redemptionHistory = [];
-                for (let i = 0; i < 50; i++) {
-                    const randomDate = new Date(2025, 9, Math.floor(Math.random() * 18) + 1);
-                    this.redemptionHistory.push({
-                        id: i + 1,
-                        date: randomDate.toISOString().split('T')[0],
-                        time: Math.floor(Math.random() * 24).toString().padStart(2, '0') + ':' + 
-                              Math.floor(Math.random() * 60).toString().padStart(2, '0'),
-                        voucherCode: vouchers[Math.floor(Math.random() * vouchers.length)],
-                        bookingId: 'BK-' + (1000 + i),
-                        customerName: customers[Math.floor(Math.random() * customers.length)],
-                        service: services[Math.floor(Math.random() * services.length)],
-                        branch: branches[Math.floor(Math.random() * branches.length)],
-                        discount: Math.floor(Math.random() * 100000) + 10000
-                    });
-                });
-            },
-
-            getFilteredHistory() {
-                let filtered = this.redemptionHistory;
-
-                if (this.filters.voucherCode) {
-                    filtered = filtered.filter(h => h.voucherCode === this.filters.voucherCode);
-                }
-                if (this.filters.branch) {
-                    filtered = filtered.filter(h => h.branch === this.filters.branch);
-                }
-                if (this.filters.service) {
-                    filtered = filtered.filter(h => h.service === this.filters.service);
-                }
-
-                return filtered;
-            },
-
-            getCurrentPageHistory() {
-                const filtered = this.getFilteredHistory();
-                const start = (this.currentHistoryPage - 1) * this.historyPerPage;
-                const end = start + parseInt(this.historyPerPage);
-                return filtered.slice(start, end);
-            },
-
-            getHistoryTotalPages() {
-                const filtered = this.getFilteredHistory();
-                return Math.ceil(filtered.length / this.historyPerPage) || 1;
-            },
-
-            getHistoryPageNumbers() {
-                const total = this.getHistoryTotalPages();
-                const current = this.currentHistoryPage;
-                const pages = [];
-
-                let startPage = Math.max(1, current - 2);
-                let endPage = Math.min(total, current + 2);
-
-                if (current <= 3) {
-                    endPage = Math.min(5, total);
-                }
-                if (current >= total - 2) {
-                    startPage = Math.max(1, total - 4);
-                }
-
-                for (let i = startPage; i <= endPage; i++) {
-                    pages.push(i);
-                }
-
-                return pages;
-            },
-
-            getHistoryPaginationInfo() {
-                const filtered = this.getFilteredHistory();
-                const start = (this.currentHistoryPage - 1) * this.historyPerPage + 1;
-                const end = Math.min(start + parseInt(this.historyPerPage) - 1, filtered.length);
-                return {
-                    start: filtered.length > 0 ? start : 0,
-                    end: end,
-                    total: filtered.length
-                };
-            },
-
-            changeHistoryPage(page) {
-                const totalPages = this.getHistoryTotalPages();
-                if (page >= 1 && page <= totalPages) {
-                    this.currentHistoryPage = page;
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
-            },
-
-            exportReport(format) {
-                alert(`Exporting report as ${format.toUpperCase()}...\n\nFilters:\nPeriod: ${this.filters.startDate} to ${this.filters.endDate}\nVoucher: ${this.filters.voucherCode || 'All'}\nBranch: ${this.filters.branch || 'All'}`);
-            },
-
-            scheduleReport() {
-                alert('Schedule Email Report:\n\n• Daily at 9:00 AM\n• Weekly on Monday\n• Monthly on 1st day\n\nSelect your preference and enter email recipients.');
-            },
-
-            viewDetailedLog() {
-                alert('Opening detailed failed redemption log...\n\nShowing all 216 failed attempts with:\n• Timestamp\n• Voucher code\n• Failure reason\n• Customer info\n• Attempted transaction details');
-            }
-        }
-    }
-</script>
-
-<style>
-    [x-cloak] { display: none !important; }
-</style>
 @endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Chart
+        const ctx = document.getElementById('usageChart');
+        let usageChart = null;
+
+        if (ctx) {
+            usageChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Day 1', 'Day 5', 'Day 10', 'Day 15', 'Day 20', 'Day 25', 'Day 30'],
+                    datasets: [
+                        {
+                            label: 'Surabaya - Gubeng',
+                            data: [12, 19, 15, 25, 22, 30, 28],
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Jakarta - Senayan',
+                            data: [8, 15, 12, 18, 20, 25, 22],
+                            borderColor: 'rgb(16, 185, 129)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Bandung - Dago',
+                            data: [5, 10, 8, 15, 12, 18, 16],
+                            borderColor: 'rgb(139, 92, 246)',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 5
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Export Dropdown
+        const exportBtn = document.getElementById('exportBtn');
+        const exportDropdown = document.getElementById('exportDropdown');
+
+        if (exportBtn && exportDropdown) {
+            exportBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                exportDropdown.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!exportBtn.contains(e.target) && !exportDropdown.contains(e.target)) {
+                    exportDropdown.classList.add('hidden');
+                }
+            });
+        }
+
+        // Export Options
+        const exportOptions = document.querySelectorAll('.exportOption');
+        exportOptions.forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                const format = this.getAttribute('data-format');
+                exportDropdown.classList.add('hidden');
+                showNotification(`Exporting to ${format.toUpperCase()}...`, 'info');
+                setTimeout(() => {
+                    showNotification(`Report exported to ${format.toUpperCase()}!`, 'success');
+                }, 1500);
+            });
+        });
+
+        // Dynamic Branch Filter
+        const mitraFilter = document.getElementById('mitraFilter');
+        const branchFilter = document.getElementById('branchFilter');
+
+        const branchData = {
+            '1': [
+                { value: '1', text: 'Surabaya - Gubeng' },
+                { value: '2', text: 'Surabaya - HR Muhammad' }
+            ],
+            '2': [
+                { value: '4', text: 'Jakarta - Senayan' },
+                { value: '5', text: 'Jakarta - Sudirman' }
+            ],
+            '3': [
+                { value: '6', text: 'Bandung - Dago' },
+                { value: '7', text: 'Bandung - Riau' }
+            ]
+        };
+
+        if (mitraFilter && branchFilter) {
+            mitraFilter.addEventListener('change', function() {
+                const mitraId = this.value;
+                branchFilter.innerHTML = '<option value="">All Branches</option>';
+                
+                if (mitraId && branchData[mitraId]) {
+                    branchData[mitraId].forEach(branch => {
+                        const option = document.createElement('option');
+                        option.value = branch.value;
+                        option.textContent = branch.text;
+                        branchFilter.appendChild(option);
+                    });
+                }
+                showNotification('Branch filter updated', 'info');
+            });
+        }
+
+        // Apply Filter
+        const applyFilterBtn = document.getElementById('applyFilterBtn');
+        if (applyFilterBtn) {
+            applyFilterBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                showNotification('Applying filters...', 'info');
+                setTimeout(() => {
+                    showNotification('Vouchers filtered successfully', 'success');
+                    if (usageChart) {
+                        const newData = generateRandomData();
+                        usageChart.data.datasets.forEach((dataset, i) => {
+                            dataset.data = newData[i];
+                        });
+                        usageChart.update();
+                    }
+                }, 800);
+            });
+        }
+
+        // Reset Filter
+        const resetFilterBtn = document.getElementById('resetFilterBtn');
+        if (resetFilterBtn) {
+            resetFilterBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementById('startDate').value = '';
+                document.getElementById('endDate').value = '';
+                mitraFilter.value = '';
+                branchFilter.innerHTML = '<option value="">All Branches</option>';
+                document.getElementById('typeFilter').value = '';
+                document.getElementById('statusFilter').value = '';
+                document.getElementById('searchInput').value = '';
+                showNotification('Filters reset', 'info');
+                if (usageChart) {
+                    usageChart.data.datasets[0].data = [12, 19, 15, 25, 22, 30, 28];
+                    usageChart.data.datasets[1].data = [8, 15, 12, 18, 20, 25, 22];
+                    usageChart.data.datasets[2].data = [5, 10, 8, 15, 12, 18, 16];
+                    usageChart.update();
+                }
+            });
+        }
+
+        // View Voucher Details
+        const viewVoucherBtns = document.querySelectorAll('.viewVoucherBtn');
+        const voucherDetailModal = document.getElementById('voucherDetailModal');
+        const closeVoucherDetailBtns = document.querySelectorAll('.closeVoucherDetailBtn');
+
+        viewVoucherBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                voucherDetailModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                showNotification('Loading details...', 'info');
+            });
+        });
+
+        closeVoucherDetailBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                voucherDetailModal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            });
+        });
+
+        voucherDetailModal?.addEventListener('click', function(e) {
+            if (e.target === voucherDetailModal) {
+                voucherDetailModal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+        });
+
+        // Pagination
+        const paginationBtns = document.querySelectorAll('.paginationBtn');
+        paginationBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const pageText = this.textContent.trim();
+                showNotification(`Loading page: ${pageText}`, 'info');
+                setTimeout(() => {
+                    showNotification('Page loaded', 'success');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }, 500);
+            });
+        });
+
+        function generateRandomData() {
+            const data1 = Array.from({length: 7}, () => Math.floor(Math.random() * 30) + 5);
+            const data2 = Array.from({length: 7}, () => Math.floor(Math.random() * 25) + 5);
+            const data3 = Array.from({length: 7}, () => Math.floor(Math.random() * 20) + 3);
+            return [data1, data2, data3];
+        }
+
+        function showNotification(message, type = 'info') {
+            const existingNotif = document.getElementById('notification');
+            if (existingNotif) existingNotif.remove();
+
+            const notification = document.createElement('div');
+            notification.id = 'notification';
+            notification.className = 'fixed top-4 right-4 z-[60] px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in';
+            
+            const colors = {
+                success: 'bg-green-500 text-white',
+                error: 'bg-red-500 text-white',
+                warning: 'bg-orange-500 text-white',
+                info: 'bg-blue-500 text-white'
+            };
+            
+            notification.className += ' ' + (colors[type] || colors.info);
+            
+            const icons = {
+                success: '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>',
+                info: '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>'
+            };
+            
+            notification.innerHTML = `${icons[type] || icons.info}<span>${message}</span>`;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slide-in {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            .animate-slide-in { animation: slide-in 0.3s ease-out; }
+            #notification { transition: all 0.3s ease-out; }
+        `;
+        document.head.appendChild(style);
+
+        console.log('Voucher Usage Report initialized!');
+    });
+</script>
+@endpush

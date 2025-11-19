@@ -25,21 +25,19 @@
             Download Semua Faktur
         </button>
     </div>
-
     {{-- Filter Section --}}
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            
-            {{-- Filter Lokasi --}}
+            {{-- Filter Lokasi - Gunakan ID --}}
             <div>
                 <label class="block text-xs font-medium text-gray-700 mb-1.5">Lokasi</label>
                 <select x-model="filters.location" 
                         @change="applyFilters"
                         class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     <option value="all">Semua Lokasi</option>
-                    <option value="jakarta-pusat">Jakarta Pusat</option>
-                    <option value="surabaya">Surabaya</option>
-                    <option value="bandung">Bandung</option>
+                    @foreach($availableLocations ?? [] as $location)
+                    <option value="{{ $location->id }}">{{ $location->name }}</option>
+                    @endforeach
                 </select>
             </div>
 
@@ -50,9 +48,9 @@
                         @change="applyFilters"
                         class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
                     <option value="all">Semua Tahun</option>
-                    <option value="2024">2024</option>
-                    <option value="2023">2023</option>
-                    <option value="2022">2022</option>
+                    @foreach($availableYears ?? [2024] as $year)
+                    <option value="{{ $year }}">{{ $year }}</option>
+                    @endforeach
                 </select>
             </div>
 
@@ -72,63 +70,63 @@
     </div>
 
     {{-- Summary Cards --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
         
         {{-- Total Faktur --}}
-        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm p-5 text-white">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium opacity-90">Total Faktur</span>
-                <div class="p-2 bg-white bg-opacity-20 rounded-lg">
-                    <svg class="w-5 h-5" fill="#FFA500" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
+        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm p-4 text-white relative">
+            <div class="absolute top-3 right-3 bg-white bg-opacity-20 p-1.5 rounded-lg">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="#FFA500" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/>
+                </svg>
             </div>
-            <p class="text-3xl font-bold" x-text="summary.totalFaktur"></p>
-            <p class="text-xs opacity-75 mt-1">Faktur tersedia</p>
+            <div class="pr-10">
+                <p class="text-sm font-medium opacity-90">Total Faktur</p>
+                <p class="text-lg sm:text-xl lg:text-2xl font-bold mt-1" x-text="summary.totalFaktur"></p>
+                <p class="text-xs opacity-75 mt-0.5">Faktur tersedia</p>
+            </div>
         </div>
 
         {{-- Faktur Belum Dilaporkan --}}
-        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm p-5 text-white">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium opacity-90">Belum Dilaporkan</span>
-                <div class="p-2 bg-white bg-opacity-20 rounded-lg">
-                    <svg class="w-5 h-5" fill="#FFA500" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
+        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm p-4 text-white relative">
+            <div class="absolute top-3 right-3 bg-white bg-opacity-20 p-1.5 rounded-lg">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="#FFA500" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
             </div>
-            <p class="text-3xl font-bold" x-text="summary.unreported"></p>
-            <p class="text-xs opacity-75 mt-1">Perlu segera dilaporkan</p>
+            <div class="pr-10">
+                <p class="text-sm font-medium opacity-90">Belum Dilaporkan</p>
+                <p class="text-lg sm:text-xl lg:text-2xl font-bold mt-1" x-text="summary.unreported"></p>
+                <p class="text-xs opacity-75 mt-0.5">Perlu segera dilaporkan</p>
+            </div>
         </div>
 
         {{-- Total Pajak Tahun Ini --}}
-        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm p-5 text-white">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium opacity-90">Total Pajak 2024</span>
-                <div class="p-2 bg-white bg-opacity-20 rounded-lg">
-                    <svg class="w-5 h-5" fill="#FFA500" viewBox="0 0 20 20">
-                        <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
+        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm p-4 text-white relative">
+            <div class="absolute top-3 right-3 bg-white bg-opacity-20 p-1.5 rounded-lg">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="#FFA500" viewBox="0 0 20 20">
+                    <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
+                </svg>
             </div>
-            <p class="text-2xl font-bold" x-text="formatCurrency(summary.totalTaxThisYear)"></p>
-            <p class="text-xs opacity-75 mt-1">Akumulasi tahun ini</p>
+            <div class="pr-10">
+                <p class="text-sm font-medium opacity-90">Total Pajak 2024</p>
+                <p class="text-lg sm:text-xl lg:text-2xl font-bold mt-1" x-text="formatCurrency(summary.totalTaxThisYear)"></p>
+                <p class="text-xs opacity-75 mt-0.5">Akumulasi tahun ini</p>
+            </div>
         </div>
 
         {{-- Faktur Terbaru --}}
-        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm p-5 text-white">
-            <div class="flex items-center justify-between mb-3">
-                <span class="text-sm font-medium opacity-90">Faktur Terbaru</span>
-                <div class="p-2 bg-white bg-opacity-20 rounded-lg">
-                    <svg class="w-5 h-5" fill="#FFA500" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
-                    </svg>
-                </div>
+        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-sm p-4 text-white relative">
+            <div class="absolute top-3 right-3 bg-white bg-opacity-20 p-1.5 rounded-lg">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="#FFA500" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                </svg>
             </div>
-            <p class="text-xl font-bold truncate" x-text="summary.latestFaktur.period"></p>
-            <p class="text-xs opacity-75 mt-1" x-text="summary.latestFaktur.location"></p>
+            <div class="pr-10">
+                <p class="text-sm font-medium opacity-90">Faktur Terbaru</p>
+                <p class="text-base sm:text-lg font-semibold truncate mt-1" x-text="summary.latestFaktur.period"></p>
+                <p class="text-xs opacity-75 mt-0.5" x-text="summary.latestFaktur.location"></p>
+            </div>
         </div>
 
     </div>
@@ -253,12 +251,7 @@
                 x-cloak
                 @click.self="showDownloadModal = false"
                 class="fixed inset-0 z-[60] overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
-                
-                <div x-show="showDownloadModal" 
-            x-cloak
-            @click.self="showDownloadModal = false"
-            {{-- Z-INDEX DITINGKATKAN DARI z-[60] MENJADI z-[100] untuk menutupi sidebar --}}
-            class="fixed inset-0 z-[100] overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+            
             
             <div x-show="showDownloadModal"
                 x-transition:enter="transition ease-out duration-300"
@@ -345,164 +338,216 @@
 <script>
 function fakturPajakData() {
     return {
-        // Filters
         filters: {
-            location: 'all',
-            year: 'all',
-            status: 'all'
+            location: '{{ $filters["location"] ?? "all" }}',
+            year: '{{ $filters["year"] ?? "all" }}',
+            status: '{{ $filters["status"] ?? "all" }}'
         },
         
-        // Data Faktur (3 lokasi x berbagai periode)
+        // Data faktur - TAMPILKAN SEMUA DATA MESKI REVENUE = 0
         fakturs: [
-            // Jakarta Pusat
-            { id: 1, location: 'Jakarta Pusat', locationSlug: 'jakarta-pusat', period: 'September 2024', year: 2024, invoiceNumber: 'FP-JKT-2024-09', totalOmzet: 103650000, pajak: 10365000, status: 'reported', reportDate: '10 Okt 2024' },
-            { id: 2, location: 'Jakarta Pusat', locationSlug: 'jakarta-pusat', period: 'Agustus 2024', year: 2024, invoiceNumber: 'FP-JKT-2024-08', totalOmzet: 98500000, pajak: 9850000, status: 'reported', reportDate: '12 Sep 2024' },
-            { id: 3, location: 'Jakarta Pusat', locationSlug: 'jakarta-pusat', period: 'Juli 2024', year: 2024, invoiceNumber: 'FP-JKT-2024-07', totalOmzet: 105200000, pajak: 10520000, status: 'reported', reportDate: '14 Ags 2024' },
-            { id: 4, location: 'Jakarta Pusat', locationSlug: 'jakarta-pusat', period: 'Juni 2024', year: 2024, invoiceNumber: 'FP-JKT-2024-06', totalOmzet: 92800000, pajak: 9280000, status: 'reported', reportDate: '10 Jul 2024' },
-            
-            // Surabaya
-            { id: 5, location: 'Surabaya', locationSlug: 'surabaya', period: 'September 2024', year: 2024, invoiceNumber: 'FP-SBY-2024-09', totalOmzet: 74950000, pajak: 7495000, status: 'unreported', reportDate: null },
-            { id: 6, location: 'Surabaya', locationSlug: 'surabaya', period: 'Agustus 2024', year: 2024, invoiceNumber: 'FP-SBY-2024-08', totalOmzet: 68200000, pajak: 6820000, status: 'reported', reportDate: '13 Sep 2024' },
-            { id: 7, location: 'Surabaya', locationSlug: 'surabaya', period: 'Juli 2024', year: 2024, invoiceNumber: 'FP-SBY-2024-07', totalOmzet: 71500000, pajak: 7150000, status: 'reported', reportDate: '15 Ags 2024' },
-            { id: 8, location: 'Surabaya', locationSlug: 'surabaya', period: 'Juni 2024', year: 2024, invoiceNumber: 'FP-SBY-2024-06', totalOmzet: 65300000, pajak: 6530000, status: 'reported', reportDate: '11 Jul 2024' },
-            
-            // Bandung
-            { id: 9, location: 'Bandung', locationSlug: 'bandung', period: 'September 2024', year: 2024, invoiceNumber: 'FP-BDG-2024-09', totalOmzet: 61650000, pajak: 6165000, status: 'unreported', reportDate: null },
-            { id: 10, location: 'Bandung', locationSlug: 'bandung', period: 'Agustus 2024', year: 2024, invoiceNumber: 'FP-BDG-2024-08', totalOmzet: 58900000, pajak: 5890000, status: 'reported', reportDate: '14 Sep 2024' },
-            { id: 11, location: 'Bandung', locationSlug: 'bandung', period: 'Juli 2024', year: 2024, invoiceNumber: 'FP-BDG-2024-07', totalOmzet: 62400000, pajak: 6240000, status: 'reported', reportDate: '12 Ags 2024' },
-            { id: 12, location: 'Bandung', locationSlug: 'bandung', period: 'Juni 2024', year: 2024, invoiceNumber: 'FP-BDG-2024-06', totalOmzet: 55800000, pajak: 5580000, status: 'reported', reportDate: '09 Jul 2024' },
-            
-            // 2023 Data (beberapa faktur tahun lalu)
-            { id: 13, location: 'Jakarta Pusat', locationSlug: 'jakarta-pusat', period: 'Desember 2023', year: 2023, invoiceNumber: 'FP-JKT-2023-12', totalOmzet: 95300000, pajak: 9530000, status: 'reported', reportDate: '10 Jan 2024' },
-            { id: 14, location: 'Surabaya', locationSlug: 'surabaya', period: 'Desember 2023', year: 2023, invoiceNumber: 'FP-SBY-2023-12', totalOmzet: 63500000, pajak: 6350000, status: 'reported', reportDate: '12 Jan 2024' },
-            { id: 15, location: 'Bandung', locationSlug: 'bandung', period: 'Desember 2023', year: 2023, invoiceNumber: 'FP-BDG-2023-12', totalOmzet: 52700000, pajak: 5270000, status: 'reported', reportDate: '11 Jan 2024' },
+            @foreach($reports ?? [] as $report)
+            @if($report->period)  {{-- ← TAMBAH CEK INI --}}
+            {
+                id: {{ $report->id }},
+                location: '{{ addslashes($report->location->name ?? 'N/A') }}',
+                locationSlug: '{{ $report->location->id ?? 'unknown' }}',
+                period: '{{ $report->formatted_period }}',
+                year: {{ $report->period->year }},  {{-- ← AKSES LANGSUNG --}}
+                invoiceNumber: '{{ $report->invoice_number }}',
+                totalOmzet: {{ $report->total_revenue ?? 0 }},
+                pajak: {{ $report->tax_amount ?? 0 }},
+                status: '{{ $report->status === 'reported' ? 'reported' : 'unreported' }}',
+                reportDate: '{{ $report->reported_at ? $report->reported_at->format('d M Y') : '' }}',
+                rawStatus: '{{ $report->status }}',
+                hasData: true
+            },
+            @endif  {{-- ← TAMBAH PENUTUP --}}
+            @endforeach
         ],
         
-        // Computed
+        showDownloadModal: false,
+        fakturToDownload: null,
+        
+        // Computed properties
         get filteredFakturs() {
-            return this.fakturs.filter(faktur => {
-                // Filter location
-                if (this.filters.location !== 'all' && faktur.locationSlug !== this.filters.location) {
-                    return false;
-                }
+            // Pertama filter berdasarkan revenue > 0
+            const faktursWithRevenue = this.fakturs.filter(faktur => faktur.totalOmzet > 0);
+            
+            // Kemudian apply user filters
+            const filtered = faktursWithRevenue.filter(faktur => {
+                const locationMatch = this.filters.location !== 'all' 
+                    ? faktur.locationSlug == this.filters.location // Perhatikan: == bukan === karena mungkin string vs number
+                    : true;
+                    
+                const yearMatch = this.filters.year !== 'all' 
+                    ? faktur.year == parseInt(this.filters.year)
+                    : true;
+                    
+                const statusMatch = this.filters.status !== 'all' 
+                    ? faktur.status === this.filters.status
+                    : true;
                 
-                // Filter year
-                if (this.filters.year !== 'all' && faktur.year !== parseInt(this.filters.year)) {
-                    return false;
-                }
-                
-                // Filter status
-                if (this.filters.status !== 'all' && faktur.status !== this.filters.status) {
-                    return false;
-                }
-                
-                return true;
+                return locationMatch && yearMatch && statusMatch;
             });
+            
+            console.log('Filtered fakturs:', {
+                'With revenue': faktursWithRevenue.length,
+                'After user filters': filtered.length,
+                'Active filters': this.filters
+            });
+            
+            return filtered;
         },
         
         get groupedFaktur() {
-            // Group by location
             const groups = {};
             
             this.filteredFakturs.forEach(faktur => {
-                if (!groups[faktur.locationSlug]) {
-                    groups[faktur.locationSlug] = {
+                // Gunakan location ID sebagai key
+                const locationKey = faktur.locationSlug;
+                
+                if (!groups[locationKey]) {
+                    groups[locationKey] = {
                         name: faktur.location,
-                        slug: faktur.locationSlug,
+                        slug: faktur.locationSlug, // Sekarang berisi ID
                         fakturs: []
                     };
                 }
-                groups[faktur.locationSlug].fakturs.push(faktur);
+                groups[locationKey].fakturs.push(faktur);
             });
             
-            // Sort fakturs by year and period (newest first)
+            // Sort fakturs by period (newest first)
             Object.values(groups).forEach(group => {
                 group.fakturs.sort((a, b) => {
-                    if (a.year !== b.year) return b.year - a.year;
-                    return b.id - a.id; // Assuming id is chronological
+                    return new Date(b.period) - new Date(a.period);
                 });
             });
             
-            return Object.values(groups);
+            const result = Object.values(groups);
+            console.log('Grouped faktur:', result);
+            return result;
         },
         
         get summary() {
-            const currentYear = 2024;
-            const totalFaktur = this.fakturs.length;
-            const unreported = this.fakturs.filter(f => f.status === 'unreported').length;
+            console.log('Calculating summary with filtered data:', this.filteredFakturs);
             
-            // Total pajak tahun 2024
-            const totalTaxThisYear = this.fakturs
+            // GUNAKAN filteredFakturs, bukan this.fakturs
+            const faktursWithData = this.filteredFakturs.filter(f => f.totalOmzet > 0);
+            
+            if (faktursWithData.length === 0) {
+                return {
+                    totalFaktur: 0,
+                    unreported: 0,
+                    totalTaxThisYear: 0,
+                    latestFaktur: { period: 'Tidak ada data', location: '-' }
+                };
+            }
+            
+            const currentYear = new Date().getFullYear();
+            
+            // Total tax tahun ini HANYA dari data yang difilter
+            const totalTaxThisYear = faktursWithData
                 .filter(f => f.year === currentYear)
-                .reduce((sum, f) => sum + f.pajak, 0);
+                .reduce((sum, f) => sum + (f.pajak || 0), 0);
             
-            // Latest faktur
-            const sortedFakturs = [...this.fakturs].sort((a, b) => b.id - a.id);
-            const latestFaktur = sortedFakturs[0] || { period: '-', location: '-' };
+            // Latest faktur HANYA dari data yang difilter
+            const latestFaktur = [...faktursWithData]
+                .sort((a, b) => new Date(b.period) - new Date(a.period))[0];
             
-            return {
-                totalFaktur,
-                unreported,
-                totalTaxThisYear,
+            const summaryData = {
+                totalFaktur: faktursWithData.length, // Hanya yang punya data
+                unreported: faktursWithData.filter(f => f.status === 'unreported').length,
+                totalTaxThisYear: totalTaxThisYear,
                 latestFaktur: {
-                    period: latestFaktur.period,
-                    location: latestFaktur.location
+                    period: latestFaktur?.period || 'Tidak ada data',
+                    location: latestFaktur?.location || '-'
                 }
             };
+            
+            console.log('Final summary (FILTERED):', summaryData);
+            return summaryData;
         },
         
-        // Methods
+        // Methods tetap sama...
         applyFilters() {
-            // Filters are reactive
+            console.log('Filters applied:', this.filters);
         },
         
         formatCurrency(amount) {
+            if (!amount || isNaN(amount) || amount === 0) {
+                return 'Rp 0';
+            }
             return new Intl.NumberFormat('id-ID', {
                 style: 'currency',
                 currency: 'IDR',
-                minimumFractionDigits: 0
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
             }).format(amount);
         },
         
         downloadFaktur(faktur) {
-            // 1. Set data faktur ke properti Alpine
+            console.log('Download faktur:', faktur);
             this.fakturToDownload = faktur;
-            
-            // 2. Tampilkan modal
             this.showDownloadModal = true;
+            
+            // Auto download setelah modal confirm
+            setTimeout(() => {
+                window.open(`/mitrapanel/faktur-pajak/${faktur.id}/download`, '_blank');
+                this.showDownloadModal = false;
+            }, 1000);
         },
         
         downloadLocationFaktur(locationSlug) {
+            // locationSlug sekarang adalah ID
             const location = this.groupedFaktur.find(g => g.slug === locationSlug);
-            if (!location) return;
+            if (location && location.fakturs.length > 0) {
+                console.log('Download location faktur:', location);
+                
+                // Show loading state
+                this.loading = true;
+                
+                // Download ZIP
+                window.open(`/mitrapanel/faktur-pajak/download-location/${locationSlug}`, '_blank');
+                
+                // Reset loading after delay
+                setTimeout(() => {
+                    this.loading = false;
+                }, 2000);
+                
+            } else {
+                alert('Tidak ada faktur untuk lokasi ini');
+            }
+        },
+
+        downloadAllFaktur() {
+            if (this.filteredFakturs.length === 0) {
+                alert('Tidak ada faktur untuk di-download');
+                return;
+            }
             
-            alert(`Download Semua Faktur untuk ${location.name}:\n\nTotal: ${location.fakturs.length} faktur\nFormat: PDF (Gabungan)`);
-            // TODO: Implementasi bulk download per lokasi
-            // window.open(`/api/faktur/location/${locationSlug}/download-all`, '_blank');
+            console.log('Download all faktur:', this.filteredFakturs.length);
+            
+            // Show loading state
+            this.loading = true;
+            
+            // Download ZIP semua faktur
+            window.open('/mitrapanel/faktur-pajak/download-all', '_blank');
+            
+            // Reset loading after delay
+            setTimeout(() => {
+                this.loading = false;
+            }, 3000);
         },
         
-        downloadAllFaktur() {
-            const total = this.filteredFakturs.length;
-            const filterInfo = [];
-            
-            if (this.filters.location !== 'all') {
-                const loc = this.filteredFakturs[0]?.location || '';
-                filterInfo.push(`Lokasi: ${loc}`);
-            }
-            if (this.filters.year !== 'all') {
-                filterInfo.push(`Tahun: ${this.filters.year}`);
-            }
-            if (this.filters.status !== 'all') {
-                filterInfo.push(`Status: ${this.filters.status === 'reported' ? 'Dilaporkan' : 'Belum Dilaporkan'}`);
-            }
-            
-            const filterText = filterInfo.length > 0 ? `\n\nFilter:\n${filterInfo.join('\n')}` : '\n\nFilter: Semua';
-            
-            alert(`Download Semua Faktur:\n\nTotal: ${total} faktur${filterText}\n\nFormat: PDF (Zip Archive)`);
-            // TODO: Implementasi bulk download dengan filter
-            // window.open(`/api/faktur/download-all?${new URLSearchParams(this.filters)}`, '_blank');
+        init() {
+            console.log('=== FAKTUR PAJAK DATA INITIALIZED ===');
+            console.log('Total fakturs loaded:', this.fakturs.length);
+            console.log('Sample faktur:', this.fakturs[0]);
+            console.log('=====================================');
+            this.applyFilters();
         }
-    }
+    };
 }
 </script>
 @endpush

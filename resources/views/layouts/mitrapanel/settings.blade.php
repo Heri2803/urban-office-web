@@ -315,15 +315,24 @@
                         {{-- Submit Button --}}
                         <div class="pt-4 border-t border-gray-200">
                             <button type="submit" 
-                                    :disabled="passwordData.newPassword !== passwordData.confirmPassword"
+                                    @click="console.log('🖱️ Button clicked')" 
+                                    :disabled="!isPasswordFormValid || passwordLoading"
                                     class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                
+                                {{-- Loading Spinner --}}
+                                <svg x-show="passwordLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                
+                                {{-- Lock Icon --}}
+                                <svg x-show="!passwordLoading" class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
                                 </svg>
-                                Update Password
+                                
+                                <span x-text="passwordLoading ? 'Mengubah Password...' : 'Update Password'"></span>
                             </button>
                         </div>
-
                     </form>
                 </div>
 
@@ -395,15 +404,19 @@
 function settingsData() {
     return {
         activeTab: 'profile',
+        isLoading: true,
         
         // Form Data
         formData: {
-            name: 'PT Urban Office Indonesia',
-            email: 'mitra@urbanoffice.co.id',
-            phone: '08123456789',
-            address: 'Jl. Sudirman No. 123, Jakarta Pusat\nDKI Jakarta 10220',
+            name: '',
+            email: '',
+            phone: '',
+            address: '',
             photo: null,
-            photoPreview: null
+            photoPreview: null,
+            company_name: '',
+            business_type: '',
+            npwp: ''
         },
         
         // Original data for reset
@@ -416,6 +429,8 @@ function settingsData() {
             confirmPassword: ''
         },
         
+        // ✅ TAMBAHKAN PROPERTY YANG DIPERLUKAN
+        passwordLoading: false,
         showCurrentPassword: false,
         showNewPassword: false,
         
@@ -449,8 +464,12 @@ function settingsData() {
                 }
             }
         },
+
+        // ✅ TAMBAHKAN STATE UNTUK MESSAGES
+        successMessage: '',
+        errorMessage: '',
         
-        // Computed
+        // ✅ COMPUTED PROPERTIES YANG DIPERLUKAN
         get passwordStrength() {
             const password = this.passwordData.newPassword;
             if (!password) return 0;
@@ -466,31 +485,89 @@ function settingsData() {
             
             return strength;
         },
-        
-        // Methods
-        init() {
-            // Save original data for reset
-            this.originalData = JSON.parse(JSON.stringify(this.formData));
+
+        // ✅ COMPUTED UNTUK VALIDASI FORM PASSWORD
+        get isPasswordFormValid() {
+            return this.passwordData.currentPassword && 
+                   this.passwordData.newPassword && 
+                   this.passwordData.confirmPassword &&
+                   this.passwordData.newPassword === this.passwordData.confirmPassword &&
+                   this.passwordData.newPassword.length >= 8;
+        },
+
+        // ✅ COMPUTED UNTUK PASSWORD MATCH (OPTIONAL)
+        get passwordsMatch() {
+            return this.passwordData.newPassword === this.passwordData.confirmPassword;
         },
         
+        // Methods
+        async init() {
+            await this.loadProfileData();
+            this.isLoading = false;
+        },
+
+        async loadProfileData() {
+            try {
+                console.log('🔄 Loading profile data...');
+                
+                const response = await fetch('/settings/profile-data');
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.formData = {
+                        ...this.formData,
+                        ...data.profile
+                    };
+                    
+                    if (data.profile.photo) {
+                        this.formData.photoPreview = data.profile.photo;
+                    }
+                    
+                    this.originalData = JSON.parse(JSON.stringify(this.formData));
+                    console.log('✅ Profile data loaded:', this.formData);
+                } else {
+                    console.error('❌ Failed to load profile data:', data.message);
+                }
+            } catch (error) {
+                console.error('❌ Error loading profile data:', error);
+            }
+        },
+        
+        // ✅ METHOD UNTUK MESSAGES
+        showSuccess(message) {
+            this.successMessage = message;
+            setTimeout(() => {
+                this.successMessage = '';
+            }, 5000);
+        },
+
+        showError(message) {
+            this.errorMessage = message;
+            setTimeout(() => {
+                this.errorMessage = '';
+            }, 5000);
+        },
+
+        clearMessages() {
+            this.successMessage = '';
+            this.errorMessage = '';
+        },
+
         handlePhotoUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
             
-            // Validate file type
             const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
             if (!validTypes.includes(file.type)) {
                 alert('Format file tidak valid. Gunakan JPG, PNG, atau WebP.');
                 return;
             }
             
-            // Validate file size (2MB)
             if (file.size > 2 * 1024 * 1024) {
                 alert('Ukuran file terlalu besar. Maksimal 2MB.');
                 return;
             }
             
-            // Create preview
             const reader = new FileReader();
             reader.onload = (e) => {
                 this.formData.photoPreview = e.target.result;
@@ -506,36 +583,73 @@ function settingsData() {
             }
         },
         
-        saveProfile() {
+        async saveProfile() {
             // Validate
             if (!this.formData.name || !this.formData.email || !this.formData.phone || !this.formData.address) {
                 alert('Mohon lengkapi semua field yang wajib diisi.');
                 return;
             }
-            
+
             // Phone validation
             const phonePattern = /^[0-9]{10,13}$/;
             if (!phonePattern.test(this.formData.phone.replace(/[-\s]/g, ''))) {
-                alert('Format nomor telepon tidak valid.');
+                alert('Format nomor telepon tidak valid. Harus 10-13 digit angka.');
                 return;
             }
-            
-            // Simulate save
-            alert('Profil berhasil diperbarui!\n\nNama: ' + this.formData.name + '\nEmail: ' + this.formData.email + '\nTelepon: ' + this.formData.phone);
-            
-            // Update original data
-            this.originalData = JSON.parse(JSON.stringify(this.formData));
-            
-            // TODO: Send to backend
-            // const formDataToSend = new FormData();
-            // formDataToSend.append('name', this.formData.name);
-            // formDataToSend.append('email', this.formData.email);
-            // formDataToSend.append('phone', this.formData.phone);
-            // formDataToSend.append('address', this.formData.address);
-            // if (this.formData.photo) {
-            //     formDataToSend.append('photo', this.formData.photo);
-            // }
-            // axios.post('/api/mitra/profile/update', formDataToSend)
+
+            try {
+                this.isLoading = true;
+                
+                const formDataToSend = new FormData();
+                formDataToSend.append('name', this.formData.name);
+                formDataToSend.append('email', this.formData.email);
+                formDataToSend.append('phone', this.formData.phone);
+                formDataToSend.append('address', this.formData.address);
+                formDataToSend.append('company_name', this.formData.company_name);
+                formDataToSend.append('business_type', this.formData.business_type);
+                formDataToSend.append('npwp', this.formData.npwp);
+                
+                if (this.formData.photo instanceof File) {
+                    formDataToSend.append('photo', this.formData.photo);
+                }
+
+                const response = await fetch('/settings/profile-update', {
+                    method: 'POST',
+                    body: formDataToSend,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.message || `HTTP error! status: ${response.status}`);
+                }
+                
+                if (result.success) {
+                    this.showSuccess('Profil berhasil diperbarui!');
+                    
+                    // Update photo preview jika ada URL baru
+                    if (result.photo_url) {
+                        this.formData.photoPreview = result.photo_url;
+                        this.formData.photo = null;
+                    }
+                    
+                    // Update original data
+                    this.originalData = JSON.parse(JSON.stringify(this.formData));
+                    
+                } else {
+                    this.showError('Gagal memperbarui profil: ' + (result.message || 'Terjadi kesalahan'));
+                }
+                
+            } catch (error) {
+                console.error('❌ Error saving profile:', error);
+                this.showError('Terjadi kesalahan saat menyimpan profil: ' + error.message);
+            } finally {
+                this.isLoading = false;
+            }
         },
         
         resetForm() {
@@ -544,48 +658,121 @@ function settingsData() {
             }
         },
         
-        changePassword() {
-            // Validate
-            if (!this.passwordData.currentPassword || !this.passwordData.newPassword || !this.passwordData.confirmPassword) {
-                alert('Mohon lengkapi semua field password.');
+        // ✅ METHOD changePassword YANG DIPERBAIKI
+        async changePassword() {
+            console.log('🔑 changePassword method dipanggil');
+            
+            this.clearMessages();
+            
+            // Validasi
+            if (!this.passwordData.currentPassword) {
+                this.showError('Mohon masukkan password saat ini');
+                return;
+            }
+            
+            if (!this.passwordData.newPassword) {
+                this.showError('Mohon masukkan password baru');
+                return;
+            }
+            
+            if (!this.passwordData.confirmPassword) {
+                this.showError('Mohon konfirmasi password baru');
                 return;
             }
             
             if (this.passwordData.newPassword !== this.passwordData.confirmPassword) {
-                alert('Password baru dan konfirmasi tidak cocok.');
+                this.showError('Password baru dan konfirmasi tidak cocok');
                 return;
             }
             
             if (this.passwordData.newPassword.length < 8) {
-                alert('Password baru minimal 8 karakter.');
+                this.showError('Password baru minimal 8 karakter');
                 return;
             }
-            
-            // Simulate save
-            alert('Password berhasil diubah!\n\nSilakan login kembali dengan password baru Anda.');
-            
-            // Reset form
-            this.passwordData = {
-                currentPassword: '',
-                newPassword: '',
-                confirmPassword: ''
-            };
-            
-            // TODO: Send to backend
-            // axios.post('/api/mitra/password/change', {
-            //     current_password: this.passwordData.currentPassword,
-            //     new_password: this.passwordData.newPassword,
-            //     new_password_confirmation: this.passwordData.confirmPassword
-            // })
+
+            try {
+                this.passwordLoading = true;
+                console.log('🔄 Mengirim request update password...');
+
+                const response = await fetch('/settings/password-update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        current_password: this.passwordData.currentPassword,
+                        new_password: this.passwordData.newPassword,
+                        new_password_confirmation: this.passwordData.confirmPassword
+                    })
+                });
+
+                console.log('📨 Response status:', response.status);
+
+                const result = await response.json();
+                console.log('📨 Response data:', result);
+
+                if (!response.ok) {
+                    throw new Error(result.message || `HTTP error! status: ${response.status}`);
+                }
+
+                if (result.success) {
+                    this.showSuccess(result.message || 'Password berhasil diubah!');
+                    console.log('✅ Password berhasil diubah di backend');
+                    
+                    // Reset form
+                    this.passwordData = {
+                        currentPassword: '',
+                        newPassword: '',
+                        confirmPassword: ''
+                    };
+                    
+                } else {
+                    this.showError(result.message || 'Gagal mengubah password');
+                    console.log('❌ Gagal di backend:', result.message);
+                }
+
+            } catch (error) {
+                console.error('❌ Error changing password:', error);
+                this.showError('Terjadi kesalahan: ' + error.message);
+            } finally {
+                this.passwordLoading = false;
+                console.log('🏁 changePassword selesai');
+            }
         },
         
-        saveNotifications() {
-            alert('Preferensi notifikasi berhasil disimpan!');
-            
-            // TODO: Send to backend
-            // axios.post('/api/mitra/notifications/update', {
-            //     settings: this.notificationSettings
-            // })
+        async saveNotifications() {
+            try {
+                this.isLoading = true;
+                this.clearMessages();
+
+                const response = await fetch('/settings/notifications-update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        notifications: this.notificationSettings
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    this.showSuccess('Preferensi notifikasi berhasil disimpan!');
+                } else {
+                    this.showError('Gagal menyimpan preferensi notifikasi.');
+                }
+
+            } catch (error) {
+                console.error('❌ Error saving notifications:', error);
+                this.showError('Terjadi kesalahan saat menyimpan notifikasi.');
+            } finally {
+                this.isLoading = false;
+            }
         }
     }
 }

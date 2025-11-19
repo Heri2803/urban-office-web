@@ -156,7 +156,7 @@ document.addEventListener('alpine:init', () => {
                             </div>
 
                             {{-- Download button --}}
-                            <a :href="'{{ url('invoice/generate') }}/' + transaction.order_id"
+                            <a :href="'{{ url('invoice') }}/' + transaction.order_id"
                             class="inline-block px-3 py-1 text-xs md:text-sm bg-orange-500 text-white rounded hover:bg-orange-600">
                                 Download PDF
                             </a>
