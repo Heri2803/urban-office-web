@@ -5,46 +5,18 @@
 src="https://app.sandbox.midtrans.com/snap/snap.js" 
 data-client-key="{{ config('midtrans.client_key') }}"></script> 
 
-<script> 
-function previewFileName(input) {
-    const file = input.files[0];
-    if (file) {
-        document.getElementById('fileNamePreview').textContent = "File dipilih: " + file.name;
-    }
-}
-
-function openSnap(token) 
-{ 
-    document.body.style.overflow = 'hidden'; 
-    if (typeof snap === 'undefined') {
-        document.body.style.overflow = '';
-        alert('Midtrans Snap SDK belum siap. Silakan coba refresh halaman.');
-        return;
-    }
-    snap.pay(token, 
-    { 
-        onSuccess: function(result) { 
-            console.log("Success:", result); 
-            document.body.style.overflow = ''; 
-            location.reload(); 
-        }, 
-        onPending: function(result) { 
-            console.log("Pending:", result); 
-            document.body.style.overflow = '';
-        }, 
-        onError: function(result) { 
-            console.error("Error:", result); 
-            document.body.style.overflow = '';
-        }, 
-        onClose: function() { 
-            document.body.style.overflow = '';
-            alert('Anda menutup popup tanpa menyelesaikan pembayaran.'); 
-        } 
-    }); 
-} 
-
+<script>
 document.addEventListener('alpine:init', () => {
+    // Fix: Add sidebar data
+    Alpine.data('sidebar', () => ({
+        isOpen: false,
+        toggle() {
+            this.isOpen = !this.isOpen;
+        }
+    }));
+
     Alpine.data('mailsData', () => ({
+        // Existing properties
         isFilterOpen: false,
         allTransactions: @json($transactions), 
         filterStatus: '', 
@@ -53,8 +25,30 @@ document.addEventListener('alpine:init', () => {
         currentPage: 1,
         itemsPerPage: 5,
 
+        // 🆕 Separate stores for UI state
+        messagesStore: {}, // { transactionId: [messages] }
+        uiState: {}, // { transactionId: { showMessages, isLoadingMessages, isSending, etc } }
+        
+        isLoading: false,
+        pollingInterval: null,
+        csrfToken: document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+
+        // Helper: Get UI state for transaction
+        getUIState(transactionId) {
+            if (!this.uiState[transactionId]) {
+                this.uiState[transactionId] = {
+                    showMessages: false,
+                    isLoadingMessages: false,
+                    newMessage: '',
+                    attachmentPreview: null,
+                    isSending: false
+                };
+            }
+            return this.uiState[transactionId];
+        },
+
         get filteredTransactions() {
-            return this.allTransactions.filter(transaction => {
+            const filtered = this.allTransactions.filter(transaction => {
                 const statusMatch = this.filterStatus === '' || transaction.status === this.filterStatus;
                 
                 let dateMatch = true;
@@ -64,6 +58,25 @@ document.addEventListener('alpine:init', () => {
                 }
 
                 return statusMatch && dateMatch;
+            });
+            
+            return filtered.map(transaction => {
+                // ✅ Get from stores
+                const messages = this.messagesStore[transaction.id] || [];
+                const uiState = this.getUIState(transaction.id);
+                
+                return {
+                    ...transaction,
+                    // ✅ From UI state store
+                    showMessages: uiState.showMessages,
+                    isLoadingMessages: uiState.isLoadingMessages,
+                    newMessage: uiState.newMessage,
+                    attachmentPreview: uiState.attachmentPreview,
+                    isSending: uiState.isSending,
+                    // ✅ From messages store
+                    messages: messages,
+                    unreadCount: this.calculateUnreadCount(messages)
+                };
             });
         },
 
@@ -83,7 +96,6 @@ document.addEventListener('alpine:init', () => {
             const current = this.currentPage;
         
             if (total <= 5) {
-                // 1,2,3,4,5 tanpa duplikat
                 pages = Array.from({ length: total }, (_, i) => i + 1);
             } else {
                 if (current <= 2) {
@@ -95,10 +107,10 @@ document.addEventListener('alpine:init', () => {
                 }
             }
         
-            // ✅ Hilangkan duplikat
             return pages.filter((value, index, self) => self.indexOf(value) === index);
         },
 
+        // Existing methods
         goToPage(page) {
             if (page >= 1 && page <= this.totalPages) {
                 this.currentPage = page;
@@ -136,6 +148,363 @@ document.addEventListener('alpine:init', () => {
             this.currentPage = 1;
         },
 
+        // 🔧 FIXED: Toggle messages
+        toggleMessages(transactionId) {
+            const uiState = this.getUIState(transactionId);
+            uiState.showMessages = !uiState.showMessages;
+            
+            console.log('🔘 Toggle messages:', { 
+                transactionId, 
+                showMessages: uiState.showMessages,
+                hasMessages: !!this.messagesStore[transactionId]
+            });
+            
+            // Load messages if showing and not loaded yet
+            if (uiState.showMessages && !this.messagesStore[transactionId]) {
+                this.loadMessages(transactionId);
+            }
+        },
+
+        // Find transaction helpers (keep for compatibility)
+        findPaginatedTransaction(transactionId) {
+            return this.paginatedTransactions.find(t => t.id == transactionId);
+        },
+
+        findTransaction(transactionId) {
+            return this.allTransactions.find(t => t.id == transactionId);
+        },
+
+        // 🔧 FIXED: Load messages
+        async loadMessages(transactionId) {
+            const uiState = this.getUIState(transactionId);
+            if (uiState.isLoadingMessages) return;
+
+            try {
+                uiState.isLoadingMessages = true;
+                
+                const url = `/dashboard/mails/transaction/${transactionId}/messages`;
+                console.log('📨 Fetching from URL:', url);
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': this.csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                console.log('📨 Response status:', response.status);
+                
+                const responseText = await response.text();
+                console.log('📨 Response text (first 500 chars):', responseText.substring(0, 500));
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = JSON.parse(responseText);
+                console.log('📨 Parsed data:', data);
+                
+                if (data.success) {
+                    console.log('📨 Messages count:', data.messages?.length || 0);
+                    this.updateTransactionMessages(transactionId, data.messages || []);
+                } else {
+                    throw new Error(data.error || 'Failed to load messages');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error loading messages:', error);
+                this.showNotification('error', 'Gagal memuat pesan: ' + error.message);
+            } finally {
+                uiState.isLoadingMessages = false;
+            }
+        },
+
+        // 🔧 FIXED: Send message
+        async sendMessage(transactionId) {
+            const uiState = this.getUIState(transactionId);
+            
+            console.log('🚀 sendMessage called:', {
+                transactionId,
+                message: uiState.newMessage,
+                hasAttachment: !!uiState.attachmentPreview
+            });
+            
+            if (!uiState.newMessage?.trim()) {
+                console.warn('⚠️ Message is empty');
+                return;
+            }
+
+            try {
+                uiState.isSending = true;
+                
+                const formData = new FormData();
+                formData.append('message', uiState.newMessage.trim());
+                formData.append('transaction_id', transactionId); // ✅ Tambahkan ini untuk controller
+                
+                if (uiState.attachmentPreview?.file) {
+                    formData.append('attachment', uiState.attachmentPreview.file);
+                }
+
+                // ✅ FIX: Gunakan URL sesuai route Anda
+                const url = `/dashboard/mails/transaction/${transactionId}/message`;
+                console.log('📤 Sending to:', url);
+                console.log('📤 FormData:', {
+                    message: uiState.newMessage.trim(),
+                    transaction_id: transactionId,
+                    hasAttachment: !!uiState.attachmentPreview
+                });
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': this.csrfToken,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                });
+
+                console.log('📥 Response status:', response.status);
+
+                const responseText = await response.text();
+                console.log('📥 Response text (first 500):', responseText.substring(0, 500));
+
+                const data = JSON.parse(responseText);
+                console.log('📥 Parsed response:', data);
+
+                if (!response.ok) {
+                    throw new Error(data.message || `HTTP error! status: ${response.status}`);
+                }
+
+                if (data.success && data.message) {
+                    this.addMessageToTransaction(transactionId, data.message);
+                    console.log('✅ Message added to store');
+                    
+                    // Clear form
+                    uiState.newMessage = '';
+                    uiState.attachmentPreview = null;
+                    
+                    this.showNotification('success', 'Pesan berhasil dikirim');
+                    
+                    this.$nextTick(() => {
+                        this.scrollToMessageBottom(transactionId);
+                    });
+                } else {
+                    throw new Error(data.message || 'Failed to send message');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error sending message:', error);
+                console.error('❌ Error stack:', error.stack);
+                this.showNotification('error', error.message || 'Gagal mengirim pesan');
+            } finally {
+                uiState.isSending = false;
+            }
+        },
+
+        // 🔧 FIXED: Handle attachment
+        handleAttachmentChange(transactionId, event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                this.showNotification('error', 'Ukuran file maksimal 5MB');
+                event.target.value = '';
+                return;
+            }
+
+            const allowedTypes = [
+                'image/jpeg', 'image/png', 'image/gif', 
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'text/plain'
+            ];
+            
+            if (!allowedTypes.includes(file.type)) {
+                this.showNotification('error', 'Tipe file tidak didukung.');
+                event.target.value = '';
+                return;
+            }
+
+            const uiState = this.getUIState(transactionId);
+            uiState.attachmentPreview = {
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                file: file
+            };
+
+            event.target.value = '';
+        },
+
+        // 🔧 FIXED: Remove attachment
+        removeAttachment(transactionId) {
+            const uiState = this.getUIState(transactionId);
+            uiState.attachmentPreview = null;
+        },
+
+        // Mark all as read
+        async markAllAsRead(transactionId) {
+            try {
+                // ✅ FIX: Gunakan URL sesuai route
+                const url = `/dashboard/mails/transaction/${transactionId}/mark-read`;
+                console.log('📖 Marking as read:', url);
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': this.csrfToken,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        this.updateTransactionUnreadCount(transactionId, 0);
+                        console.log('✅ Messages marked as read');
+                        this.showNotification('success', 'Pesan ditandai sudah dibaca');
+                    }
+                } else {
+                    console.error('❌ Failed to mark as read:', response.status);
+                }
+            } catch (error) {
+                console.error('❌ Error marking messages as read:', error);
+            }
+        },
+
+        // 🔧 FIXED: Update messages
+        updateTransactionMessages(transactionId, messages) {
+            console.log('🔄 updateTransactionMessages called:', {
+                transactionId,
+                messagesCount: messages.length
+            });
+            
+            // Store messages
+            this.messagesStore[transactionId] = messages;
+            
+            console.log('✅ Updated messagesStore:', this.messagesStore[transactionId]);
+            console.log('✅ Total messages in store:', Object.keys(this.messagesStore).length);
+        },
+
+        // 🔧 FIXED: Add single message
+        addMessageToTransaction(transactionId, message) {
+            if (!this.messagesStore[transactionId]) {
+                this.messagesStore[transactionId] = [];
+            }
+            this.messagesStore[transactionId].push(message);
+            
+            console.log('✅ Message added to store:', {
+                transactionId,
+                totalMessages: this.messagesStore[transactionId].length
+            });
+        },
+
+        // Update unread count
+        updateTransactionUnreadCount(transactionId, count) {
+            const messages = this.messagesStore[transactionId];
+            if (messages) {
+                messages.forEach(msg => {
+                    if (msg.receiver_id == {{ auth()->id() ?? 0 }}) {
+                        msg.is_read = true;
+                    }
+                });
+            }
+        },
+
+        // Calculate unread count
+        calculateUnreadCount(messages) {
+            if (!messages || !Array.isArray(messages)) return 0;
+            const userId = {{ auth()->id() ?? 0 }};
+            return messages.filter(msg => 
+                msg.receiver_id == userId && !msg.is_read
+            ).length;
+        },
+
+        // Format time
+        formatMessageTime(timestamp) {
+            if (!timestamp) return '';
+            
+            try {
+                const date = new Date(timestamp);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffDays = Math.floor(diffMs / 86400000);
+
+                if (diffMins < 1) return 'Baru saja';
+                if (diffMins < 60) return `${diffMins}m yang lalu`;
+                if (diffHours < 24) return `${diffHours}j yang lalu`;
+                if (diffDays < 7) return `${diffDays}h yang lalu`;
+                
+                return date.toLocaleDateString('id-ID', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+                });
+            } catch (e) {
+                return '';
+            }
+        },
+
+        // Format file size
+        formatFileSize(bytes) {
+            if (!bytes) return '0 B';
+            
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let size = bytes;
+            let unitIndex = 0;
+
+            while (size >= 1024 && unitIndex < units.length - 1) {
+                size /= 1024;
+                unitIndex++;
+            }
+
+            return `${size.toFixed(1)} ${units[unitIndex]}`;
+        },
+
+        // Scroll to bottom
+        scrollToMessageBottom(transactionId) {
+            this.$nextTick(() => {
+                const container = document.querySelector(`[data-transaction="${transactionId}"]`);
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            });
+        },
+
+        // Show notification
+        showNotification(type, message) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg transform transition-all duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                type === 'warning' ? 'bg-yellow-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <span class="mr-2">${type === 'success' ? '✓' : type === 'error' ? '✗' : '!'}</span>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        },
+
+        // Initialize
         init() {
             const mainContent = document.getElementById('mail-content-wrapper');
             if (mainContent) {
@@ -145,17 +514,87 @@ document.addEventListener('alpine:init', () => {
 
             this.$watch('filterStatus', () => { this.currentPage = 1; });
             this.$watch('filterDate', () => { this.currentPage = 1; });
-        }
+
+            this.initPolling();
+        },
+
+        // Initialize polling
+        initPolling() {
+            // setInterval(() => {
+            //     this.checkForNewMessages();
+            // }, 30000);
+        },
+
+        // Check for new messages
+        // async checkForNewMessages() {
+        //     const openTransactions = Object.keys(this.uiState).filter(
+        //         id => this.uiState[id].showMessages
+        //     );
+            
+        //     if (openTransactions.length === 0) return;
+
+        //     try {
+        //         const transactionIds = openTransactions.join(',');
+        //         const response = await fetch(`/messages/check-updates?transactions=${transactionIds}`, {
+        //             headers: {
+        //                 'Accept': 'application/json',
+        //                 'X-CSRF-TOKEN': this.csrfToken,
+        //                 'X-Requested-With': 'XMLHttpRequest'
+        //             }
+        //         });
+
+        //         if (response.ok) {
+        //             const data = await response.json();
+        //             // Process updates if any
+        //         }
+        //     } catch (error) {
+        //         console.error('Error checking for updates:', error);
+        //     }
+        // }
     }));
 });
+
+// Existing openSnap and previewFileName functions remain the same
+function previewFileName(input) {
+    const file = input.files[0];
+    if (file) {
+        document.getElementById('fileNamePreview').textContent = "File dipilih: " + file.name;
+    }
+}
+
+function openSnap(token) { 
+    document.body.style.overflow = 'hidden'; 
+    if (typeof snap === 'undefined') {
+        document.body.style.overflow = '';
+        alert('Midtrans Snap SDK belum siap. Silakan coba refresh halaman.');
+        return;
+    }
+    snap.pay(token, { 
+        onSuccess: function(result) { 
+            console.log("Success:", result); 
+            document.body.style.overflow = ''; 
+            location.reload(); 
+        }, 
+        onPending: function(result) { 
+            console.log("Pending:", result); 
+            document.body.style.overflow = '';
+        }, 
+        onError: function(result) { 
+            console.error("Error:", result); 
+            document.body.style.overflow = '';
+        }, 
+        onClose: function() { 
+            document.body.style.overflow = '';
+            alert('Anda menutup popup tanpa menyelesaikan pembayaran.'); 
+        } 
+    }); 
+}
 </script>
 @endsection
 
 @section('content')
 <div class="flex min-h-screen bg-gray-50">
-
     <div class="flex-1 ml-0 md:ml-60 lg:ml-64 xl:ml-64 flex flex-col mb-10">
-
         <div>
             @include('layouts.components.mailsbar')
         </div>
@@ -207,6 +646,7 @@ document.addEventListener('alpine:init', () => {
                     </div>
                 </div>
             </div>
+
             {{-- Loop Transaksi (Paginated) --}}
             <template x-for="(transaction, index) in paginatedTransactions" :key="transaction.order_id">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
@@ -287,6 +727,205 @@ document.addEventListener('alpine:init', () => {
             
                         </div>
                     </div>
+
+                    <!-- 🆕 MESSAGING SECTION -->
+                    <div class="border-t border-gray-200 px-4 md:px-6 py-4 bg-gray-50">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-medium text-gray-700 flex items-center text-sm">
+                                <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                </svg>
+                                Percakapan
+                            </h4>
+                            <button @click.stop="toggleMessages(transaction.id)" 
+                                    class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                                <span x-text="transaction.showMessages ? 'Sembunyikan' : 'Tampilkan'"></span>
+                            </button>
+                        </div>
+
+                        <!-- Messages Container (Collapsible) -->
+                        <div x-show="transaction.showMessages" 
+                                x-transition:enter="transition ease-out duration-300"
+                                x-transition:enter-start="opacity-0 max-h-0"
+                                x-transition:enter-end="opacity-100 max-h-64"
+                                x-transition:leave="transition ease-in duration-200"
+                                x-transition:leave-start="opacity-100 max-h-64"
+                                x-transition:leave-end="opacity-0 max-h-0"
+                                class="space-y-2 mb-4 overflow-y-auto p-3 bg-white rounded-lg border border-gray-200 messages-container"
+                                style="max-height: 16rem;"
+                                :data-transaction="transaction.id">
+                            
+                            <!-- Loading State -->
+                            <template x-if="transaction.isLoadingMessages">
+                                <div class="flex justify-center py-4">
+                                    <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </div>
+                            </template>
+                            <!-- Dalam template messages: -->
+                            <template x-if="transaction.messages && transaction.messages.length > 0">
+                                <template x-for="msg in transaction.messages" :key="msg.id">
+                                    <div class="flex" :class="msg.sender_id == {{ auth()->id() }} ? 'justify-end' : 'justify-start'">
+                                        <div class="max-w-xs md:max-w-sm p-3 rounded-lg shadow-sm"
+                                            :class="msg.sender_id == {{ auth()->id() }} 
+                                                ? 'bg-blue-100 text-blue-900 rounded-br-none border border-blue-200' 
+                                                : 'bg-gray-100 text-gray-800 rounded-bl-none border border-gray-200'">
+                                            
+                                            <!-- Debug: Tampilkan data mentah -->
+                                            <div class="text-xs text-gray-500" x-text="'ID: ' + msg.id"></div>
+                                            
+                                            <div class="flex justify-between items-start mb-1">
+                                                <span class="text-xs font-medium" 
+                                                    x-text="msg.sender_id == {{ auth()->id() }} ? 'Anda' : (msg.sender?.name || 'Pengirim')">
+                                                </span>
+                                                <span class="text-xs text-gray-500 ml-2" 
+                                                    x-text="formatMessageTime(msg.created_at)">
+                                                </span>
+                                            </div>
+                                            
+                                            <!-- Message content -->
+                                            <p class="text-sm" x-text="msg.message"></p>
+                                            
+                                            <!-- Attachment -->
+                                            <template x-if="msg.attachment">
+                                                <div class="mt-2 pt-2 border-t border-gray-300 border-opacity-50">
+                                                    <div class="flex items-center space-x-2">
+                                                        <template x-if="msg.attachment_mime && msg.attachment_mime.startsWith('image/')">
+                                                            <img :src="msg.attachment_url" 
+                                                                :alt="msg.attachment_name"
+                                                                class="w-16 h-16 object-cover rounded cursor-pointer"
+                                                                @click="window.open(msg.attachment_url, '_blank')">
+                                                        </template>
+                                                        <template x-if="!msg.attachment_mime || !msg.attachment_mime.startsWith('image/')">
+                                                            <div class="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
+                                                                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                                </svg>
+                                                            </div>
+                                                        </template>
+                                                        <div class="flex-1 min-w-0">
+                                                            <a :href="msg.attachment_url" 
+                                                            target="_blank"
+                                                            class="text-xs font-medium text-blue-600 hover:text-blue-800 truncate block"
+                                                            x-text="msg.attachment_name">
+                                                            </a>
+                                                            <p class="text-xs text-gray-500" 
+                                                            x-text="formatFileSize(msg.attachment_size)">
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            
+                                            <!-- Read status -->
+                                            <div class="text-xs text-gray-400 mt-1">
+                                                <template x-if="msg.sender_id == {{ auth()->id() }}">
+                                                    <span x-text="msg.is_read ? '✓✓ Dibaca' : '✓ Terkirim'"></span>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+
+                            <!-- No Messages -->
+                            <template x-if="!transaction.isLoadingMessages && (!transaction.messages || transaction.messages.length === 0)">
+                                <div class="text-center py-6 text-gray-500">
+                                    <svg class="w-8 h-8 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                    </svg>
+                                    <p class="text-sm">Belum ada percakapan</p>
+                                    <p class="text-xs">Mulai percakapan dengan admin</p>
+                                </div>
+                            </template>
+                        </div>
+                        <!-- Message Input Form -->
+                        <div class="mt-3">
+                            <form @submit.prevent="sendMessage(transaction.id)" class="space-y-3">
+                                <div>
+                                    <!-- ✅ FIX: Access via getUIState() -->
+                                    <textarea x-model="getUIState(transaction.id).newMessage" 
+                                            :placeholder="'Kirim pesan ke admin terkait transaksi ' + (transaction.order_id || '')"
+                                            class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                                            rows="2"
+                                            :disabled="getUIState(transaction.id).isSending"
+                                            required></textarea>
+                                </div>
+                                
+                                <div class="flex items-center justify-between">
+                                    <!-- Attachment -->
+                                    <div class="flex items-center space-x-2">
+                                        <label :for="'attachment-' + transaction.id" 
+                                            class="cursor-pointer p-1.5 text-gray-500 hover:text-blue-600 rounded hover:bg-gray-100">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                            </svg>
+                                            <input type="file" 
+                                                :id="'attachment-' + transaction.id" 
+                                                :name="'attachment-' + transaction.id"
+                                                class="hidden"
+                                                @change="handleAttachmentChange(transaction.id, $event)">
+                                        </label>
+                                        
+                                        <!-- ✅ FIX: Attachment Preview -->
+                                        <template x-if="getUIState(transaction.id).attachmentPreview">
+                                            <div class="flex items-center space-x-1 bg-blue-50 px-2 py-1 rounded text-xs">
+                                                <span x-text="getUIState(transaction.id).attachmentPreview.name" class="text-blue-700"></span>
+                                                <button type="button" 
+                                                        @click="removeAttachment(transaction.id)"
+                                                        class="text-red-500 hover:text-red-700">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Send Button -->
+                                    <div class="flex items-center space-x-2">
+                                        <!-- ✅ FIX: Character counter -->
+                                        <span class="text-xs text-gray-500" 
+                                            :class="{ 'text-red-500': (getUIState(transaction.id).newMessage?.length || 0) > 1000 }">
+                                            <span x-text="getUIState(transaction.id).newMessage?.length || 0"></span>/1000
+                                        </span>
+                                        
+                                        <!-- ✅ FIX: Button state -->
+                                        <button type="submit" 
+                                                :disabled="getUIState(transaction.id).isSending || !getUIState(transaction.id).newMessage?.trim()"
+                                                class="px-4 py-2 text-sm bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                            <span x-show="!getUIState(transaction.id).isSending">Kirim</span>
+                                            <span x-show="getUIState(transaction.id).isSending" class="flex items-center">
+                                                <svg class="animate-spin h-4 w-4 text-white mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Mengirim...
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Unread Message Notification -->
+                        <template x-if="transaction.unreadCount && transaction.unreadCount > 0">
+                            <div class="mt-2">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-blue-600 font-medium">
+                                        <span x-text="transaction.unreadCount"></span> pesan belum dibaca
+                                    </span>
+                                    <button @click="markAllAsRead(transaction.id)" 
+                                            class="text-blue-500 hover:text-blue-700">
+                                        Tandai sudah dibaca
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <!-- END MESSAGING SECTION -->
             
                 </div>
             </template>

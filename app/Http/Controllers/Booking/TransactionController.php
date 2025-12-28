@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Booking;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\Transaction;
 use Illuminate\Support\Str;
 use Midtrans\Config;
@@ -15,6 +16,7 @@ use Midtrans\Notification;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\Room;
+use App\Models\LunchOption;
 use Carbon\Carbon;
 
 
@@ -86,10 +88,12 @@ class TransactionController extends Controller
 // function kirim data baru ke tabel transaction 
 public function store(Request $request)
 {
+    DB::beginTransaction();
+
     try {
         Log::info('Booking request received', $request->all());
 
-        // ✅ VALIDASI INPUT - NULLABLE untuk field yang tidak selalu dikirim
+        // ✅ VALIDASI INPUT
         $validated = $request->validate([
             'city_id'       => 'required|exists:citys,id',
             'location_id'   => 'required|exists:locations,id',
@@ -118,19 +122,20 @@ public function store(Request $request)
             'admin_fee'     => 'required|numeric|min:0',
             'deposit'       => 'required|numeric|min:0',
             'total_amount'  => 'required|numeric|min:0',
+
+            'lunches' => 'nullable|array',
+            'lunches.*.lunch_option_id' => 'required_with:lunches|exists:lunch_options,id',
+            'lunches.*.quantity' => 'required_with:lunches|integer|min:1',
+            'lunch_total' => 'nullable|numeric|min:0'
         ]);
 
         $userId = Auth::id();
-        $amount = (int) $validated['total_amount'];
+        $amount = (int) round($validated['total_amount']);
         $orderId = 'ORDER-' . strtoupper(Str::random(10)) . '-' . time();
 
         // ✅ NORMALISASI DURASI
         $duration = [
-            'jam'    => null,
-            'hari'   => null,
-            'minggu' => null,
-            'bulan'  => null,
-            'tahun'  => null,
+            'jam'    => null, 'hari' => null, 'minggu' => null, 'bulan' => null, 'tahun' => null,
         ];
 
         switch ($validated['paket']) {
@@ -141,20 +146,19 @@ public function store(Request $request)
             case 'yearly':  $duration['tahun']  = $validated['tahun'] ?? null; break;
         }
 
-        // ✅ VALIDASI durasi tidak boleh kosong
         $durationValue = $duration['jam'] ?? $duration['hari'] ?? $duration['minggu'] ?? $duration['bulan'] ?? $duration['tahun'];
         if (empty($durationValue)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Durasi pemesanan tidak valid',
-            ], 422);
+            return response()->json(['success' => false, 'message' => 'Durasi pemesanan tidak valid'], 422);
         }
 
-      // ✅ BENAR - Cek dulu apakah key exists
         $room = !empty($validated['room_id']) ? Room::find($validated['room_id']) : null;
-        $room_name = $room ? "Ruang " . $room->room_number : $validated['room_type'];
+        if ($room && !empty($room->room_number)) {
+            $room_name = $validated['room_type'] . ' - Ruang ' . $room->room_number;
+        } else {
+            $room_name = $validated['room_type']; // ✅ Langsung pakai room_type tanpa prefix "Meeting Room"
+        }
 
-        // ✅ SIMPAN TRANSAKSI
+        // ✅ SIMPAN TRANSAKSI AWAL
         $transaction = Transaction::create([
             'user_id'      => $userId,
             'city_id'      => $validated['city_id'],
@@ -179,8 +183,9 @@ public function store(Request $request)
             'nama_lengkap' => $validated['nama_lengkap'],
             'email'        => $validated['email'],
 
-            'deposit'      => (int) $validated['deposit'],
+            'deposit'      => (int) round($validated['deposit']),
             'gross_amount' => $amount,
+            'lunch_total'  => 0,
 
             'order_id'     => $orderId,
             'payment_type' => null,
@@ -190,20 +195,97 @@ public function store(Request $request)
             'is_read'      => false,
         ]);
 
-        Log::info('Transaction created', ['transaction_id' => $transaction->id , 'is_read' => $transaction->is_read]);
+        // ✅ PROCESS LUNCH ITEMS - GUNAKAN HARGA DARI DATABASE
+        $calculatedLunchTotal = 0;
+        if (!empty($validated['lunches']) && is_array($validated['lunches'])) {
+            Log::info('Processing lunch items', ['count' => count($validated['lunches'])]);
 
-        // ✅ BUAT LABEL DURASI
-        $duration_label = $this->generateDurationLabel($validated['paket'], $duration);
+            foreach ($validated['lunches'] as $index => $lunchData) {
+                $lunchOption = LunchOption::find($lunchData['lunch_option_id']);
+                if (!$lunchOption) {
+                    throw new \Exception("Lunch option ID {$lunchData['lunch_option_id']} tidak ditemukan");
+                }
+                if (!$lunchOption->is_available) {
+                    throw new \Exception("Lunch option '{$lunchOption->name}' sedang tidak tersedia");
+                }
 
-        // ✅ Hitung item price (gross_amount - deposit)
-        $itemPrice = $amount - (int) $validated['deposit'];
-        
-        // ✅ Pastikan tidak ada nilai negatif
-        if ($itemPrice < 0) {
-            $itemPrice = 0;
+                // ✅ GUNAKAN HARGA DARI DATABASE, BUKAN DARI CLIENT
+                $qty = (int) ($lunchData['quantity'] ?? 1);
+                $unitPrice = (int) round($lunchOption->price); // HARGA DARI DB
+
+                $lunchItem = $transaction->lunches()->create([
+                    'lunch_option_id' => $lunchData['lunch_option_id'],
+                    'quantity' => $qty,
+                    'unit_price' => $unitPrice,
+                ]);
+
+                $lineSubtotal = $qty * $unitPrice;
+                $calculatedLunchTotal += $lineSubtotal;
+
+                Log::info("Lunch item saved", [
+                    'id' => $lunchItem->id,
+                    'lunch_option' => $lunchOption->name,
+                    'quantity' => $qty,
+                    'unit_price' => $unitPrice,
+                    'subtotal' => $lineSubtotal,
+                ]);
+            }
+
+            $transaction->update(['lunch_total' => $calculatedLunchTotal]);
+            Log::info('Lunch processing completed', [
+                'transaction_id' => $transaction->id,
+                'items_count' => $transaction->lunches()->count(),
+                'lunch_total' => $calculatedLunchTotal
+            ]);
         }
 
-        // ✅ === PARAM MIDTRANS ===
+        // ✅ HITUNG ULANG HARGA DENGAN LUNCH TOTAL YANG BARU
+        $lunchTotal = (int) $transaction->lunch_total;
+        $subtotalFromClient = (int) round($validated['subtotal']);
+        $deposit = (int) round($validated['deposit']);
+        $adminFee = (int) round($validated['admin_fee']);
+
+        // ✅ VALIDASI: JIKA LUNCH TOTAL BERBEDA DENGAN CLIENT, GUNAKAN YANG SERVER-SIDE
+        $serverSideSubtotal = $subtotalFromClient;
+        if ($calculatedLunchTotal != $validated['lunch_total']) {
+            Log::warning('Lunch total mismatch, using server-side calculation', [
+                'client_lunch_total' => $validated['lunch_total'],
+                'server_lunch_total' => $calculatedLunchTotal
+            ]);
+            // Sesuaikan room price berdasarkan lunch total yang benar
+            $serverSideSubtotal = $subtotalFromClient - $validated['lunch_total'] + $calculatedLunchTotal;
+        }
+
+        $roomPrice = $serverSideSubtotal - $lunchTotal;
+
+        if ($roomPrice < 0) {
+            throw new \Exception("Perhitungan room price menghasilkan nilai negatif.");
+        }
+
+        // ✅ VALIDASI FINAL AMOUNT
+        $expectedTotal = $serverSideSubtotal + $deposit;
+        if ($expectedTotal !== $amount) {
+            Log::warning('Amount mismatch, adjusting gross_amount', [
+                'expected' => $expectedTotal,
+                'actual' => $amount
+            ]);
+            // Update amount dengan perhitungan server-side
+            $amount = $expectedTotal;
+        }
+
+        // ✅ KONFIGURASI MIDTRANS - PASTIKAN INI DIPANGGIL
+        \Midtrans\Config::$serverKey = config('midtrans.server_key');
+        \Midtrans\Config::$isProduction = config('midtrans.is_production', false);
+        \Midtrans\Config::$isSanitized = true;
+        \Midtrans\Config::$is3ds = true;
+
+        Log::info('Midtrans Config', [
+            'is_production' => config('midtrans.is_production'),
+            'server_key_prefix' => substr(config('midtrans.server_key'), 0, 10),
+            'merchant_id' => config('midtrans.merchant_id')
+        ]);
+
+        // ✅ BUILD MIDTRANS PARAMS - DENGAN DETAIL LENGKAP UNTUK INVOICE
         $params = [
             'transaction_details' => [
                 'order_id'     => $orderId,
@@ -212,164 +294,236 @@ public function store(Request $request)
             'item_details' => [],
         ];
 
-        // ✅ Item booking dengan nama yang lebih pendek (max 50 karakter)
+        // ✅ ITEM 1: ROOM BOOKING DENGAN DETAIL LENGKAP
+        if ($roomPrice > 0) {
+            $params['item_details'][] = [
+                'id'       => 'room-' . ($transaction->room_id ?? 'virtual'),
+                'price'    => (int) $roomPrice,
+                'quantity' => 1,
+                'name'     => $room_name,
+            ];
+        }
+
+        // ✅ ITEM 2: PAKET DURASI (PRICE 0 UNTUK INFO)
         $paketLabel = ucfirst($validated['paket']);
-        $bookingName = "{$validated['room_type']} - {$room_name}";
-        $durationName = "Paket {$paketLabel} ({$duration_label})";
-        
-        if ($itemPrice > 0) {
-            $params['item_details'][] = [
-                'id'       => 'room_booking',
-                'price'    => $itemPrice,
-                'quantity' => 1,
-                'name'     => substr($bookingName, 0, 50), // Batasi 50 karakter
-            ];
-            
-            // Tambahkan durasi sebagai item terpisah
-            $params['item_details'][] = [
-                'id'       => 'duration_info',
-                'price'    => 0,
-                'quantity' => 1,
-                'name'     => $durationName,
-            ];
+        $durasiText = '';
+        switch ($validated['paket']) {
+            case 'hourly':
+                $durasiText = $duration['jam'] . ' Jam';
+                break;
+            case 'daily':
+                $durasiText = $duration['hari'] . ' Hari';
+                break;
+            case 'weekly':
+                $durasiText = $duration['minggu'] . ' Minggu';
+                break;
+            case 'monthly':
+                $durasiText = $duration['bulan'] . ' Bulan';
+                break;
+            case 'yearly':
+                $durasiText = $duration['tahun'] . ' Tahun';
+                break;
         }
 
-        // ✅ Tambahkan deposit jika ada
-        if ($transaction->deposit > 0) {
-            $params['item_details'][] = [
-                'id'       => 'deposit',
-                'price'    => (int) $transaction->deposit,
-                'quantity' => 1,
-                'name'     => 'Deposit',
-            ];
-        }
-
-        // ✅ INFORMASI BOOKING (dengan quantity 1 dan price 0)
         $params['item_details'][] = [
-            'id'       => 'info_header',
+            'id'       => 'package-info',
+            'price'    => 0,
+            'quantity' => 1,
+            'name'     => "Paket {$paketLabel} ({$durasiText})",
+        ];
+
+        // ✅ ITEM 3: HEADER INFO BOOKING
+        $params['item_details'][] = [
+            'id'       => 'info-booking-header',
             'price'    => 0,
             'quantity' => 1,
             'name'     => '== Info Booking ==',
         ];
 
-        // ✅ Tanggal Booking
-        if (!empty($transaction->booking_date)) {
+        // ✅ ITEM 4: TANGGAL BOOKING
+        if (!empty($validated['booking_date'])) {
+            $formattedDate = \Carbon\Carbon::parse($validated['booking_date'])->format('d F Y');
             $params['item_details'][] = [
-                'id'       => 'booking_date',
+                'id'       => 'booking-date',
                 'price'    => 0,
                 'quantity' => 1,
-                'name'     => 'Tanggal: ' . \Carbon\Carbon::parse($transaction->booking_date)->format('d F Y'),
+                'name'     => "Tanggal: {$formattedDate}",
             ];
         }
 
-        // ✅ Jam Mulai (untuk hourly/daily)
-        if (!empty($transaction->start_time) && in_array($validated['paket'], ['hourly', 'daily'])) {
+        // ✅ ITEM 5: JAM MULAI
+        if (!empty($validated['start_time'])) {
             $params['item_details'][] = [
-                'id'       => 'start_time',
+                'id'       => 'start-time',
                 'price'    => 0,
                 'quantity' => 1,
-                'name'     => 'Jam Mulai: ' . $transaction->start_time,
+                'name'     => "Jam Mulai: {$validated['start_time']}",
             ];
         }
 
-        // ✅ Jumlah Orang
-        if (!empty($transaction->jumlah_orang)) {
+        // ✅ ITEM 6: JUMLAH ORANG
+        if (!empty($validated['jumlah_orang'])) {
             $params['item_details'][] = [
-                'id'       => 'total_people',
+                'id'       => 'guest-count',
                 'price'    => 0,
                 'quantity' => 1,
-                'name'     => 'Jumlah Orang: ' . $transaction->jumlah_orang . ' orang',
+                'name'     => "Jumlah Orang: {$validated['jumlah_orang']} orang",
             ];
         }
 
-        // ✅ INFORMASI PEMESAN
+        // ✅ ITEM 7: HEADER INFO PEMESAN
         $params['item_details'][] = [
-            'id'       => 'customer_header',
+            'id'       => 'info-customer-header',
             'price'    => 0,
             'quantity' => 1,
             'name'     => '== Info Pemesan ==',
         ];
 
+        // ✅ ITEM 8: NAMA PEMESAN
         $params['item_details'][] = [
-            'id'       => 'customer_name',
+            'id'       => 'customer-name',
             'price'    => 0,
             'quantity' => 1,
-            'name'     => 'Nama: ' . $transaction->nama_lengkap,
+            'name'     => "Nama: {$validated['nama_lengkap']}",
         ];
 
+        // ✅ ITEM 9: EMAIL PEMESAN
         $params['item_details'][] = [
-            'id'       => 'customer_email',
+            'id'       => 'customer-email',
             'price'    => 0,
             'quantity' => 1,
-            'name'     => 'Email: ' . $transaction->email,
+            'name'     => "Email: {$validated['email']}",
         ];
 
-        if (!empty($transaction->phone)) {
+        // ✅ ITEM 10: NO HP PEMESAN
+        if (!empty($validated['phone'])) {
             $params['item_details'][] = [
-                'id'       => 'customer_phone',
+                'id'       => 'customer-phone',
                 'price'    => 0,
                 'quantity' => 1,
-                'name'     => 'No HP: ' . $transaction->phone,
+                'name'     => "No HP: {$validated['phone']}",
             ];
         }
 
+        // ✅ ITEM 11: LUNCH ITEMS (JIKA ADA)
+        if ($transaction->lunches()->count() > 0) {
+            foreach ($transaction->lunches as $index => $lunchItem) {
+                $lunchName = $lunchItem->lunchOption->name ?? 'Lunch Item';
+                $params['item_details'][] = [
+                    'id'       => 'lunch-' . $lunchItem->lunch_option_id,
+                    'price'    => (int) $lunchItem->unit_price,
+                    'quantity' => (int) $lunchItem->quantity,
+                    'name'     => $lunchName,
+                ];
+            }
+        }
+
+        // ✅ ITEM 12: DEPOSIT (JIKA ADA)
+        if ($deposit > 0) {
+            $params['item_details'][] = [
+                'id'       => 'deposit',
+                'price'    => (int) $deposit,
+                'quantity' => 1,
+                'name'     => 'Deposit',
+            ];
+        }
+        
         // ✅ CUSTOMER DETAILS
         $params['customer_details'] = [
-            'first_name' => $transaction->nama_lengkap,
+            'first_name' => substr($transaction->nama_lengkap, 0, 50),
             'email'      => $transaction->email,
             'phone'      => $transaction->phone ?? '',
         ];
 
-        // ✅ CALLBACK
+        // ✅ CALLBACKS
         $params['callbacks'] = [
             'finish'  => route('payment.finish') . '?order_id=' . $orderId,
             'error'   => route('payment.error') . '?order_id=' . $orderId,
             'pending' => route('payment.unfinish') . '?order_id=' . $orderId,
         ];
 
-        Log::info('Midtrans params prepared', ['params' => $params]);
+        // ✅ VALIDASI FINAL ITEMS TOTAL
+        $itemsTotal = 0;
+        foreach ($params['item_details'] as $item) {
+            $itemsTotal += ((int)$item['price'] * (int)$item['quantity']);
+        }
 
-        
-        // ✅ BUAT TRANSAKSI DI MIDTRANS (PERBAIKAN PALING PENTING)
-        $midtrans = \Midtrans\Snap::createTransaction($params);
-        
-        // ✅ SIMPAN TOKEN & REDIRECT URL
+        // ✅ LOG DETAILED PARAMETERS UNTUK DEBUG
+        Log::info('=== DETAILED MIDTRANS PARAMETERS ===', [
+            'order_id' => $orderId,
+            'gross_amount' => $amount,
+            'calculated_items_total' => $itemsTotal,
+            'item_count' => count($params['item_details']),
+            'environment' => config('midtrans.is_production') ? 'production' : 'sandbox'
+        ]);
+
+        // Log setiap item secara terpisah
+        foreach ($params['item_details'] as $index => $item) {
+            Log::info("Item {$index}", [
+                'id' => $item['id'],
+                'name' => $item['name'],
+                'price' => $item['price'],
+                'quantity' => $item['quantity'],
+                'line_total' => $item['price'] * $item['quantity']
+            ]);
+        }
+
+        if ($itemsTotal !== $amount) {
+            throw new \Exception("Total item_details ({$itemsTotal}) tidak sama dengan gross_amount ({$amount}).");
+        }
+
+        // ✅ CREATE MIDTRANS TRANSACTION
+        try {
+            Log::info('Creating Midtrans transaction...', ['order_id' => $orderId]);
+            $midtrans = \Midtrans\Snap::createTransaction($params);
+            Log::info('Midtrans transaction created successfully', [
+                'token' => $midtrans->token,
+                'redirect_url' => $midtrans->redirect_url
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Midtrans API Error', [
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'order_id' => $orderId
+            ]);
+            throw new \Exception("Gagal membuat transaksi Midtrans: " . $e->getMessage());
+        }
+
+        // ✅ UPDATE TRANSAKSI DENGAN DATA MIDTRANS
         $transaction->update([
-            "snap_token"   => $midtrans->token,
-            "redirect_url" => $midtrans->redirect_url,
-        ]);
-        
-        Log::info("Snap Token Generated", [
-            "order_id" => $orderId,
-            "token"    => $midtrans->token
-        ]);
-        
-        return response()->json([
-            'success'     => true,
-            'message'     => 'Transaksi berhasil dibuat',
-            'snap_token'  => $midtrans->token, // ✅ PERBAIKAN DI SINI
-            'redirect_url'=> $midtrans->redirect_url,
-            'order_id'    => $orderId,
-            'transaction' => $transaction,
+            'snap_token'   => $midtrans->token,
+            'redirect_url' => $midtrans->redirect_url,
+            'gross_amount' => $amount,
         ]);
 
+        Log::info("=== TRANSACTION FINALIZED ===", [
+            'order_id' => $orderId,
+            'token' => $midtrans->token,
+            'amount' => $amount,
+        ]);
+
+        DB::commit();
+
+        return response()->json([
+            'success'      => true,
+            'message'      => 'Transaksi berhasil dibuat',
+            'snap_token'   => $midtrans->token,
+            'redirect_url' => $midtrans->redirect_url,
+            'order_id'     => $orderId,
+            'transaction'  => $transaction->load('lunches.lunchOption'),
+        ]);
 
     } catch (ValidationException $e) {
+        DB::rollBack();
         Log::error('Validation error', ['errors' => $e->errors()]);
-        
-        return response()->json([
-            'success' => false,
-            'message' => 'Validation error',
-            'errors'  => $e->errors(),
-        ], 422);
-
-    } catch (Exception $e) {
+        return response()->json(['success' => false, 'message' => 'Validation error', 'errors' => $e->errors()], 422);
+    } catch (\Exception $e) {
+        DB::rollBack();
         Log::error('Transaction creation failed', [
             'error'   => $e->getMessage(),
             'trace'   => $e->getTraceAsString(),
             'request' => $request->all()
         ]);
-
         return response()->json([
             'success' => false,
             'message' => 'Terjadi kesalahan sistem. Silakan coba lagi.',

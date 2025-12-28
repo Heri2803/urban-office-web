@@ -177,9 +177,9 @@
                 <h3 class="text-lg font-semibold text-gray-800">Transaksi Terbaru</h3>
                 <p class="text-sm text-gray-500 mt-1">5 transaksi terakhir</p>
             </div>
-            <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-700 transition self-start sm:self-auto">
+            <!-- <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-700 transition self-start sm:self-auto">
                 Lihat Semua →
-            </a>
+            </a> -->
         </div>
 
         <div class="overflow-x-auto -mx-2 sm:mx-0">

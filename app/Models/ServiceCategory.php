@@ -11,4 +11,9 @@ class ServiceCategory extends Model
     {
         return $this->hasMany(ServicePrice::class);
     }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'service_category_id');
+    }
 }

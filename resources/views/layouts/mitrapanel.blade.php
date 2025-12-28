@@ -55,8 +55,8 @@
     <div class="content-wrapper md:ml-60 pb-20 md:pb-0">
         
         {{-- HEADER PROFIL (sticky di atas) --}}
-        <header class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
-            <div class="px-4 md:px-6">
+        <header class="sticky top-0 z-40">
+            <div class="px-4 md:px-6 bg-white rounded-xl shadow-sm border border-gray-200">
                 @include('layouts.mitrapanel.components.header-profile')
             </div>
         </header>

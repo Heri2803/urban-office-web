@@ -107,11 +107,11 @@
                                             </option>
                                         </template>
                                     </template>
-                        
+
                                     <template x-if="availableRooms && availableRooms.length === 0">
                                         <option disabled value="">Tidak ada ruangan tersedia untuk lokasi ini</option>
                                     </template>
-                        
+
                                 </select>
                         
                                 <!-- Detail ruangan -->
@@ -369,7 +369,10 @@
                                 <label class="block text-sm font-semibold text-gray-800 mb-2">
                                     Tanggal Mulai <span class="text-red-500">*</span>
                                 </label>
-                                <input type="date" x-model="bookingDate" :min="getTodayDate()"
+                                <input type="date" 
+                                    x-model="bookingDate" 
+                                    :min="getTodayDate()"
+                                    @change="loadAvailableRooms()" 
                                     class="form-input border-2 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 rounded-lg p-3 w-full text-gray-800 font-medium transition-all duration-200 hover:border-gray-400">
                             </div>
                             <div class="mt-4">
@@ -377,10 +380,95 @@
                                     Waktu Mulai Akses <span class="text-red-500">*</span>
                                 </label>
                                 <input type="time"
-                                       x-model="startTime"
-                                       class="form-input border-2 border-gray-300 focus:border-orange-500 focus:ring 
-                                              focus:ring-orange-200 rounded-lg p-3 w-full text-gray-800 font-medium
-                                              placeholder-gray-500 transition-all duration-200 hover:border-gray-400">
+                                    x-model="startTime"
+                                    @change="loadAvailableRooms()" 
+                                    class="form-input border-2 border-gray-300 focus:border-orange-500 focus:ring 
+                                            focus:ring-orange-200 rounded-lg p-3 w-full text-gray-800 font-medium
+                                            placeholder-gray-500 transition-all duration-200 hover:border-gray-400">
+                            </div>
+                        </div>
+
+                        <div x-show="['Meeting Room', 'Event Space', 'Private Office', 'Coworking Space'].includes(selectedRoomType)" x-transition class="bg-orange-50 border border-orange-200 rounded-xl p-4 md:p-6">
+                            <div class="mb-4">
+                                <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-2">
+                                    <svg class="w-5 h-5 mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Tambah Lunch/Catering
+                                </h3>
+                                <p class="text-sm text-gray-600">Opsional - pilih menu lunch Anda</p>
+                            </div>
+                        
+                            {{-- Simple Dropdown --}}
+                            <div class="space-y-4">
+                                {{-- Pilih Menu Lunch --}}
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-800 mb-2">
+                                        Pilih Menu Lunch
+                                    </label>
+                                    <select x-model="selectedLunchOption" 
+                                            @change="onLunchOptionChange()"
+                                            class="form-select border-2 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 rounded-lg p-3 w-full text-gray-800 font-medium transition-all duration-200 hover:border-gray-400 bg-white">
+                                        <option value="">-- Pilih Menu Lunch --</option>
+                                        <template x-for="lunch in availableLunches" :key="lunch.id">
+                                            <option :value="lunch.id" 
+                                                    x-text="`${lunch.name} - Rp ${formatPrice(lunch.price)}`">
+                                            </option>
+                                        </template>
+                                    </select>
+                                </div>
+                        
+                                {{-- Quantity Input --}}
+                                <div x-show="selectedLunchOption">
+                                    <label class="block text-sm font-semibold text-gray-800 mb-2">
+                                        Jumlah Porsi <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           x-model.number="lunchQuantity"
+                                           min="1" 
+                                           max="50"
+                                           @input="calculateLunchTotal()"
+                                           class="form-input border-2 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 rounded-lg p-3 w-full text-gray-800 font-medium transition-all duration-200 hover:border-gray-400 bg-white"
+                                           placeholder="Masukkan jumlah porsi">
+                                    <p class="text-xs text-gray-500 mt-1">* Minimum 1 porsi, maksimal 50 porsi</p>
+                                </div>
+                        
+                                {{-- Lunch Summary --}}
+                                <div x-show="selectedLunchOption && lunchQuantity > 0" 
+                                     class="bg-green-50 border border-green-200 rounded-lg p-4">
+                                    <h4 class="font-semibold text-green-800 mb-2 flex items-center">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        Ringkasan Lunch
+                                    </h4>
+                                    <div class="space-y-1 text-sm text-green-700">
+                                        <div class="flex justify-between">
+                                            <span x-text="getSelectedLunchName()"></span>
+                                            <span x-text="'Rp ' + formatPrice(getSelectedLunchPrice())"></span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span>Jumlah:</span>
+                                            <span x-text="lunchQuantity + ' porsi'"></span>
+                                        </div>
+                                        <div class="flex justify-between font-semibold border-t border-green-200 pt-1">
+                                            <span>Total Lunch:</span>
+                                            <span x-text="'Rp ' + formatPrice(lunchTotal)"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                        
+                                {{-- Clear Button --}}
+                                <div x-show="selectedLunchOption" class="flex justify-end">
+                                    <button type="button"
+                                            @click="clearLunchSelection()"
+                                            class="text-red-500 hover:text-red-700 text-sm font-semibold flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                        Hapus Lunch
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -440,11 +528,43 @@
                                     <span class="text-gray-700">Detail:</span>
                                     <span class="font-semibold text-right" x-text="summary.details"></span>
                                 </div>
+                                
+                                {{-- ✅ LUNCH BREAKDOWN --}}
+                                <template x-if="selectedLunchOption && lunchQuantity > 0">
+                                    <div>
+                                        <div class="border-t border-orange-300 pt-2 mt-2"></div>
+                                        <div class="text-green-600 font-semibold mb-2">🍽️ Lunch/Catering:</div>
+                                        <div class="flex justify-between text-green-700 text-xs">
+                                            <span x-text="`${lunchQuantity}x ${getSelectedLunchName()}`"></span>
+                                            <span x-text="formatCurrency(lunchTotal)"></span>
+                                        </div>
+                                        <div class="flex justify-between text-green-700 font-semibold border-t border-green-200 pt-1 mt-1 text-sm">
+                                            <span>Subtotal Lunch:</span>
+                                            <span x-text="formatCurrency(lunchTotal)"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                                
                                 <div class="border-t border-orange-300 pt-2 mt-2"></div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-700">Subtotal:</span>
-                                    <span class="font-semibold" x-text="formatCurrency(summary.subtotal)"></span>
+                                
+                                {{-- ✅ BREAKDOWN SUBTOTAL --}}
+                                <div class="space-y-1">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-700">Subtotal Layanan:</span>
+                                        <span class="font-semibold" x-text="formatCurrency(summary.roomSubtotal)"></span>
+                                    </div>
+                                    <template x-if="selectedLunchOption && lunchQuantity > 0">
+                                        <div class="flex justify-between text-green-600">
+                                            <span>Subtotal Lunch:</span>
+                                            <span class="font-semibold" x-text="formatCurrency(lunchTotal)"></span>
+                                        </div>
+                                    </template>
+                                    <div class="flex justify-between border-t border-gray-300 pt-1">
+                                        <span class="text-gray-700 font-semibold">Total Subtotal:</span>
+                                        <span class="font-semibold" x-text="formatCurrency(summary.subtotal)"></span>
+                                    </div>
                                 </div>
+                                
                                 <div class="flex justify-between text-orange-600">
                                     <span>Admin Fee (10%):</span>
                                     <span class="font-semibold" x-text="formatCurrency(summary.adminFee)"></span>
@@ -586,9 +706,19 @@ function enhancedBookingForm() {
             details: ''
         },
 
+        availableLunches: [],
+        selectedLunchOption: '',        
+        lunchQuantity: 1,                
+        lunchTotal: 0,                  
+        showLunchOptions: false,        
+        selectedLunches: [],        
+
         // Initialize
         async initForm() {
             await this.loadCities();
+            if (this.location) {
+                await this.loadLunchOptions();
+            }
         },
 
         // Load cities from Backend
@@ -665,42 +795,180 @@ function enhancedBookingForm() {
         async onLocationChange() {
             this.availableRooms = [];
             this.selectedRoom = '';
+            this.availableLunches = [];
+            this.selectedLunchOption = '';
+            this.lunchQuantity = 1;
+            this.lunchTotal = 0;
             
-            if (!this.location || !this.selectedRoomType) return;
+            if (!this.location) return;
+            
+            // Load lunch options untuk location baru
+            await this.loadLunchOptions();
             
             // Only load rooms for Private Office and Meeting Room
             if (!['Private Office', 'Meeting Room', 'Sharing Room'].includes(this.selectedRoomType)) return;
             
+            // ✅ PASTIKAN: Hanya load rooms jika tanggal & waktu sudah dipilih
+            if (this.bookingDate && this.startTime) {
+                await this.loadAvailableRooms();
+            } else {
+                console.log('⏳ Menunggu input tanggal dan waktu...');
+                this.availableRooms = [];
+            }
+        },
+
+        // ✅ FUNCTION BARU: Load rooms dengan parameter tanggal & waktu
+        loadAvailableRooms() {
+            console.log('🔍 CURRENT FORM VALUES:', {
+                bookingDate: this.bookingDate,
+                startTime: this.startTime,
+                selectedRoomType: this.selectedRoomType,
+                location: this.location
+            });
+            
+            // ✅ VALIDASI LENGKAP: Pastikan SEMUA required fields terisi
+            if (!this.bookingDate || !this.startTime || !this.location || !this.selectedRoomType) {
+                console.warn('⚠️ Missing required fields:', {
+                    missing: {
+                        bookingDate: !this.bookingDate,
+                        startTime: !this.startTime, 
+                        location: !this.location,
+                        selectedRoomType: !this.selectedRoomType
+                    }
+                });
+                this.availableRooms = [];
+                return;
+            }
+            
+            this.isLoadingRooms = true;
+            
+            // ✅ PASTIKAN parameter tidak kosong
+            const url = `/rooms?location_id=${this.location}&room_type=${this.selectedRoomType}&booking_date=${this.bookingDate}&start_time=${this.startTime}`;
+            
+            console.log('🔗 Fetching rooms from:', url);
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('🔍 ROOM DATA FROM BACKEND:', data);
+                    this.availableRooms = data.data || [];
+                })
+                .catch(error => {
+                    console.error('❌ Error loading rooms:', error);
+                    this.availableRooms = [];
+                })
+                .finally(() => {
+                    this.isLoadingRooms = false;
+                });
+        },
+        
+        // ✅ TAMBAH WATCHERS untuk real-time availability check
+        // Di dalam return {} Alpine.js, tambahkan:
+        watch: {
+            bookingDate(value) {
+                if (value && this.startTime && this.location && 
+                    ['Private Office', 'Meeting Room', 'Sharing Room'].includes(this.selectedRoomType)) {
+                    // Debounce untuk prevent multiple calls
+                    setTimeout(() => {
+                        this.loadAvailableRooms();
+                    }, 500);
+                }
+            },
+            startTime(value) {
+                if (value && this.bookingDate && this.location && 
+                    ['Private Office', 'Meeting Room', 'Sharing Room'].includes(this.selectedRoomType)) {
+                    // Debounce untuk prevent multiple calls
+                    setTimeout(() => {
+                        this.loadAvailableRooms();
+                    }, 500);
+                }
+            }
+        },
+
+        async onLunchOptionChange() {
+            if (this.selectedLunchOption) {
+                this.lunchQuantity = 1; // Reset quantity to 1
+                this.calculateLunchTotal();
+            } else {
+                this.lunchTotal = 0;
+            }
+            this.calculatePrice(); // Recalculate overall price
+        },
+        
+        // ✅ LOAD LUNCH OPTIONS
+        async loadLunchOptions() {
+            if (!this.location) {
+                this.availableLunches = [];
+                return;
+            }
+            
             try {
-                // Encode room type for URL
-                const encodedRoomType = encodeURIComponent(this.selectedRoomType);
-                const response = await fetch(
-                    `/rooms?location_id=${this.location}&room_type=${encodedRoomType}`
-                );
+                console.log('🔄 Loading lunch options for location:', this.location);
+                
+                const response = await fetch(`/lunch-options/location/${this.location}`);
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
                 const result = await response.json();
                 
-                if (!result.success) {
-                    throw new Error(result.message || 'Failed to load rooms');
+                if (result.success) {
+                    this.availableLunches = result.data;
+                    console.log('✅ Loaded lunch options:', this.availableLunches);
+                } else {
+                    this.availableLunches = [];
+                    console.warn('⚠️ No lunch options available');
                 }
-                
-                this.availableRooms = result.data || [];
-                
-                
-                // Check if no rooms available
-                if (result.count === 0) {
-                    alert(`Tidak ada ruangan ${this.selectedRoomType} tersedia di lokasi ini`);
-                }
-                
             } catch (error) {
-                console.error('❌ Error loading rooms:', error);
-                alert('Gagal memuat daftar ruangan: ' + error.message);
-                this.availableRooms = [];
+                console.error('❌ Error loading lunch options:', error);
+                this.availableLunches = [];
+                
+                // Fallback: Try to load all lunch options
+                try {
+                    const fallbackResponse = await fetch('/lunch-options');
+                    const fallbackResult = await fallbackResponse.json();
+                    
+                    if (fallbackResult.success) {
+                        this.availableLunches = fallbackResult.data;
+                        console.log('✅ Loaded fallback lunch options:', this.availableLunches);
+                    }
+                } catch (fallbackError) {
+                    console.error('❌ Fallback also failed:', fallbackError);
+                }
             }
+        },
+        
+        // ✅ GET SELECTED LUNCH NAME
+        getSelectedLunchName() {
+            if (!this.selectedLunchOption) return '';
+            const lunch = this.availableLunches.find(l => l.id == this.selectedLunchOption);
+            return lunch ? lunch.name : '';
+        },
+
+        // ✅ GET SELECTED LUNCH PRICE
+        getSelectedLunchPrice() {
+            if (!this.selectedLunchOption) return 0;
+            const lunch = this.availableLunches.find(l => l.id == this.selectedLunchOption);
+            return lunch ? lunch.price : 0;
+        },
+
+        // ✅ CLEAR LUNCH SELECTION
+        clearLunchSelection() {
+            this.selectedLunchOption = '';
+            this.lunchQuantity = 1;
+            this.lunchTotal = 0;
+            this.calculatePrice(); // Recalculate overall price
+        },
+
+        // ✅ TOGGLE LUNCH SECTION (untuk compatibility)
+        toggleLunchOptions() {
+            this.showLunchOptions = !this.showLunchOptions;
         },
 
         // Select Room Type
@@ -958,50 +1226,56 @@ function enhancedBookingForm() {
 
         // Calculate Price
         async calculatePrice() {
-            let subtotal = 0;
+            let roomSubtotal = 0; // ✅ Pisahkan subtotal untuk layanan
+            let lunchSubtotal = this.lunchTotal; // ✅ Subtotal lunch terpisah
             let details = '';
         
             try {
                 switch (this.selectedRoomType) {
                     case 'Virtual Office':
-                        subtotal = this.calculateVirtualOfficePrice();
+                        roomSubtotal = this.calculateVirtualOfficePrice();
                         details = this.getVirtualOfficeDetails();
                         break;
                     case 'Private Office':
-                        subtotal = this.calculatePrivateOfficePrice();
+                        roomSubtotal = this.calculatePrivateOfficePrice();
                         details = this.getPrivateOfficeDetails();
                         break;
                     case 'Meeting Room':
-                        subtotal = await this.calculateMeetingRoomPrice(); 
+                        roomSubtotal = await this.calculateMeetingRoomPrice(); 
                         details = this.getMeetingRoomDetails();
                         break;
                     case 'Event Space':
-                        subtotal = this.calculateEventSpacePrice();
+                        roomSubtotal = this.calculateEventSpacePrice();
                         details = this.getEventSpaceDetails();
                         break;
                     case 'Coworking Space':
-                        subtotal = this.calculateCoworkingPrice();
+                        roomSubtotal = this.calculateCoworkingPrice();
                         details = this.getCoworkingDetails();
                         break;
-                    case 'Sharing Room': // ✅ TAMBAHKAN INI
-                        subtotal = this.calculateSharingRoomPrice();
+                    case 'Sharing Room':
+                        roomSubtotal = this.calculateSharingRoomPrice();
                         details = this.getSharingRoomDetails();
                         break;
                 }
         
-                const adminFee = subtotal * 0.10;
-                const deposit = this.calculateDeposit(subtotal);
-                const total = subtotal + deposit;
+                // ✅ TOTAL SUBTOTAL = Room Subtotal + Lunch Subtotal
+                const totalSubtotal = roomSubtotal + lunchSubtotal;
+        
+                const adminFee = totalSubtotal * 0.10;
+                const deposit = this.calculateDeposit(totalSubtotal);
+                const total = totalSubtotal + deposit;
         
                 this.summary = {
-                    subtotal,
+                    roomSubtotal,        // ✅ Subtotal untuk layanan saja
+                    lunchTotal: lunchSubtotal, // ✅ Subtotal untuk lunch saja  
+                    subtotal: totalSubtotal,// ✅ Total subtotal (room + lunch)
                     adminFee,
                     deposit,
                     total,
                     details
                 };
         
-                console.log("💰 Ringkasan harga:", this.summary); // untuk debugging
+                console.log("💰 Ringkasan harga breakdown:", this.summary);
         
                 return true;
             } catch (error) {
@@ -1033,6 +1307,21 @@ function enhancedBookingForm() {
         // 🆕 Helper: Format harga ke Rupiah
         formatPrice(price) {
             return new Intl.NumberFormat('id-ID').format(price);
+        },
+
+        // ✅ CALCULATE LUNCH TOTAL
+        calculateLunchTotal() {
+            if (!this.selectedLunchOption || this.lunchQuantity < 1) {
+                this.lunchTotal = 0;
+                return;
+            }
+            
+            const lunch = this.availableLunches.find(l => l.id == this.selectedLunchOption);
+            if (lunch) {
+                this.lunchTotal = lunch.price * this.lunchQuantity;
+            }
+            
+            this.calculatePrice(); // Recalculate overall price
         },
         
         // ✅ Kalkulasi harga Virtual Office (updated)
@@ -1866,12 +2155,18 @@ function enhancedBookingForm() {
             this.isSubmitting = true;
             
             try {
+                // ✅ PREPARE DATA
                 const bookingData = this.prepareBookingData();
+                
+                console.log('🚀 Sending booking data:', bookingData);
                 
                 const csrfToken = document.querySelector('meta[name="csrf-token"]');
                 if (!csrfToken) {
                     throw new Error('CSRF token not found');
                 }
+                
+                // ✅ SEND REQUEST
+                console.log('📡 Sending request to /transactions');
                 
                 const response = await fetch('/transactions', {
                     method: 'POST',
@@ -1885,6 +2180,8 @@ function enhancedBookingForm() {
                     body: JSON.stringify(bookingData)
                 });
                 
+                console.log('📥 Response status:', response.status);
+                
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
                     
@@ -1892,7 +2189,6 @@ function enhancedBookingForm() {
                     console.error('Status:', response.status);
                     console.error('Error Data:', errorData);
                     
-                    // Tampilkan validation errors dari Laravel
                     if (errorData.errors) {
                         const errorMessages = Object.entries(errorData.errors)
                             .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
@@ -1906,40 +2202,54 @@ function enhancedBookingForm() {
                 }
                 
                 const result = await response.json();
+                console.log('✅ Response data:', result);
                 
+                // ✅ CHECK SNAP TOKEN
                 if (result.success && result.snap_token) {
+                    console.log('🎫 Snap token received:', result.snap_token);
+                    
+                    // ✅ CHECK IF SNAP IS AVAILABLE
                     if (typeof snap === 'undefined') {
+                        console.error('❌ Midtrans Snap library not loaded!');
+                        console.error('Check if snap.js is loaded in HTML <head>');
                         throw new Error('Midtrans Snap tidak tersedia');
                     }
                     
+                    console.log('💳 Opening payment popup...');
+                    
+                    // ✅ OPEN SNAP PAYMENT
                     snap.pay(result.snap_token, {
                         onSuccess: (response) => {
-                            console.log('Payment success:', response);
+                            console.log('✅ Payment success:', response);
                             alert('Pembayaran berhasil!');
                             window.location.href = '/dashboard/invoice/';
                         },
                         onPending: (response) => {
-                            console.log('Payment pending:', response);
+                            console.log('⏳ Payment pending:', response);
                             alert('Pembayaran pending! Silakan selesaikan pembayaran Anda.');
                             window.location.href = '/dashboard/invoice/';
                         },
                         onError: (response) => {
-                            console.error('Payment error:', response);
+                            console.error('❌ Payment error:', response);
+                            console.error('Error details:', JSON.stringify(response, null, 2));
                             alert('Terjadi kesalahan pembayaran! Silakan coba lagi.');
                         },
                         onClose: () => {
-                            console.log('Payment popup closed');
+                            console.log('🚪 Payment popup closed without completing');
                         }
                     });
                 } else {
+                    console.error('❌ Invalid response:', result);
                     throw new Error(result.message || 'Gagal generate payment token');
                 }
                 
             } catch (error) {
-                console.error('Booking error:', error);
+                console.error('💥 Booking error:', error);
+                console.error('Error stack:', error.stack);
                 alert('Terjadi kesalahan: ' + error.message);
             } finally {
                 this.isSubmitting = false;
+                console.log('🏁 Submit process completed');
             }
         },
 
@@ -1951,6 +2261,9 @@ function enhancedBookingForm() {
         console.log('Room Type:', this.selectedRoomType);
         console.log('Virtual Office Package:', this.virtualOfficePackage);
         console.log('Summary:', this.summary);
+        console.log('Lunch Option:', this.selectedLunchOption);
+        console.log('Lunch Quantity:', this.lunchQuantity);
+        console.log('Lunch Total:', this.lunchTotal);
         
         const data = {
             city_id: this.city || null,
@@ -1961,10 +2274,13 @@ function enhancedBookingForm() {
             phone: this.phone || '',
             booking_date: this.bookingDate || null,
             start_time: this.startTime || null,
-            subtotal: this.summary?.subtotal || 0,
-            admin_fee: this.summary?.adminFee || 0,
-            deposit: this.summary?.deposit || 0,
-            total_amount: this.summary?.total || 0,
+            
+            // ✅ CRITICAL: Kirim breakdown yang benar
+            subtotal: Math.round(this.summary?.subtotal || 0),      // Room + Lunch
+            admin_fee: Math.round(this.summary?.adminFee || 0),
+            deposit: Math.round(this.summary?.deposit || 0),
+            total_amount: Math.round(this.summary?.total || 0),     // Subtotal + Deposit
+            lunch_total: Math.round(this.lunchTotal || 0),          // Lunch saja
         };
         
         // Add room_id if selected
@@ -1975,6 +2291,17 @@ function enhancedBookingForm() {
         // Add quantity as jumlah_orang
         if (this.numPeople) {
             data.jumlah_orang = parseInt(this.numPeople);
+        }
+        
+        // ✅ PERBAIKAN: Lunches array - HAPUS unit_price & subtotal
+        if (this.selectedLunchOption && this.lunchQuantity > 0) {
+            data.lunches = [{
+                lunch_option_id: this.selectedLunchOption,
+                quantity: parseInt(this.lunchQuantity)
+                // ❌ HAPUS unit_price dan subtotal - backend yang hitung dari DB
+            }];
+            
+            console.log('📦 Lunch data:', data.lunches);
         }
         
         // ✅ Room-specific data dengan MAPPING yang benar
@@ -2162,6 +2489,24 @@ function enhancedBookingForm() {
                 }
                 break;
         }
+        
+         console.log('=== VALIDASI DATA ===');
+            console.log('Room Subtotal:', this.summary?.roomSubtotal);
+            console.log('Lunch Total:', this.lunchTotal);
+            console.log('Total Subtotal:', this.summary?.subtotal);
+            console.log('Deposit:', this.summary?.deposit);
+            console.log('Grand Total:', this.summary?.total);
+            
+            const expectedTotal = Math.round((this.summary?.subtotal || 0) + (this.summary?.deposit || 0));
+            const actualTotal = Math.round(this.summary?.total || 0);
+            
+            if (expectedTotal !== actualTotal) {
+                console.error('❌ MISMATCH DETECTED!');
+                console.error('Expected:', expectedTotal);
+                console.error('Actual:', actualTotal);
+                alert('Terjadi kesalahan perhitungan harga. Silakan refresh halaman.');
+                throw new Error('Price calculation mismatch');
+            }
         
         console.log('=== DATA YANG AKAN DIKIRIM ===');
         console.log(JSON.stringify(data, null, 2));

@@ -17,7 +17,7 @@
                 </svg>
                 <span class="text-sm">Refresh</span>
             </button>
-            <a href="#" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+            <a href="{{ route('admin.booking.walk-in-booking') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
@@ -143,126 +143,59 @@
         </div>
     </div>
 
-    {{-- Real-time Room Status --}}
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h2 class="text-lg font-semibold text-gray-800">Real-time Room Status</h2>
-                <p class="text-sm text-gray-600 mt-1">Current status of all rooms across services</p>
-            </div>
-            <div class="flex items-center gap-4 text-xs">
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span class="text-gray-600">Available</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <span class="text-gray-600">Occupied</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                    <span class="text-gray-600">Booked</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 bg-purple-500 rounded-full"></div>
-                    <span class="text-gray-600">Cleaning</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-3 h-3 bg-gray-500 rounded-full"></div>
-                    <span class="text-gray-600">Maintenance</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="space-y-4">
-            {{-- Meeting Rooms --}}
-            <div>
-                <h3 class="text-sm font-semibold text-gray-700 mb-3">Meeting Rooms</h3>
-                <div class="flex flex-wrap gap-2">
-                    <template x-for="room in roomStatus.meetingRooms" :key="room.number">
-                        <button @click="showRoomDetail(room)" :class="{
-                            'bg-green-100 border-green-500 text-green-700': room.status === 'available',
-                            'bg-red-100 border-red-500 text-red-700': room.status === 'occupied',
-                            'bg-yellow-100 border-yellow-500 text-yellow-700': room.status === 'booked',
-                            'bg-purple-100 border-purple-500 text-purple-700': room.status === 'cleaning',
-                            'bg-gray-100 border-gray-500 text-gray-700': room.status === 'maintenance'
-                        }" class="px-4 py-2 rounded-lg border-2 text-sm font-medium hover:shadow-md transition cursor-pointer">
-                            <span x-text="room.number"></span>
-                        </button>
-                    </template>
-                </div>
-            </div>
-
-            {{-- Private Office --}}
-            <div>
-                <h3 class="text-sm font-semibold text-gray-700 mb-3">Private Office</h3>
-                <div class="flex flex-wrap gap-2">
-                    <template x-for="room in roomStatus.privateOffice" :key="room.number">
-                        <button @click="showRoomDetail(room)" :class="{
-                            'bg-green-100 border-green-500 text-green-700': room.status === 'available',
-                            'bg-red-100 border-red-500 text-red-700': room.status === 'occupied',
-                            'bg-yellow-100 border-yellow-500 text-yellow-700': room.status === 'booked',
-                            'bg-purple-100 border-purple-500 text-purple-700': room.status === 'cleaning',
-                            'bg-gray-100 border-gray-500 text-gray-700': room.status === 'maintenance'
-                        }" class="px-4 py-2 rounded-lg border-2 text-sm font-medium hover:shadow-md transition cursor-pointer">
-                            <span x-text="room.number"></span>
-                        </button>
-                    </template>
-                </div>
-            </div>
-
-            {{-- Sharing Room --}}
-            <div>
-                <h3 class="text-sm font-semibold text-gray-700 mb-3">Sharing Room</h3>
-                <div class="flex flex-wrap gap-2">
-                    <template x-for="room in roomStatus.sharingRoom" :key="room.number">
-                        <button @click="showRoomDetail(room)" :class="{
-                            'bg-green-100 border-green-500 text-green-700': room.status === 'available',
-                            'bg-red-100 border-red-500 text-red-700': room.status === 'occupied',
-                            'bg-yellow-100 border-yellow-500 text-yellow-700': room.status === 'booked',
-                            'bg-purple-100 border-purple-500 text-purple-700': room.status === 'cleaning',
-                            'bg-gray-100 border-gray-500 text-gray-700': room.status === 'maintenance'
-                        }" class="px-4 py-2 rounded-lg border-2 text-sm font-medium hover:shadow-md transition cursor-pointer">
-                            <span x-text="room.number"></span>
-                        </button>
-                    </template>
-                </div>
-            </div>
-        </div>
-    </div>
-
     {{-- Recent Transactions --}}
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-6">
             <div>
-                <h2 class="text-lg font-semibold text-gray-800">Recent Transactions Today</h2>
-                <p class="text-sm text-gray-600 mt-1">Latest bookings and their payment status</p>
+                <h2 class="text-lg font-semibold text-gray-800">Recent Transactions</h2>
+                <p class="text-sm text-gray-600 mt-1">Latest 50 bookings and their payment status</p>
             </div>
+            {{-- ✅ ADD: Link to All Bookings --}}
+            <a href="{{ route('admin.booking.all') }}" class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+                View All Bookings
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </a>
         </div>
 
-        {{-- Service Tabs --}}
+        {{-- Service Tabs - ✅ DYNAMIC COUNTS --}}
         <div class="border-b border-gray-200 mb-4">
             <nav class="flex gap-6 overflow-x-auto whitespace-nowrap">
-                <button @click="activeServiceTab = 'all'" :class="activeServiceTab === 'all' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" class="py-3 px-1 border-b-2 font-medium text-sm transition">
-                    Semua (25)
+                <button @click="activeServiceTab = 'all'" 
+                        :class="activeServiceTab === 'all' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
+                        class="py-3 px-1 border-b-2 font-medium text-sm transition">
+                    <span x-text="`Semua (${tabCounts.all})`">Semua (0)</span>
                 </button>
-                <button @click="activeServiceTab = 'meeting'" :class="activeServiceTab === 'meeting' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" class="py-3 px-1 border-b-2 font-medium text-sm transition">
-                    Meeting Room (8)
+                <button @click="activeServiceTab = 'meeting'" 
+                        :class="activeServiceTab === 'meeting' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
+                        class="py-3 px-1 border-b-2 font-medium text-sm transition">
+                    <span x-text="`Meeting Room (${tabCounts.meeting})`">Meeting Room (0)</span>
                 </button>
-                <button @click="activeServiceTab = 'private'" :class="activeServiceTab === 'private' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" class="py-3 px-1 border-b-2 font-medium text-sm transition">
-                    Private Office (4)
+                <button @click="activeServiceTab = 'private'" 
+                        :class="activeServiceTab === 'private' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
+                        class="py-3 px-1 border-b-2 font-medium text-sm transition">
+                    <span x-text="`Private Office (${tabCounts.private})`">Private Office (0)</span>
                 </button>
-                <button @click="activeServiceTab = 'sharing'" :class="activeServiceTab === 'sharing' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" class="py-3 px-1 border-b-2 font-medium text-sm transition">
-                    Sharing Room (3)
+                <button @click="activeServiceTab === 'sharing'" 
+                        :class="activeServiceTab === 'sharing' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
+                        class="py-3 px-1 border-b-2 font-medium text-sm transition">
+                    <span x-text="`Sharing Room (${tabCounts.sharing})`">Sharing Room (0)</span>
                 </button>
-                <button @click="activeServiceTab = 'coworking'" :class="activeServiceTab === 'coworking' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" class="py-3 px-1 border-b-2 font-medium text-sm transition">
-                    Coworking (5)
+                <button @click="activeServiceTab = 'coworking'" 
+                        :class="activeServiceTab === 'coworking' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
+                        class="py-3 px-1 border-b-2 font-medium text-sm transition">
+                    <span x-text="`Coworking (${tabCounts.coworking})`">Coworking (0)</span>
                 </button>
-                <button @click="activeServiceTab = 'virtual'" :class="activeServiceTab === 'virtual' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" class="py-3 px-1 border-b-2 font-medium text-sm transition">
-                    Virtual Office (3)
+                <button @click="activeServiceTab = 'virtual'" 
+                        :class="activeServiceTab === 'virtual' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
+                        class="py-3 px-1 border-b-2 font-medium text-sm transition">
+                    <span x-text="`Virtual Office (${tabCounts.virtual})`">Virtual Office (0)</span>
                 </button>
-                <button @click="activeServiceTab = 'event'" :class="activeServiceTab === 'event' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" class="py-3 px-1 border-b-2 font-medium text-sm transition">
-                    Event Space (2)
+                <button @click="activeServiceTab = 'event'" 
+                        :class="activeServiceTab === 'event' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
+                        class="py-3 px-1 border-b-2 font-medium text-sm transition">
+                    <span x-text="`Event Space (${tabCounts.event})`">Event Space (0)</span>
                 </button>
             </nav>
         </div>
@@ -281,16 +214,24 @@
             
             <div class="flex items-center gap-3">
                 <div class="flex bg-gray-100 rounded-lg p-1">
-                    <button @click="statusFilter = 'all'" :class="statusFilter === 'all' ? 'bg-white shadow-sm' : ''" class="px-3 py-1.5 text-xs rounded-md transition">
+                    <button @click="statusFilter = 'all'" 
+                            :class="statusFilter === 'all' ? 'bg-white shadow-sm' : ''" 
+                            class="px-3 py-1.5 text-xs rounded-md transition">
                         All
                     </button>
-                    <button @click="statusFilter = 'settlement'" :class="statusFilter === 'settlement' ? 'bg-white shadow-sm' : ''" class="px-3 py-1.5 text-xs rounded-md transition">
+                    <button @click="statusFilter = 'settlement'" 
+                            :class="statusFilter === 'settlement' ? 'bg-white shadow-sm' : ''" 
+                            class="px-3 py-1.5 text-xs rounded-md transition">
                         Settlement
                     </button>
-                    <button @click="statusFilter = 'pending'" :class="statusFilter === 'pending' ? 'bg-white shadow-sm' : ''" class="px-3 py-1.5 text-xs rounded-md transition">
+                    <button @click="statusFilter = 'pending'" 
+                            :class="statusFilter === 'pending' ? 'bg-white shadow-sm' : ''" 
+                            class="px-3 py-1.5 text-xs rounded-md transition">
                         Pending
                     </button>
-                    <button @click="statusFilter = 'expired'" :class="statusFilter === 'expired' ? 'bg-white shadow-sm' : ''" class="px-3 py-1.5 text-xs rounded-md transition">
+                    <button @click="statusFilter = 'expire'" 
+                            :class="statusFilter === 'expire' ? 'bg-white shadow-sm' : ''" 
+                            class="px-3 py-1.5 text-xs rounded-md transition">
                         Expired
                     </button>
                 </div>
@@ -311,8 +252,22 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
-                    <template x-for="(transaction, index) in filteredTransactions" :key="index">
-                        <tr class="hover:bg-gray-50 transition">
+                    {{-- ✅ Show message if no data --}}
+                    <template x-if="filteredTransactions.length === 0">
+                        <tr>
+                            <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                                <div class="flex flex-col items-center justify-center">
+                                    <svg class="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                                    </svg>
+                                    <p class="text-sm">No transactions found</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                    
+                    <template x-for="(transaction, index) in filteredTransactions" :key="transaction.id">
+                        <tr class="hover:bg-gray-50 transition cursor-pointer" @click="viewDetail(transaction)">
                             <td class="px-4 py-4">
                                 <span class="text-sm font-medium text-blue-600" x-text="transaction.bookingId"></span>
                             </td>
@@ -341,7 +296,7 @@
                                     </svg>
                                     Pending
                                 </span>
-                                <span x-show="transaction.status === 'expired'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <span x-show="transaction.status === 'expire'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                     <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
                                     </svg>
@@ -352,11 +307,14 @@
                                 <p class="text-sm text-gray-800" x-text="transaction.time"></p>
                             </td>
                             <td class="px-4 py-4">
-                                <button x-show="transaction.status === 'settlement'" @click="assignRoom(transaction)" class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition">
-                                    Assign Room
-                                </button>
-                                <button x-show="transaction.status !== 'settlement'" class="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs rounded-lg hover:bg-gray-200 transition">
-                                    View Detail
+                                {{-- ✅ SIMPLIFIED: Single button that redirects --}}
+                                <button @click.stop="viewDetail(transaction)" 
+                                        class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                    View
                                 </button>
                             </td>
                         </tr>
@@ -365,23 +323,11 @@
             </table>
         </div>
 
-        {{-- Pagination --}}
+        {{-- Pagination - ✅ DYNAMIC --}}
         <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
-            <p class="text-sm text-gray-600">Showing 1 to 5 of 25 entries</p>
-            <div class="flex gap-2">
-                <button class="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition">
-                    1
-                </button>
-                <button class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition">
-                    2
-                </button>
-                <button class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition">
-                    3
-                </button>
-                <button class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition">
-                    Next
-                </button>
-            </div>
+            <p class="text-sm text-gray-600" x-text="`Showing ${paginationInfo.from} to ${paginationInfo.to} of ${paginationInfo.total} entries`">
+                Showing 0 to 0 of 0 entries
+            </p>
         </div>
     </div>
 
@@ -505,144 +451,391 @@ function dashboardData() {
     return {
         // Stats Data
         stats: {
-            totalBookingToday: 25,
-            revenueToday: 4500000,
-            pendingConfirmation: 5,
-            roomsOccupied: 12,
-            totalRooms: 16,
-            occupancyRate: 75
+            totalBookingToday: 0,
+            revenueToday: 0,
+            pendingConfirmation: 0,
+            roomsOccupied: 0,
+            totalRooms: 0,
+            occupancyRate: 0
         },
 
         // Chart Data
         chartMetric: 'revenue',
         chartPeriod: 'daily',
-        transactionChart: null,
-
-        // Room Status
-        roomStatus: {
-            meetingRooms: [
-                { number: '201', status: 'occupied', capacity: '10 pax', facilities: ['Proyektor', 'Whiteboard', 'AC'], currentBooking: { customer: 'Budi Santoso', time: '09:00-11:00', remaining: '45 mins' } },
-                { number: '202', status: 'available', capacity: '6 pax', facilities: ['Proyektor', 'Flipchart'] },
-                { number: '203', status: 'booked', capacity: '20 pax', facilities: ['LED TV', 'Sound System'], nextBooking: { customer: 'Ani Wijaya', time: '14:00-16:00' } },
-                { number: '204', status: 'cleaning', capacity: '8 pax', facilities: ['Proyektor', 'Whiteboard'] },
-                { number: '205', status: 'maintenance', capacity: '12 pax', facilities: ['Proyektor', 'AC'] }
-            ],
-            privateOffice: [
-                { number: '301', status: 'occupied', capacity: '4 pax', facilities: ['Desk', 'Chair', 'Cabinet'] },
-                { number: '302', status: 'occupied', capacity: '6 pax', facilities: ['Desk', 'Chair', 'Cabinet'] },
-                { number: '303', status: 'available', capacity: '4 pax', facilities: ['Desk', 'Chair'] },
-                { number: '304', status: 'booked', capacity: '8 pax', facilities: ['Desk', 'Chair', 'Cabinet'] },
-                { number: '305', status: 'available', capacity: '4 pax', facilities: ['Desk', 'Chair'] }
-            ],
-            sharingRoom: [
-                { number: '306', status: 'occupied', capacity: '12 pax', facilities: ['Desks', 'Chairs', 'Lockers'] },
-                { number: '307', status: 'cleaning', capacity: '15 pax', facilities: ['Desks', 'Chairs', 'Lockers'] },
-                { number: '308', status: 'available', capacity: '10 pax', facilities: ['Desks', 'Chairs'] }
-            ]
-        },
+        chartInstance: null,
+        chartLoading: false,
+        chartUpdateInProgress: false,
+        currentLocationId: 1, // Default location
+        availableLocations: [],
 
         // Transactions
         activeServiceTab: 'all',
         statusFilter: 'all',
         entriesPerPage: 5,
-        transactions: [
-            { bookingId: '#MR-089', customerName: 'Budi Santoso', customerPhone: '0812-3456-7890', service: 'Meeting Room', package: '2 Jam', status: 'settlement', time: '08:30 WIB', serviceType: 'meeting' },
-            { bookingId: '#PO-045', customerName: 'Ani Wijaya', customerPhone: '0813-5678-9012', service: 'Private Office', package: 'Monthly', status: 'settlement', time: '08:15 WIB', serviceType: 'private' },
-            { bookingId: '#MR-090', customerName: 'Siti Rahayu', customerPhone: '0814-6789-0123', service: 'Meeting Room', package: '4 Jam', status: 'pending', time: '07:45 WIB', serviceType: 'meeting' },
-            { bookingId: '#CW-012', customerName: 'Joko Prasetyo', customerPhone: '0815-7890-1234', service: 'Coworking Space', package: 'Day Pass', status: 'settlement', time: '07:30 WIB', serviceType: 'coworking' },
-            { bookingId: '#VO-008', customerName: 'Dewi Kusuma', customerPhone: '0816-8901-2345', service: 'Virtual Office', package: 'Yearly', status: 'settlement', time: '07:00 WIB', serviceType: 'virtual' },
-            { bookingId: '#MR-091', customerName: 'Ahmad Fauzi', customerPhone: '0817-9012-3456', service: 'Meeting Room', package: '1 Jam', status: 'expired', time: '06:45 WIB', serviceType: 'meeting' },
-            { bookingId: '#SR-023', customerName: 'Linda Permata', customerPhone: '0818-0123-4567', service: 'Sharing Room', package: 'Monthly', status: 'settlement', time: '06:30 WIB', serviceType: 'sharing' },
-            { bookingId: '#ES-005', customerName: 'Ridwan Kamil', customerPhone: '0819-1234-5678', service: 'Event Space', package: 'Full Day', status: 'settlement', time: '06:00 WIB', serviceType: 'event' }
-        ],
-
-        // Modal
+        transactions: [],
+        allTransactions: [],
         showRoomModal: false,
         selectedRoom: null,
 
-        // Initialize
-        init() {
-            this.initChart();
+        // Loading & Error
+        loading: false,
+        refreshing: false,
+
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        async init() {
+            console.log('🚀 Dashboard initializing...');
+            this.loading = true;
+            
+            try {
+                // Load data first
+                await Promise.all([
+                    this.fetchDashboardStats(),
+                    this.fetchAllTransactions() // ✅ CHANGED: Load all, not just today
+                ]);
+                
+                // Wait for DOM to be ready
+                await this.$nextTick();
+                
+                // Initialize chart once
+                setTimeout(() => {
+                    this.createChart();
+                }, 300);
+                
+                console.log('✅ Dashboard initialized successfully');
+                
+            } catch (error) {
+                console.error('❌ Initialization error:', error);
+            } finally {
+                this.loading = false;
+            }
         },
 
-        // Chart Methods
-        initChart() {
+        // ==========================================
+        // CHART METHODS
+        // ==========================================
+        createChart() {
             const ctx = document.getElementById('transactionChart');
-            if (!ctx) return;
+            if (!ctx) {
+                console.error('❌ Chart canvas not found');
+                return;
+            }
 
-            this.transactionChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['03 Oct', '04 Oct', '05 Oct', '06 Oct', '07 Oct', '08 Oct', '09 Oct'],
-                    datasets: [{
-                        label: 'Revenue (Rp)',
-                        data: [3200000, 4100000, 3800000, 4500000, 3900000, 4200000, 4500000],
-                        borderColor: 'rgb(37, 99, 235)',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
+            // Destroy previous chart instance
+            if (this.chartInstance) {
+                try {
+                    this.chartInstance.destroy();
+                } catch (e) {
+                    console.warn('Chart destroy error:', e);
+                }
+                this.chartInstance = null;
+            }
+
+            try {
+                const staticData = this.getStaticChartData();
+                
+                this.chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: staticData.labels,
+                        datasets: [{
+                            label: this.chartMetric === 'revenue' ? 'Revenue (Rp)' : 'Booking Count',
+                            data: staticData.data,
+                            borderColor: this.chartMetric === 'revenue' ? 'rgb(37, 99, 235)' : 'rgb(16, 185, 129)',
+                            backgroundColor: this.chartMetric === 'revenue' ? 'rgba(37, 99, 235, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: false, // ✅ Disable to prevent loop
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
                         },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return 'Rp ' + context.parsed.y.toLocaleString('id-ID');
+                        plugins: {
+                            legend: { 
+                                display: false 
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: 12,
+                                titleFont: {
+                                    size: 14
+                                },
+                                bodyFont: {
+                                    size: 13
+                                },
+                                callbacks: {
+                                    label: (context) => {
+                                        if (this.chartMetric === 'revenue') {
+                                            return 'Revenue: Rp ' + context.parsed.y.toLocaleString('id-ID');
+                                        }
+                                        return 'Bookings: ' + context.parsed.y;
+                                    }
                                 }
                             }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'Rp ' + (value / 1000000) + 'jt';
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                },
+                                ticks: {
+                                    callback: (value) => {
+                                        if (this.chartMetric === 'revenue') {
+                                            if (value >= 1000000) {
+                                                return 'Rp ' + (value / 1000000).toFixed(1) + 'jt';
+                                            }
+                                            return 'Rp ' + (value / 1000).toFixed(0) + 'k';
+                                        }
+                                        return value;
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
                                 }
                             }
                         }
                     }
-                }
-            });
+                });
+
+                console.log('✅ Chart created successfully');
+                
+                // Try to load real data in background
+                setTimeout(() => {
+                    this.loadChartData();
+                }, 2000);
+
+            } catch (error) {
+                console.error('❌ Chart creation failed:', error);
+            }
         },
 
-        updateChart() {
-            if (!this.transactionChart) return;
+        async loadChartData() {
+            if (this.chartLoading || !this.chartInstance) return;
 
-            let labels, data;
-            
-            if (this.chartPeriod === 'daily') {
-                labels = ['03 Oct', '04 Oct', '05 Oct', '06 Oct', '07 Oct', '08 Oct', '09 Oct'];
-                data = this.chartMetric === 'revenue' 
-                    ? [3200000, 4100000, 3800000, 4500000, 3900000, 4200000, 4500000]
-                    : [18, 23, 21, 25, 22, 24, 25];
-            } else if (this.chartPeriod === 'monthly') {
-                labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                data = this.chartMetric === 'revenue'
-                    ? [85000000, 92000000, 88000000, 95000000, 90000000, 98000000, 93000000, 100000000, 96000000, 105000000, 0, 0]
-                    : [520, 580, 550, 600, 570, 620, 590, 650, 610, 680, 0, 0];
-            } else {
-                labels = ['2023', '2024', '2025'];
-                data = this.chartMetric === 'revenue'
-                    ? [980000000, 1150000000, 950000000]
-                    : [6500, 7200, 6800];
+            try {
+                this.chartLoading = true;
+                console.log('🔄 Loading real chart data...');
+
+                const response = await fetch(
+                    `/dashboard/chart-data?period=${this.chartPeriod}&metric=${this.chartMetric}`
+                );
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    console.log('📊 Chart data received:', result.data);
+                    
+                    if (this.chartInstance && this.chartInstance.data) {
+                        this.chartInstance.data.labels = result.data.labels || [];
+                        this.chartInstance.data.datasets[0].data = result.data.data || [];
+                        this.chartInstance.update('none');
+                        console.log('✅ Chart updated with real data');
+                    }
+                } else {
+                    console.warn('⚠️ Invalid chart data response');
+                }
+
+            } catch (error) {
+                console.log('ℹ️ Using static chart data. Error:', error.message);
+            } finally {
+                this.chartLoading = false;
+            }
+        },
+
+        async updateChart() {
+            // Prevent concurrent updates
+            if (this.chartUpdateInProgress) {
+                console.log('⏳ Chart update already in progress, skipping...');
+                return;
             }
 
-            this.transactionChart.data.labels = labels;
-            this.transactionChart.data.datasets[0].data = data;
-            this.transactionChart.data.datasets[0].label = this.chartMetric === 'revenue' ? 'Revenue (Rp)' : 'Booking Count';
-            this.transactionChart.update();
+            this.chartUpdateInProgress = true;
+
+            try {
+                if (!this.chartInstance) {
+                    console.log('🔄 Chart instance not found, recreating...');
+                    this.createChart();
+                    return;
+                }
+
+                // Update with static data first (instant feedback)
+                const staticData = this.getStaticChartData();
+                
+                if (this.chartInstance && this.chartInstance.data) {
+                    this.chartInstance.data.labels = staticData.labels;
+                    this.chartInstance.data.datasets[0].data = staticData.data;
+                    this.chartInstance.data.datasets[0].label = this.chartMetric === 'revenue' ? 'Revenue (Rp)' : 'Booking Count';
+                    this.chartInstance.data.datasets[0].borderColor = this.chartMetric === 'revenue' ? 'rgb(37, 99, 235)' : 'rgb(16, 185, 129)';
+                    this.chartInstance.data.datasets[0].backgroundColor = this.chartMetric === 'revenue' ? 'rgba(37, 99, 235, 0.1)' : 'rgba(16, 185, 129, 0.1)';
+                    
+                    this.chartInstance.update('none');
+                    console.log('✅ Chart updated with static data');
+                }
+
+                // Load real data in background
+                setTimeout(() => {
+                    this.loadChartData();
+                }, 500);
+
+            } catch (error) {
+                console.error('❌ Chart update failed:', error);
+                // Fallback: recreate chart
+                this.createChart();
+            } finally {
+                this.chartUpdateInProgress = false;
+            }
         },
 
-        // Computed
+        getStaticChartData() {
+            if (this.chartPeriod === 'daily') {
+                return {
+                    labels: ['23 Nov', '24 Nov', '25 Nov', '26 Nov', '27 Nov', '28 Nov', '29 Nov'],
+                    data: this.chartMetric === 'revenue' 
+                        ? [1200000, 1500000, 1800000, 2100000, 2500000, 2200000, 1900000]
+                        : [8, 10, 12, 15, 18, 16, 14]
+                };
+            } else if (this.chartPeriod === 'monthly') {
+                return {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
+                    data: this.chartMetric === 'revenue'
+                        ? [25000000, 28000000, 30000000, 32000000, 35000000, 38000000, 40000000, 42000000, 45000000, 48000000, 50000000, 52000000]
+                        : [150, 180, 200, 220, 250, 280, 300, 320, 350, 380, 400, 420]
+                };
+            } else {
+                return {
+                    labels: ['2023', '2024', '2025'],
+                    data: this.chartMetric === 'revenue'
+                        ? [450000000, 520000000, 480000000]
+                        : [2500, 3000, 2800]
+                };
+            }
+        },
+
+        // ==========================================
+        // API METHODS
+        // ==========================================
+        async fetchDashboardStats() {
+            try {
+                console.log('📊 Fetching dashboard stats...');
+                const response = await fetch(`/dashboard/stats?location_id=${this.currentLocationId}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    this.stats = result.data;
+                    console.log('✅ Stats loaded:', this.stats);
+                } else {
+                    console.warn('⚠️ Invalid stats response');
+                }
+            } catch (error) {
+                console.error('❌ Failed to fetch stats:', error);
+            }
+        },
+
+        // ✅ NEW METHOD: Fetch all recent transactions (not just today)
+        async fetchAllTransactions() {
+            try {
+                console.log('📋 Fetching all recent transactions...');
+                
+                // ✅ Remove date filter to get all recent bookings
+                const url = `/booking/all/api/data?per_page=50`;
+                console.log('🔗 Fetching from:', url);
+                
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                console.log('📦 API Response:', result);
+                console.log('📊 Total bookings:', result.data?.bookings?.length);
+                
+                if (result.success && result.data && result.data.bookings) {
+                    this.allTransactions = result.data.bookings.map(booking => 
+                        this.transformBookingForDashboard(booking)
+                    );
+                    console.log('✅ Transactions loaded:', this.allTransactions.length);
+                } else {
+                    console.warn('⚠️ Invalid transactions response');
+                    this.allTransactions = [];
+                }
+            } catch (error) {
+                console.error('❌ Failed to fetch transactions:', error);
+                this.allTransactions = [];
+            }
+        },
+
+        transformBookingForDashboard(booking) {
+            // ✅ FIXED MAPPING - Match with Model
+            const serviceTypeMap = {
+                'meeting': 'meeting',           // ✅ No suffix
+                'private': 'private',           // ✅ No suffix
+                'sharing': 'sharing',           // ✅ No suffix
+                'coworking': 'coworking',       // ✅ No suffix
+                'virtual': 'virtual',           // ✅ No suffix
+                'event': 'event'                // ✅ No suffix
+            };
+
+            const statusMap = {
+                'pending': 'pending',
+                'settlement': 'settlement',
+                'expire': 'expire',
+                'cancel': 'expire',
+                'deny': 'expire'
+            };
+
+            // ✅ DEBUG (remove after testing)
+            if (this.allTransactions.length < 3) {
+                console.log('🔍 Transform booking:', {
+                    originalServiceType: booking.serviceType,
+                    mappedServiceType: serviceTypeMap[booking.serviceType] || 'other',
+                    service: booking.service
+                });
+            }
+
+            return {
+                id: booking.id,
+                bookingId: booking.bookingId,
+                customerName: booking.customerName,
+                customerPhone: booking.customerPhone,
+                customerEmail: booking.customerEmail,
+                service: booking.service,
+                serviceType: serviceTypeMap[booking.serviceType] || booking.serviceType || 'other',
+                package: booking.package,
+                status: statusMap[booking.paymentStatus] || booking.paymentStatus,
+                time: booking.bookingTime || 'Flexible',
+                bookingDate: booking.bookingDate,
+                grossAmount: booking.basePrice || 0
+            };
+        },
+
+        // ==========================================
+        // COMPUTED PROPERTIES
+        // ==========================================
         get filteredTransactions() {
-            let filtered = this.transactions;
+            let filtered = [...this.allTransactions];
 
             // Filter by service tab
             if (this.activeServiceTab !== 'all') {
@@ -654,27 +847,107 @@ function dashboardData() {
                 filtered = filtered.filter(t => t.status === this.statusFilter);
             }
 
-            return filtered.slice(0, this.entriesPerPage);
+            // Limit by entries per page
+            return filtered.slice(0, parseInt(this.entriesPerPage));
         },
 
-        // Methods
+        get tabCounts() {
+            return {
+                all: this.allTransactions.length,
+                meeting: this.allTransactions.filter(t => t.serviceType === 'meeting').length,
+                private: this.allTransactions.filter(t => t.serviceType === 'private').length,
+                sharing: this.allTransactions.filter(t => t.serviceType === 'sharing').length,
+                coworking: this.allTransactions.filter(t => t.serviceType === 'coworking').length,
+                virtual: this.allTransactions.filter(t => t.serviceType === 'virtual').length,
+                event: this.allTransactions.filter(t => t.serviceType === 'event').length
+            };
+        },
+
+        get paginationInfo() {
+            const filtered = this.filteredTransactions.length;
+            const showing = Math.min(parseInt(this.entriesPerPage), filtered);
+            return {
+                from: filtered > 0 ? 1 : 0,
+                to: showing,
+                total: this.allTransactions.length
+            };
+        },
+
+        // ==========================================
+        // UTILITY METHODS
+        // ==========================================
         formatCurrency(value) {
-            return 'Rp ' + value.toLocaleString('id-ID');
+            if (!value || value === 0) return 'Rp 0';
+            
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
         },
 
-        refreshData() {
-            alert('Refreshing data...');
-        },
-
-        showRoomDetail(room) {
-            this.selectedRoom = room;
-            this.showRoomModal = true;
+        async refreshData() {
+            if (this.refreshing) return;
+            
+            this.refreshing = true;
+            console.log('🔄 Refreshing dashboard data...');
+            
+            try {
+                await Promise.all([
+                    this.fetchDashboardStats(),
+                    this.fetchAllTransactions() // ✅ Use new method
+                ]);
+                
+                // Reload chart data
+                if (this.chartInstance) {
+                    await this.loadChartData();
+                }
+                
+                console.log('✅ Dashboard refreshed successfully');
+            } catch (error) {
+                console.error('❌ Refresh failed:', error);
+            } finally {
+                this.refreshing = false;
+            }
         },
 
         assignRoom(transaction) {
-            alert('Assigning room for ' + transaction.bookingId);
-            // Redirect to room assignment page
-        }
+            console.log('Assign room for booking:', transaction.bookingId);
+            alert(`Assign room feature coming soon!\nBooking ID: ${transaction.bookingId}`);
+        },
+
+        get filteredTransactions() {
+            let filtered = [...this.allTransactions];
+
+            // Filter by service tab
+            if (this.activeServiceTab !== 'all') {
+                filtered = filtered.filter(t => t.serviceType === this.activeServiceTab);
+            }
+
+            // Filter by status
+            if (this.statusFilter !== 'all') {
+                filtered = filtered.filter(t => t.status === this.statusFilter);
+            }
+
+            // ✅ ADD DEBUG LOG
+            console.log('🔍 Filtered transactions:', {
+                total: this.allTransactions.length,
+                activeTab: this.activeServiceTab,
+                statusFilter: this.statusFilter,
+                filtered: filtered.length,
+                sample: filtered[0]
+            });
+
+            // Limit by entries per page
+            return filtered.slice(0, parseInt(this.entriesPerPage));
+        },
+
+        viewDetail(transaction) {
+            // Redirect to All Bookings page with booking ID as query parameter
+            const url = `{{ route('admin.booking.all') }}?booking_id=${transaction.id}&show_modal=true`;
+            window.location.href = url;
+        },
     }
 }
 </script>

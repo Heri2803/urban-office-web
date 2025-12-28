@@ -9,21 +9,27 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckMitraAccess
 {
-    public function handle(Request $request, Closure $next): Response
+        public function handle(Request $request, Closure $next): Response
     {
         if (!auth()->check()) {
             return redirect()->route('login');
         }
 
         $user = auth()->user();
-        
-        // Cek sederhana: punya mitra_id DAN status approved/active
-        if (!$user->isMitra()) {
-            $status = $user->mitra ? $user->mitra->status : 'Tidak terdaftar';
+
+        // WAJIB: cek role dengan ketat
+        if ($user->role !== 'mitra') {
             return redirect()->route('dashboard.home')
-                ->with('error', "Akses ditolak. Status mitra: {$status}");
+                ->with('error', 'Akses ditolak. Anda bukan mitra.');
+        }
+
+        // OPTIONAL tapi penting: cek status mitra harus approved
+        if (!$user->mitra || $user->mitra->status !== 'approved') {
+            return redirect()->route('dashboard.home')
+                ->with('error', 'Status mitra Anda belum aktif.');
         }
 
         return $next($request);
     }
+
 }

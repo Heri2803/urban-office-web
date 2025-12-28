@@ -154,7 +154,7 @@
       </div>
 
       {{-- Reports & Analytics --}}
-      <div x-data="{ open: false }">
+      <!-- <div x-data="{ open: false }">
         <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-50">
           <span class="font-semibold">📊 Reports & Analytics</span>
           <svg :class="{ 'rotate-180': open }" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,10 +166,10 @@
           <a href="{{ route('superadmin.reports.occupancy') }}" class="block px-2 py-1 rounded hover:bg-gray-100">Occupancy Reports</a>
           <a href="#" class="block px-2 py-1 rounded hover:bg-gray-100">Customer Reports</a>
         </div>
-      </div>
+      </div> -->
 
       {{-- Approval Center --}}
-      <div x-data="{ open: false }">
+      <!-- <div x-data="{ open: false }">
         <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-50">
           <span class="font-semibold">✅ Approval Center</span>
           <span class="ml-2 text-xs bg-red-600 text-white px-2 py-0.5 rounded-full">3</span>
@@ -178,7 +178,7 @@
           <a href="{{ route('superadmin.approval.pending') }}" class="block px-2 py-1 rounded hover:bg-gray-100">Pending Approvals</a>
           <a href="#" class="block px-2 py-1 rounded hover:bg-gray-100">Approval History</a>
         </div>
-      </div>
+      </div> -->
 
       {{-- System Settings --}}
       <div x-data="{ open: false }">
@@ -197,7 +197,7 @@
       </div>
 
       {{-- Activity Log --}}
-      <div x-data="{ open: false }">
+      <!-- <div x-data="{ open: false }">
         <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-50">
           <span class="font-semibold">📜 Activity Log</span>
           <svg :class="{ 'rotate-180': open }" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,25 +208,7 @@
           <a href="#" class="block px-2 py-1 rounded hover:bg-gray-100">Audit Trail</a>
           <a href="#" class="block px-2 py-1 rounded hover:bg-gray-100">System Logs</a>
         </div>
-      </div>
-
-      {{-- My Profile (bottom) --}}
-      <div x-data="{ open: false }" class="mt-4 border-t pt-3">
-        <button @click="open = !open" class="w-full flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-50">
-          <span class="font-semibold">⚙️ My Profile</span>
-          <svg :class="{ 'rotate-180': open }" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
-        </button>
-        <div x-show="open" x-cloak x-transition class="pl-4 mt-2 space-y-1 text-sm">
-          <a href="#" class="block px-2 py-1 rounded hover:bg-gray-100">Update Profile</a>
-          <a href="#" class="block px-2 py-1 rounded hover:bg-gray-100">Change Password</a>
-          <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit" class="block px-2 py-1 rounded text-left w-full hover:bg-gray-100">Logout</button>
-          </form>
-        </div>
-      </div>
+      </div> -->
     </nav>
   </div>
 
@@ -320,11 +302,10 @@
             <a href="#" class="block px-2 py-2 rounded hover:bg-gray-50">Content Management</a>
             <a href="#" class="block px-2 py-2 rounded hover:bg-gray-50">Pricing Management</a>
             <a href="#" class="block px-2 py-2 rounded hover:bg-gray-50">Voucher & Promo</a>
-            <a href="#" class="block px-2 py-2 rounded hover:bg-gray-50">Reports & Analytics</a>
-            <a href="#" class="block px-2 py-2 rounded hover:bg-gray-50">Approval Center</a>
+            <!-- <a href="#" class="block px-2 py-2 rounded hover:bg-gray-50">Reports & Analytics</a> -->
+            <!-- <a href="#" class="block px-2 py-2 rounded hover:bg-gray-50">Approval Center</a> -->
             <a href="#" class="block px-2 py-2 rounded hover:bg-gray-50">System Settings</a>
-            <a href="#" class="block px-2 py-2 rounded hover:bg-gray-50">Activity Log</a>
-            <a href="#" class="block px-2 py-2 rounded hover:bg-gray-50">My Profile</a>
+            <!-- <a href="#" class="block px-2 py-2 rounded hover:bg-gray-50">Activity Log</a> -->
           </div>
         </template>
       </div>

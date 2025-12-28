@@ -12,13 +12,14 @@
             <p class="text-sm text-gray-600 mt-1">Manage and track all booking transactions</p>
         </div>
         <div class="flex items-center gap-2 sm:gap-3">
-            <button @click="exportExcel()" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2 text-sm">
+            <button x-on:click="exportExcel()" 
+                    class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2 text-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
                 <span class="hidden sm:inline">Export Excel</span>
                 <span class="sm:hidden">Export</span>
-            </button>
+            </button>   
             <a href="{{ route('admin.booking.walk-in-booking') }}" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 text-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -28,7 +29,6 @@
             </a>
         </div>
     </div>
-
     {{-- Summary Cards --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -67,8 +67,8 @@
                     </svg>
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xs text-gray-600 truncate">Expired</p>
-                    <h3 class="text-xl md:text-2xl font-bold text-gray-800" x-text="summary.expired">0</h3>
+                    <p class="text-xs text-gray-600 truncate">Expire</p>
+                    <h3 class="text-xl md:text-2xl font-bold text-gray-800" x-text="summary.expire">0</h3>
                 </div>
             </div>
         </div>
@@ -87,7 +87,6 @@
             </div>
         </div>
     </div>
-
     {{-- Filter Section --}}
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
         <div class="flex items-center justify-between mb-4">
@@ -101,54 +100,44 @@
             {{-- Status Filter --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Status Payment</label>
-                <select x-model="filters.status" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select x-model="filters.status" @change="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">All Status</option>
                     <option value="settlement">Settlement</option>
                     <option value="pending">Pending</option>
-                    <option value="expired">Expired</option>
+                    <option value="expire">Expire</option>
                 </select>
             </div>
 
             {{-- Service Filter --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Service Type</label>
-                <select x-model="filters.service" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select x-model="filters.service" @change="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">All Services</option>
-                    <option value="meeting">Meeting Room</option>
-                    <option value="private">Private Office</option>
-                    <option value="sharing">Sharing Room</option>
-                    <option value="coworking">Coworking Space</option>
-                    <option value="virtual">Virtual Office</option>
-                    <option value="event">Event Space</option>
-                </select>
-            </div>
-
-            {{-- Assignment Status Filter --}}
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Assignment Status</label>
-                <select x-model="filters.assignment" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">All</option>
-                    <option value="assigned">Sudah Ditempatkan</option>
-                    <option value="unassigned">Belum Ditempatkan</option>
+                    <option value="Meeting Room">Meeting Room</option>
+                    <option value="Private Office">Private Office</option>
+                    <option value="Sharing Room">Sharing Room</option>
+                    <option value="Coworking Space">Coworking Space</option>
+                    <option value="Virtual Office">Virtual Office</option>
+                    <option value="Event Space">Event Space</option>
                 </select>
             </div>
 
             {{-- Date Filter --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Booking Date</label>
-                <input type="date" x-model="filters.date" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="date" x-model="filters.date" @change="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
             {{-- Date Range From --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">From Date</label>
-                <input type="date" x-model="filters.dateFrom" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="date" x-model="filters.dateFrom" @change="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
             {{-- Date Range To --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">To Date</label>
-                <input type="date" x-model="filters.dateTo" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="date" x-model="filters.dateTo" @change="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
             {{-- Search --}}
@@ -163,6 +152,25 @@
             </div>
         </div>
 
+        {{-- Loading State --}}
+        <div x-show="loading" class="mt-4 flex items-center justify-center py-4">
+            <svg class="animate-spin h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="ml-2 text-sm text-gray-600">Loading bookings...</span>
+        </div>
+
+        {{-- Error State --}}
+        <div x-show="error" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p class="text-sm text-red-800" x-text="error"></p>
+            <button @click="loadBookings()" class="mt-2 text-sm text-red-600 hover:text-red-700 font-medium">
+                Try Again
+            </button>
+        </div>
+
+        {{-- HAPUS BAGIAN INI: --}}
+        {{-- 
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-4 pt-4 border-t border-gray-200">
             <p class="text-sm text-gray-600">
                 Showing <span class="font-semibold" x-text="filteredBookings.length"></span> of <span class="font-semibold" x-text="bookings.length"></span> bookings
@@ -178,6 +186,7 @@
                 <label class="text-sm text-gray-600">entries</label>
             </div>
         </div>
+        --}}
     </div>
 
     {{-- Table Section - Desktop View --}}
@@ -253,18 +262,29 @@
         {{-- ================================================= --}}
         {{-- 2. PAGINATION (Berada di luar grid)                --}}
         {{-- ================================================= --}}
-        <div class="px-4 sm:px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+        <div class="px-4 sm:px-6 py-4 border-t border-gray-200 flex items-center justify-between" x-show="!loading && bookings.length > 0">
             <p class="text-sm text-gray-600">
-                Showing <span class="font-semibold" x-text="paginationStart"></span> to <span class="font-semibold" x-text="paginationEnd"></span> of <span class="font-semibold" x-text="filteredBookings.length"></span> entries
+                Showing <span class="font-semibold" x-text="paginationStart"></span> to 
+                <span class="font-semibold" x-text="paginationEnd"></span> of 
+                <span class="font-semibold" x-text="totalItems"></span> entries
             </p>
             <div class="flex gap-2">
-                <button @click="previousPage()" :disabled="currentPage === 1" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                <button @click="previousPage()" 
+                        :disabled="currentPage === 1 || loading"
+                        class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
                     Previous
                 </button>
+                
                 <template x-for="page in totalPages" :key="page">
-                    <button @click="currentPage = page" :class="currentPage === page ? 'bg-blue-600 text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'" class="px-3 py-1.5 rounded-lg text-sm transition" x-text="page"></button>
+                    <button @click="goToPage(page)" 
+                            :class="currentPage === page ? 'bg-blue-600 text-white' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'"
+                            class="px-3 py-1.5 rounded-lg text-sm transition"
+                            x-text="page"></button>
                 </template>
-                <button @click="nextPage()" :disabled="currentPage === totalPages" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                
+                <button @click="nextPage()" 
+                        :disabled="currentPage === totalPages || loading"
+                        class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed">
                     Next
                 </button>
             </div>
@@ -385,7 +405,6 @@
                             </div>
                         </div>
                     </div>
-
                     {{-- Payment Information --}}
                     <div>
                         <h4 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
@@ -399,14 +418,34 @@
                                 <span class="text-gray-600">Base Price</span>
                                 <span class="font-medium text-gray-800" x-text="formatCurrency(selectedBooking?.basePrice || 0)"></span>
                             </div>
+                            
+                            {{-- ✅ LUNCH ITEMS --}}
+                            <template x-if="selectedBooking?.lunchItems && selectedBooking.lunchItems.length > 0">
+                                <div class="border-t border-gray-300 pt-2 mt-2">
+                                    <p class="text-sm font-medium text-gray-700 mb-2">Lunch Items:</p>
+                                    <template x-for="lunch in selectedBooking.lunchItems" :key="lunch.lunch_option">
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <div>
+                                                <span class="text-gray-600" x-text="lunch.quantity + ' x ' + lunch.lunch_option"></span>
+                                                <span class="text-xs text-gray-500 ml-2" x-text="'@ ' + formatCurrency(lunch.unit_price)"></span>
+                                            </div>
+                                            <span class="font-medium text-gray-800" x-text="formatCurrency(lunch.subtotal)"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                            
+                            {{-- ✅ LUNCH TOTAL --}}
+                            <div x-show="selectedBooking?.lunchTotal > 0" class="flex justify-between text-sm border-t border-gray-300 pt-2">
+                                <span class="text-gray-600">Lunch Total</span>
+                                <span class="font-medium text-green-600" x-text="formatCurrency(selectedBooking?.lunchTotal || 0)"></span>
+                            </div>
+                            
                             <div class="flex justify-between text-sm" x-show="selectedBooking?.discount > 0">
                                 <span class="text-gray-600">Discount</span>
                                 <span class="font-medium text-green-600" x-text="'- ' + formatCurrency(selectedBooking?.discount || 0)"></span>
                             </div>
-                            <div class="flex justify-between text-sm" x-show="selectedBooking?.voucher">
-                                <span class="text-gray-600">Voucher Applied</span>
-                                <span class="font-medium text-green-600" x-text="selectedBooking?.voucher || '-'"></span>
-                            </div>
+                            
                             <div class="flex justify-between pt-2 border-t border-gray-300">
                                 <span class="text-sm font-semibold text-gray-700">Total Payment</span>
                                 <span class="text-lg font-bold text-gray-800" x-text="formatCurrency(selectedBooking?.total || 0)"></span>
@@ -419,9 +458,6 @@
                 <div class="flex flex-col sm:flex-row gap-3 mt-6 pt-6 border-t border-gray-200">
                     <button @click="showDetailModal = false" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
                         Close
-                    </button>
-                    <button x-show="selectedBooking?.paymentStatus === 'settlement' && selectedBooking?.assignmentStatus === 'unassigned'" @click="assignNow(selectedBooking)" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-                        Assign Room Now
                     </button>
                     <button x-show="selectedBooking?.assignmentStatus === 'assigned'" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
                         View Assignment
@@ -438,369 +474,170 @@
 <script>
 function bookingAllData() {
     return {
-        // Summary Stats
+        // State Management
+        loading: false,
+        error: null,
+        
+        // Data dari API
+        bookings: [],
         summary: {
-            settlement: 25,
-            pending: 10,
-            expired: 3,
-            total: 38
+            settlement: 0,
+            pending: 0,
+            expire: 0,
+            total: 0
         },
 
         // Filters
         filters: {
             status: '',
             service: '',
-            assignment: '',
             date: '',
             dateFrom: '',
             dateTo: '',
-            search: ''
+            search: '',
+            searchQuery: '' // Untuk debounced search
         },
 
         // Pagination
         currentPage: 1,
         entriesPerPage: 10,
+        totalItems: 0,
+        totalPages: 0,
 
         // Modal
         showDetailModal: false,
         selectedBooking: null,
 
-        // Sample Booking Data
-        bookings: [
-            {
-                id: 1,
-                bookingId: '#MR-089',
-                transactionDate: '08 Oct 2025, 15:30',
-                bookingDate: '09 Oct 2025',
-                bookingTime: '09:00 - 11:00',
-                customerName: 'Budi Santoso',
-                customerPhone: '0812-3456-7890',
-                customerEmail: 'budi@email.com',
-                customerCompany: 'PT Maju Jaya',
-                service: 'Meeting Room',
-                package: '2 Jam',
-                duration: '2 Hours',
-                participants: '8 people',
-                paymentStatus: 'settlement',
-                assignmentStatus: 'assigned',
-                roomNumber: 'Room 201',
-                basePrice: 200000,
-                discount: 20000,
-                voucher: null,
-                total: 180000,
-                serviceType: 'meeting'
-            },
-            {
-                id: 2,
-                bookingId: '#PO-045',
-                transactionDate: '08 Oct 2025, 14:15',
-                bookingDate: '09 Oct 2025',
-                bookingTime: 'Full Day',
-                customerName: 'Ani Wijaya',
-                customerPhone: '0813-5678-9012',
-                customerEmail: 'ani@email.com',
-                customerCompany: 'CV Sukses Mandiri',
-                service: 'Private Office',
-                package: 'Monthly',
-                duration: '1 Month',
-                participants: '4 people',
-                paymentStatus: 'settlement',
-                assignmentStatus: 'assigned',
-                roomNumber: 'Room 301',
-                basePrice: 3000000,
-                discount: 0,
-                voucher: null,
-                total: 3000000,
-                serviceType: 'private'
-            },
-            {
-                id: 3,
-                bookingId: '#MR-090',
-                transactionDate: '08 Oct 2025, 13:45',
-                bookingDate: '10 Oct 2025',
-                bookingTime: '14:00 - 18:00',
-                customerName: 'Siti Rahayu',
-                customerPhone: '0814-6789-0123',
-                customerEmail: 'siti@email.com',
-                customerCompany: null,
-                service: 'Meeting Room',
-                package: '4 Jam',
-                duration: '4 Hours',
-                participants: '12 people',
-                paymentStatus: 'pending',
-                assignmentStatus: 'unassigned',
-                roomNumber: null,
-                basePrice: 400000,
-                discount: 80000,
-                voucher: null,
-                total: 320000,
-                serviceType: 'meeting'
-            },
-            {
-                id: 4,
-                bookingId: '#CW-012',
-                transactionDate: '08 Oct 2025, 12:30',
-                bookingDate: '09 Oct 2025',
-                bookingTime: '08:00 - 17:00',
-                customerName: 'Joko Prasetyo',
-                customerPhone: '0815-7890-1234',
-                customerEmail: 'joko@email.com',
-                customerCompany: 'Freelancer',
-                service: 'Coworking Space',
-                package: 'Day Pass',
-                duration: '1 Day',
-                participants: '1 person',
-                paymentStatus: 'settlement',
-                assignmentStatus: 'assigned',
-                roomNumber: 'N/A',
-                basePrice: 50000,
-                discount: 0,
-                voucher: null,
-                total: 50000,
-                serviceType: 'coworking'
-            },
-            {
-                id: 5,
-                bookingId: '#VO-008',
-                transactionDate: '08 Oct 2025, 11:00',
-                bookingDate: '09 Oct 2025',
-                bookingTime: 'Start Date',
-                customerName: 'Dewi Kusuma',
-                customerPhone: '0816-8901-2345',
-                customerEmail: 'dewi@email.com',
-                customerCompany: 'Startup ABC',
-                service: 'Virtual Office',
-                package: 'Yearly',
-                duration: '1 Year',
-                participants: null,
-                paymentStatus: 'settlement',
-                assignmentStatus: 'assigned',
-                roomNumber: 'N/A',
-                basePrice: 5000000,
-                discount: 0,
-                voucher: 'FREE-VO-2025',
-                total: 5000000,
-                serviceType: 'virtual'
-            },
-            {
-                id: 6,
-                bookingId: '#MR-091',
-                transactionDate: '08 Oct 2025, 10:45',
-                bookingDate: '09 Oct 2025',
-                bookingTime: '10:00 - 11:00',
-                customerName: 'Ahmad Fauzi',
-                customerPhone: '0817-9012-3456',
-                customerEmail: 'ahmad@email.com',
-                customerCompany: null,
-                service: 'Meeting Room',
-                package: '1 Jam',
-                duration: '1 Hour',
-                participants: '6 people',
-                paymentStatus: 'expired',
-                assignmentStatus: 'unassigned',
-                roomNumber: null,
-                basePrice: 100000,
-                discount: 0,
-                voucher: null,
-                total: 100000,
-                serviceType: 'meeting'
-            },
-            {
-                id: 7,
-                bookingId: '#SR-023',
-                transactionDate: '08 Oct 2025, 09:30',
-                bookingDate: '09 Oct 2025',
-                bookingTime: 'Full Month',
-                customerName: 'Linda Permata',
-                customerPhone: '0818-0123-4567',
-                customerEmail: 'linda@email.com',
-                customerCompany: 'PT Digital',
-                service: 'Sharing Room',
-                package: 'Monthly',
-                duration: '1 Month',
-                participants: '6 people',
-                paymentStatus: 'settlement',
-                assignmentStatus: 'assigned',
-                roomNumber: 'Room 306',
-                basePrice: 2500000,
-                discount: 0,
-                voucher: null,
-                total: 2500000,
-                serviceType: 'sharing'
-            },
-            {
-                id: 8,
-                bookingId: '#ES-005',
-                transactionDate: '08 Oct 2025, 08:00',
-                bookingDate: '12 Oct 2025',
-                bookingTime: '08:00 - 18:00',
-                customerName: 'Ridwan Kamil',
-                customerPhone: '0819-1234-5678',
-                customerEmail: 'ridwan@email.com',
-                customerCompany: 'Event Organizer XYZ',
-                service: 'Event Space',
-                package: 'Full Day',
-                duration: '10 Hours',
-                participants: '100 people',
-                paymentStatus: 'settlement',
-                assignmentStatus: 'unassigned',
-                roomNumber: null,
-                basePrice: 5000000,
-                discount: 500000,
-                voucher: null,
-                total: 4500000,
-                serviceType: 'event'
-            },
-            {
-                id: 9,
-                bookingId: '#MR-092',
-                transactionDate: '07 Oct 2025, 16:20',
-                bookingDate: '11 Oct 2025',
-                bookingTime: '13:00 - 15:00',
-                customerName: 'Rina Susanti',
-                customerPhone: '0821-2345-6789',
-                customerEmail: 'rina@email.com',
-                customerCompany: 'CV Sejahtera',
-                service: 'Meeting Room',
-                package: '2 Jam',
-                duration: '2 Hours',
-                participants: '10 people',
-                paymentStatus: 'settlement',
-                assignmentStatus: 'unassigned',
-                roomNumber: null,
-                basePrice: 200000,
-                discount: 20000,
-                voucher: null,
-                total: 180000,
-                serviceType: 'meeting'
-            },
-            {
-                id: 10,
-                bookingId: '#PO-046',
-                transactionDate: '07 Oct 2025, 15:10',
-                bookingDate: '15 Oct 2025',
-                bookingTime: 'Full Month',
-                customerName: 'Hendra Wijaya',
-                customerPhone: '0822-3456-7890',
-                customerEmail: 'hendra@email.com',
-                customerCompany: 'PT Teknologi',
-                service: 'Private Office',
-                package: 'Monthly',
-                duration: '1 Month',
-                participants: '6 people',
-                paymentStatus: 'pending',
-                assignmentStatus: 'unassigned',
-                roomNumber: null,
-                basePrice: 3500000,
-                discount: 0,
-                voucher: null,
-                total: 3500000,
-                serviceType: 'private'
-            }
-        ],
+        // Search debounce
+        searchTimeout: null,
 
-        // Initialize
-        init() {
-            // Any initialization logic
+        // Initialize - Load data dari API
+        async init() {
+            await this.loadBookings();
+            
+            // Setup search debounce
+            this.$watch('filters.search', (value) => {
+                clearTimeout(this.searchTimeout);
+                this.searchTimeout = setTimeout(() => {
+                    this.filters.searchQuery = value;
+                    this.currentPage = 1;
+                    this.loadBookings();
+                }, 500);
+            });
         },
 
-        // Computed Properties
-        get filteredBookings() {
-            let filtered = this.bookings;
-
-            // Filter by payment status
-            if (this.filters.status) {
-                filtered = filtered.filter(b => b.paymentStatus === this.filters.status);
+        // Load data dari API
+        async loadBookings() {
+            this.loading = true;
+            this.error = null;
+            
+            try {
+                const params = new URLSearchParams();
+                
+                // Add filters to params
+                if (this.filters.status) params.append('status', this.filters.status);
+                if (this.filters.service) params.append('service', this.filters.service);
+                if (this.filters.date) params.append('date', this.filters.date);
+                if (this.filters.dateFrom) params.append('date_from', this.filters.dateFrom);
+                if (this.filters.dateTo) params.append('date_to', this.filters.dateTo);
+                if (this.filters.searchQuery) params.append('search', this.filters.searchQuery);
+                
+                // Pagination
+                params.append('per_page', this.entriesPerPage);
+                params.append('page', this.currentPage);
+                
+                const response = await fetch(`/booking/all/api/data?${params.toString()}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.bookings = result.data.bookings;
+                    this.summary = result.data.summary;
+                    this.totalItems = result.data.pagination.total_items;
+                    this.totalPages = result.data.pagination.total_pages;
+                    this.currentPage = result.data.pagination.current_page;
+                } else {
+                    this.error = result.message || 'Failed to load bookings';
+                    console.error('API Error:', result);
+                }
+            } catch (error) {
+                this.error = 'Network error: Failed to fetch bookings';
+                console.error('Fetch Error:', error);
+            } finally {
+                this.loading = false;
             }
-
-            // Filter by service type
-            if (this.filters.service) {
-                filtered = filtered.filter(b => b.serviceType === this.filters.service);
-            }
-
-            // Filter by assignment status
-            if (this.filters.assignment) {
-                filtered = filtered.filter(b => b.assignmentStatus === this.filters.assignment);
-            }
-
-            // Filter by specific date
-            if (this.filters.date) {
-                filtered = filtered.filter(b => {
-                    const bookingDate = new Date(b.bookingDate).toISOString().split('T')[0];
-                    return bookingDate === this.filters.date;
-                });
-            }
-
-            // Filter by date range
-            if (this.filters.dateFrom && this.filters.dateTo) {
-                filtered = filtered.filter(b => {
-                    const bookingDate = new Date(b.bookingDate);
-                    const fromDate = new Date(this.filters.dateFrom);
-                    const toDate = new Date(this.filters.dateTo);
-                    return bookingDate >= fromDate && bookingDate <= toDate;
-                });
-            }
-
-            // Filter by search
-            if (this.filters.search) {
-                const search = this.filters.search.toLowerCase();
-                filtered = filtered.filter(b => 
-                    b.bookingId.toLowerCase().includes(search) ||
-                    b.customerName.toLowerCase().includes(search) ||
-                    b.customerPhone.includes(search) ||
-                    (b.customerEmail && b.customerEmail.toLowerCase().includes(search))
-                );
-            }
-
-            return filtered;
         },
 
+        // Load filter options dari API
+        async loadFilterOptions() {
+            try {
+                const response = await fetch('/booking/all/api/filter-options');
+                const result = await response.json();
+                
+                if (result.success) {
+                    return result.data;
+                }
+            } catch (error) {
+                console.error('Failed to load filter options:', error);
+            }
+            return null;
+        },
+
+        // Computed Properties - Disesuaikan dengan data dari API
         get paginatedBookings() {
-            const start = (this.currentPage - 1) * this.entriesPerPage;
-            const end = start + parseInt(this.entriesPerPage);
-            return this.filteredBookings.slice(start, end);
-        },
-
-        get totalPages() {
-            return Math.ceil(this.filteredBookings.length / this.entriesPerPage);
+            return this.bookings;
         },
 
         get paginationStart() {
-            return (this.currentPage - 1) * this.entriesPerPage + 1;
+            return ((this.currentPage - 1) * this.entriesPerPage) + 1;
         },
 
         get paginationEnd() {
             const end = this.currentPage * this.entriesPerPage;
-            return end > this.filteredBookings.length ? this.filteredBookings.length : end;
+            return end > this.totalItems ? this.totalItems : end;
         },
 
         // Methods
         formatCurrency(value) {
-            return 'Rp ' + value.toLocaleString('id-ID');
+            return 'Rp ' + Number(value).toLocaleString('id-ID');
         },
 
-        resetFilter() {
+        async resetFilter() {
             this.filters = {
                 status: '',
                 service: '',
-                assignment: '',
                 date: '',
                 dateFrom: '',
                 dateTo: '',
-                search: ''
+                search: '',
+                searchQuery: ''
             };
             this.currentPage = 1;
+            await this.loadBookings();
         },
 
-        previousPage() {
+        async applyFilters() {
+            this.currentPage = 1;
+            await this.loadBookings();
+        },
+
+        async previousPage() {
             if (this.currentPage > 1) {
                 this.currentPage--;
+                await this.loadBookings();
             }
         },
 
-        nextPage() {
+        async nextPage() {
             if (this.currentPage < this.totalPages) {
                 this.currentPage++;
+                await this.loadBookings();
+            }
+        },
+
+        async goToPage(page) {
+            if (page >= 1 && page <= this.totalPages) {
+                this.currentPage = page;
+                await this.loadBookings();
             }
         },
 
@@ -809,15 +646,158 @@ function bookingAllData() {
             this.showDetailModal = true;
         },
 
-        assignNow(booking) {
-            // Redirect to room assignment page
-            alert('Redirecting to room assignment for ' + booking.bookingId);
-            // window.location.href = '/admin/booking/room-assignment?booking=' + booking.id;
+        // Di Alpine.js - PERBAIKI METHOD exportExcel
+       async exportExcel() {
+            try {
+                if (this.totalItems === 0) {
+                    this.showNotification('No data to export', 'error');
+                    return;
+                }
+                
+                console.log('Starting export...');
+                
+                // Build export URL dengan filters
+                const params = new URLSearchParams();
+                
+                if (this.filters.status) params.append('status', this.filters.status);
+                if (this.filters.service) params.append('service', this.filters.service);
+                if (this.filters.date) params.append('date', this.filters.date);
+                if (this.filters.dateFrom) params.append('date_from', this.filters.dateFrom);
+                if (this.filters.dateTo) params.append('date_to', this.filters.dateTo);
+                if (this.filters.searchQuery) params.append('search', this.filters.searchQuery);
+                
+                console.log('Exporting with params:', params.toString());
+                
+                this.showNotification('Preparing export file...', 'info');
+                
+                // Panggil API export
+                const response = await fetch(`/booking/all/api/export?${params.toString()}`);
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    
+                    // Cek jika response error (JSON)
+                    if (blob.type === 'application/json') {
+                        const errorData = await blob.text();
+                        throw new Error(JSON.parse(errorData).message || 'Export failed');
+                    }
+                    
+                    // Download CSV file
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    
+                    // Get filename from header atau default
+                    const contentDisposition = response.headers.get('content-disposition');
+                    let filename = `bookings-${new Date().toISOString().split('T')[0]}.csv`;
+                    
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                        if (filenameMatch) {
+                            filename = filenameMatch[1];
+                        }
+                    }
+                    
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    
+                    this.showNotification(`Successfully exported ${this.totalItems} bookings to CSV`, 'success');
+                    
+                } else {
+                    // Handle HTTP errors
+                    const errorText = await response.text();
+                    let errorMessage = `Export failed: ${response.status}`;
+                    
+                    try {
+                        const errorData = JSON.parse(errorText);
+                        errorMessage = errorData.message || errorMessage;
+                    } catch (e) {
+                        errorMessage = errorText || errorMessage;
+                    }
+                    
+                    throw new Error(errorMessage);
+                }
+                
+            } catch (error) {
+                console.error('Export error:', error);
+                this.showNotification(
+                    error.message || 'Failed to export data. Please try again.', 
+                    'error'
+                );
+            }
         },
 
-        exportExcel() {
-            alert('Exporting ' + this.filteredBookings.length + ' bookings to Excel...');
-            // Implementation for Excel export
+        // ✅ Notification method
+        showNotification(message, type = 'info') {
+            // Buat notification element
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg border-l-4 ${
+                type === 'success' ? 'bg-green-50 border-green-400 text-green-700' :
+                type === 'error' ? 'bg-red-50 border-red-400 text-red-700' :
+                'bg-blue-50 border-blue-400 text-blue-700'
+            }`;
+            
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        ${
+                            type === 'success' ? 
+                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>' :
+                            type === 'error' ?
+                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>' :
+                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
+                        }
+                    </svg>
+                    <span class="text-sm">${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto remove setelah 5 detik
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        },
+
+        // ✅ METHOD BARU: Reset export button
+        resetExportButton() {
+            const buttons = this.$root.querySelectorAll('button[ x-on\\:click="exportExcel()"]');
+            buttons.forEach(button => {
+                button.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span class="hidden sm:inline">Export Excel</span>
+                    <span class="sm:hidden">Export</span>
+                `;
+                button.disabled = false;
+            });
+        },
+
+        // Helper method untuk status colors
+        getStatusColor(status) {
+            const colors = {
+                settlement: { bg: 'bg-green-100', text: 'text-green-800' },
+                pending: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+                expire: { bg: 'bg-red-100', text: 'text-red-800' }
+            };
+            return colors[status] || { bg: 'bg-gray-100', text: 'text-gray-800' };
+        },
+
+        // Format date untuk display
+        formatDate(dateString) {
+            if (!dateString) return '-';
+            return new Date(dateString).toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
         }
     }
 }

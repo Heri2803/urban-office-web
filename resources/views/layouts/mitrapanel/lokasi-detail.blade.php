@@ -79,15 +79,7 @@
                  x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
                 
                 {{-- Modal Header --}}
-                <div class="relative p-6 border-b border-gray-200"
-                     :class="{
-                         'bg-gradient-to-r from-blue-50 to-blue-100': selectedService?.type === 'private-office',
-                         'bg-gradient-to-r from-purple-50 to-purple-100': selectedService?.type === 'virtual-office',
-                         'bg-gradient-to-r from-green-50 to-green-100': selectedService?.type === 'sharing-room',
-                         'bg-gradient-to-r from-orange-50 to-orange-100': selectedService?.type === 'meeting-room',
-                         'bg-gradient-to-r from-pink-50 to-pink-100': selectedService?.type === 'event-space',
-                         'bg-gradient-to-r from-indigo-50 to-indigo-100': selectedService?.type === 'coworking-space'
-                     }">
+                <div class="relative p-6 border-b border-gray-200 bg-gradient-to-r from-orange-50 to-red-50">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-3">
                             <div class="text-4xl" x-text="selectedService?.icon"></div>
@@ -113,15 +105,15 @@
                         <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-xl border border-blue-200">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="text-sm font-medium text-blue-900">Total Transaksi</span>
-                                <div class="p-2 bg-blue-200 rounded-lg">
-                                    <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <div class="p-2 bg-green-200 rounded-lg">
+                                    <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
                                         <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
                                     </svg>
                                 </div>
                             </div>
                             <p class="text-3xl font-bold text-blue-900" x-text="selectedService?.transactions"></p>
-                            <p class="text-xs text-blue-700 mt-1">Transaksi berhasil</p>
+                            <p class="text-xs text-green-700 mt-1">Transaksi berhasil</p>
                         </div>
 
                         {{-- Total Nominal --}}
@@ -152,8 +144,8 @@
                             {{-- Rata-rata --}}
                             <div class="flex items-center justify-between py-3 border-b border-gray-200">
                                 <div class="flex items-center space-x-3">
-                                    <div class="p-2 bg-blue-100 rounded-lg">
-                                        <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <div class="p-2 bg-orange-100 rounded-lg">
+                                        <svg class="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11 4a1 1 0 10-2 0v4a1 1 0 102 0V7zm-3 1a1 1 0 10-2 0v3a1 1 0 102 0V8zM8 9a1 1 0 00-2 0v2a1 1 0 102 0V9z" clip-rule="evenodd"/>
                                         </svg>
                                     </div>
@@ -168,8 +160,8 @@
                             {{-- Tertinggi --}}
                             <div class="flex items-center justify-between py-3 border-b border-gray-200">
                                 <div class="flex items-center space-x-3">
-                                    <div class="p-2 bg-orange-100 rounded-lg">
-                                        <svg class="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <div class="p-2 bg-green-100 rounded-lg">
+                                        <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"/>
                                         </svg>
                                     </div>
@@ -184,8 +176,8 @@
                             {{-- Terendah (optional) --}}
                             <div class="flex items-center justify-between py-3">
                                 <div class="flex items-center space-x-3">
-                                    <div class="p-2 bg-purple-100 rounded-lg">
-                                        <svg class="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <div class="p-2 bg-red-100 rounded-lg">
+                                        <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M12 13a1 1 0 100 2h5a1 1 0 001-1V9a1 1 0 10-2 0v2.586l-4.293-4.293a1 1 0 00-1.414 0L8 9.586 3.707 5.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0L11 9.414 14.586 13H12z" clip-rule="evenodd"/>
                                         </svg>
                                     </div>
@@ -223,7 +215,7 @@
                         </button>
                         <button @click="exportServiceDetail()" 
                                 type="button"
-                                class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition flex items-center">
+                                class="px-5 py-2.5 bg-orange-500 hover:bg-orange-500 text-white text-sm font-medium rounded-lg transition flex items-center">
                             <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
                             </svg>
@@ -378,17 +370,9 @@
     {{-- Service Cards Grid --}}
     <div x-show="services.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         <template x-for="service in services" :key="service.id">
-            <div class="service-card bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                {{-- Card Header dengan Icon --}}
-                <div class="p-5 border-b border-gray-100" 
-                     :class="{
-                         'bg-gradient-to-r from-blue-50 to-blue-100': service.type === 'private-office',
-                         'bg-gradient-to-r from-purple-50 to-purple-100': service.type === 'virtual-office',
-                         'bg-gradient-to-r from-green-50 to-green-100': service.type === 'sharing-room',
-                         'bg-gradient-to-r from-orange-50 to-orange-100': service.type === 'meeting-room',
-                         'bg-gradient-to-r from-pink-50 to-pink-100': service.type === 'event-space',
-                         'bg-gradient-to-r from-indigo-50 to-indigo-100': service.type === 'coworking-space'
-                     }">
+            <div class="service-card bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow duration-300">
+                {{-- Card Header dengan Icon - Warna Seragam --}}
+                <div class="p-5 border-b border-gray-100 bg-gradient-to-r from-orange-50 to-red-50">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-3">
                             <div class="text-3xl" x-text="service.icon"></div>
@@ -446,8 +430,8 @@
                 <div class="bg-white p-5 rounded-xl border border-gray-200">
                     <div class="flex items-center justify-between mb-3">
                         <span class="text-sm font-medium text-gray-600">Total Omzet</span>
-                        <div class="p-2 bg-blue-100 rounded-lg">
-                            <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                        <div class="p-2 bg-orange-100 rounded-lg">
+                            <svg class="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
                             </svg>
                         </div>
@@ -492,7 +476,7 @@
                             x-show="summary.status !== 'reported'"
                             @click="reportTax"
                             :disabled="loading"
-                            class="w-full mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition disabled:opacity-50">
+                            class="w-full mt-3 px-4 py-2 bg-orange-500 hover:bg-orange-300 text-white text-sm font-medium rounded-lg transition disabled:opacity-50">
                         Laporkan Sekarang
                     </button>
                 </div>

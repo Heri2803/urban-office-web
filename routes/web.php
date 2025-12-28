@@ -21,6 +21,7 @@ use App\Http\Controllers\Booking\BookingApiController;
 use App\Http\Controllers\Booking\ServicePriceController;
 use App\Http\Controllers\Booking\PaymentController;
 use App\Http\Controllers\Backend\MitraPanel\MitraAccessController;
+use App\Http\Controllers\Booking\LunchOptionController;
 
 
     Route::get('cities', [BookingApiController::class, 'getCities']);
@@ -116,6 +117,9 @@ Route::get('/check-mitra-status', [MitraAccessController::class, 'checkStatus'])
     ->name('check.mitra.status')
     ->middleware('auth');
 
+Route::get('/lunch-options', [LunchOptionController::class, 'getByLocation']);
+Route::get('/lunch-options/location/{locationId}', [LunchOptionController::class, 'getByLocation']);
+
 // Dashboard Routes (DILINDUNGI AUTH GUARD) - Semua route dashboard wajib login
 Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(function () {
     
@@ -128,6 +132,20 @@ Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(functi
     })->name('calls');
 
     Route::get('/mails', [MailController::class, 'mailContent'])->name('mails');
+
+    Route::prefix('mails')->name('mails.')->group(function () {
+        Route::get('/transaction/{transaction}/messages', 
+            [\App\Http\Controllers\Mails\CustomerMessageController::class, 'getTransactionMessages'])
+            ->name('transaction.messages.get');
+        
+        Route::post('/transaction/{transaction}/message', 
+            [\App\Http\Controllers\Mails\CustomerMessageController::class, 'store'])
+            ->name('transaction.message.store');
+        
+        Route::post('/transaction/{transaction}/mark-read', 
+            [\App\Http\Controllers\Mails\CustomerMessageController::class, 'markAsRead'])
+            ->name('transaction.mark-read');
+    });
 
     Route::get('/invoice', [InvoiceController::class, 'index'])->name('invoice');
 
@@ -168,6 +186,8 @@ Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(functi
 
 });
 
+
+
 Route::middleware(['auth'])->group(function() {
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
 });
@@ -181,12 +201,12 @@ Route::get('/clear-cache', function () {
     return "Cache Laravel sudah dibersihkan ðŸš€";
 });
 
-
 // Route untuk clear session manual (untuk development)
 Route::get('/clear-session', function () {
     session()->flush();
     return redirect()->route('login')->with('success', 'Session cleared');
 })->name('clear.session');
+
 
 require __DIR__.'/admin.php';
 require __DIR__.'/superadmin.php';

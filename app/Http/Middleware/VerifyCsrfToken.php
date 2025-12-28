@@ -14,5 +14,7 @@ class VerifyCsrfToken extends Middleware
     protected $except = [
         'midtrans/notification',
          '/payment/*',// Tambahkan route notification Midtrans
+         'pricing/api/request', // TAMBAHKAN INI
+        'pricing/api/*', // atau gunakan wildcard untuk semua route di pricing/api
     ];
 }   

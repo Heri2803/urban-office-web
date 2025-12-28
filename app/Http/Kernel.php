@@ -66,5 +66,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'auth.guard' => \App\Http\Middleware\AuthGuard::class,
         'mitra.access' => \App\Http\Middleware\CheckMitraAccess::class,
+        'superadmin' => \App\Http\Middleware\EnsureSuperadmin::class,
     ];
 }

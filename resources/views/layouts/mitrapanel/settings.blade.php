@@ -22,14 +22,14 @@
         {{-- Sidebar Menu (Desktop) --}}
         <div class="lg:w-1/5">
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden sticky top-6">
-                <div class="p-4 bg-gradient-to-r from-blue-50 to-blue-100 border-b border-gray-200">
+                <div class="p-4 bg-gradient-to-r from-orange-50 to-orange-100 border-b border-gray-200">
                     <h3 class="text-sm font-semibold text-gray-800">Menu Pengaturan</h3>
                 </div>
                 <nav class="p-2">
                     <button @click="activeTab = 'profile'" 
                             type="button"
                             class="w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition"
-                            :class="activeTab === 'profile' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'">
+                            :class="activeTab === 'profile' ? 'bg-orange-50 text-orange-700' : 'text-gray-700 hover:bg-gray-50'">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                         </svg>
@@ -38,20 +38,11 @@
                     <button @click="activeTab = 'security'" 
                             type="button"
                             class="w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition"
-                            :class="activeTab === 'security' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'">
+                            :class="activeTab === 'security' ? 'bg-orange-50 text-orange-700' : 'text-gray-700 hover:bg-gray-50'">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                         </svg>
                         Keamanan
-                    </button>
-                    <button @click="activeTab = 'notifications'" 
-                            type="button"
-                            class="w-full flex items-center px-4 py-3 rounded-lg text-sm font-medium transition"
-                            :class="activeTab === 'notifications' ? 'bg-blue-50 text-blue-700' : 'text-gray-700 hover:bg-gray-50'">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                        </svg>
-                        Notifikasi
                     </button>
                 </nav>
             </div>
@@ -74,7 +65,7 @@
                                     class="w-32 h-32 rounded-full object-cover border-4 border-gray-200 shadow-lg">
                             </template>
                             <template x-if="!formData.photoPreview">
-                                <div class="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-4xl font-bold border-4 border-gray-200 shadow-lg">
+                                <div class="w-32 h-32 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white text-4xl font-bold border-4 border-gray-200 shadow-lg">
                                     <span x-text="formData.name.charAt(0).toUpperCase()"></span>
                                 </div>
                             </template>
@@ -89,7 +80,7 @@
                             <p class="text-xs text-gray-500 mb-4">Format: JPG, PNG, atau WebP (Maks. 2MB)</p>
                             
                             <div class="flex flex-col sm:flex-row gap-2">
-                                <label class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition cursor-pointer">
+                                <label class="inline-flex items-center px-4 py-2 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition cursor-pointer">
                                     <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z"/>
                                         <path d="M9 13h2v5a1 1 0 11-2 0v-5z"/>
@@ -191,7 +182,7 @@
                         {{-- Action Buttons --}}
                         <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
                             <button type="submit" 
-                                    class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm">
+                                    class="flex-1 inline-flex items-center justify-center px-6 py-3 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm">
                                 <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                 </svg>
@@ -317,7 +308,7 @@
                             <button type="submit" 
                                     @click="console.log('🖱️ Button clicked')" 
                                     :disabled="!isPasswordFormValid || passwordLoading"
-                                    class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                    class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
                                 
                                 {{-- Loading Spinner --}}
                                 <svg x-show="passwordLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
@@ -355,43 +346,6 @@
                 </div>
 
             </div>
-
-            {{-- Tab: Notifikasi --}}
-            <div x-show="activeTab === 'notifications'" x-transition class="space-y-6">
-
-                {{-- Email Notifications --}}
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Notifikasi Email</h3>
-                    <p class="text-sm text-gray-600 mb-6">Pilih notifikasi yang ingin Anda terima via email</p>
-                    
-                    <div class="space-y-4">
-                        <template x-for="(item, key) in notificationSettings.email" :key="key">
-                            <label class="flex items-start p-4 rounded-lg hover:bg-gray-50 transition cursor-pointer">
-                                <input type="checkbox" 
-                                        x-model="notificationSettings.email[key].enabled"
-                                        class="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2">
-                                <div class="ml-3 flex-1">
-                                    <p class="text-sm font-medium text-gray-900" x-text="item.label"></p>
-                                    <p class="text-xs text-gray-500 mt-0.5" x-text="item.description"></p>
-                                </div>
-                            </label>
-                        </template>
-                    </div>
-
-                    <div class="pt-4 border-t border-gray-200 mt-6">
-                        <button @click="saveNotifications" 
-                                type="button"
-                                class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm">
-                            <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                            </svg>
-                            Simpan Preferensi
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-
         </div>
 
     </div>
@@ -433,37 +387,7 @@ function settingsData() {
         passwordLoading: false,
         showCurrentPassword: false,
         showNewPassword: false,
-        
-        // Notification Settings
-        notificationSettings: {
-            email: {
-                newTransaction: {
-                    enabled: true,
-                    label: 'Transaksi Baru',
-                    description: 'Notifikasi saat ada transaksi baru di lokasi Anda'
-                },
-                monthlyReport: {
-                    enabled: true,
-                    label: 'Laporan Bulanan',
-                    description: 'Terima laporan bulanan transaksi dan pendapatan'
-                },
-                taxReminder: {
-                    enabled: true,
-                    label: 'Pengingat Pajak',
-                    description: 'Reminder untuk melaporkan pajak sebelum deadline'
-                },
-                promoUpdate: {
-                    enabled: false,
-                    label: 'Update Promo',
-                    description: 'Info tentang promo baru dan performa promo yang berjalan'
-                },
-                systemUpdate: {
-                    enabled: true,
-                    label: 'Update Sistem',
-                    description: 'Pemberitahuan tentang maintenance dan update sistem'
-                }
-            }
-        },
+    
 
         // ✅ TAMBAHKAN STATE UNTUK MESSAGES
         successMessage: '',
@@ -742,38 +666,6 @@ function settingsData() {
             }
         },
         
-        async saveNotifications() {
-            try {
-                this.isLoading = true;
-                this.clearMessages();
-
-                const response = await fetch('/settings/notifications-update', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify({
-                        notifications: this.notificationSettings
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    this.showSuccess('Preferensi notifikasi berhasil disimpan!');
-                } else {
-                    this.showError('Gagal menyimpan preferensi notifikasi.');
-                }
-
-            } catch (error) {
-                console.error('❌ Error saving notifications:', error);
-                this.showError('Terjadi kesalahan saat menyimpan notifikasi.');
-            } finally {
-                this.isLoading = false;
-            }
-        }
     }
 }
 </script>

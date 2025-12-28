@@ -20,6 +20,8 @@ class Kernel extends ConsoleKernel
     
     // Generate reports baru setiap bulan
     $schedule->command('tax:generate-monthly')->monthlyOn(1, '02:00');
+
+    $schedule->command('rooms:update-status')->everyMinute();
     }
 
     /**
