@@ -248,15 +248,79 @@
                                 
                                 <!-- Attachment -->
                                 <div x-show="msg.attachment" class="mt-2">
-                                    <a :href="msg.attachment" target="_blank" class="block">
-                                        <img x-show="msg.is_image" 
-                                             :src="msg.attachment" 
-                                             class="rounded-lg max-w-full h-auto">
+                                    <a :href="msg.attachment" 
+                                    target="_blank" 
+                                    class="block"
+                                    @click.prevent="msg.is_image ? previewImage(msg.attachment) : null">
+                                        
+                                        <!-- UNTUK GAMBAR -->
+                                        <div x-show="msg.is_image" 
+                                            class="rounded-lg overflow-hidden bg-gray-50 border border-gray-200 group cursor-pointer">
+                                            
+                                            <!-- Container dengan batasan maksimal -->
+                                            <div class="relative" 
+                                                :class="{
+                                                    'max-w-xs': msg.image_width > msg.image_height,  // Landscape
+                                                    'max-w-sm': msg.image_width === msg.image_height, // Square
+                                                    'max-w-xs': msg.image_width < msg.image_height   // Portrait
+                                                }">
+                                                
+                                                <!-- Loading Skeleton (tampil saat gambar loading) -->
+                                                <div x-show="!msg.image_loaded" 
+                                                    class="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-pulse rounded-lg"></div>
+                                                
+                                                <!-- Gambar Aktual -->
+                                                <img :src="msg.attachment" 
+                                                    :alt="msg.attachment_name || 'Gambar pesan'"
+                                                    class="rounded-lg w-full max-h-80 object-contain transition-opacity duration-300"
+                                                    :class="{'opacity-0': !msg.image_loaded, 'opacity-100': msg.image_loaded}"
+                                                    @load="msg.image_loaded = true"
+                                                    loading="lazy">
+                                                    
+                                                    <!-- Optional: Untuk dapatkan dimensi asli gambar -->
+                                                    <x-init="if (msg.is_image) {
+                                                        const img = new Image();
+                                                        img.onload = function() {
+                                                            if (!msg.image_width) {
+                                                                msg.image_width = this.width;
+                                                                msg.image_height = this.height;
+                                                                msg.aspect_ratio = this.width / this.height;
+                                                            }
+                                                        };
+                                                        img.src = msg.attachment;
+                                                    }">
+                                                
+                                                <!-- Overlay untuk preview -->
+                                                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                                    <div class="bg-black/70 text-white px-3 py-1 rounded-full text-sm">
+                                                        <i class="fas fa-expand mr-1"></i> Preview
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Caption kecil di bawah gambar (jika ada) -->
+                                            <div x-show="msg.attachment_name && msg.attachment_name !== 'image.png'" 
+                                                class="text-xs text-gray-500 mt-1 px-2 pb-1 truncate">
+                                                <i class="fas fa-image mr-1"></i>
+                                                <span x-text="msg.attachment_name"></span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- UNTUK FILE NON-GAMBAR -->
                                         <div x-show="!msg.is_image" 
-                                             class="flex items-center gap-2 p-2 bg-gray-100 rounded-lg">
-                                            <i class="fas fa-file text-gray-600"></i>
-                                            <span class="text-sm text-gray-700" x-text="msg.attachment_name"></span>
-                                            <i class="fas fa-download ml-auto text-gray-500"></i>
+                                            class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors group">
+                                            <div class="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                <i class="fas fa-file text-white"></i>
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="text-sm font-medium text-gray-800 truncate" 
+                                                    x-text="msg.attachment_name"></div>
+                                                <div class="text-xs text-gray-500" 
+                                                    x-text="msg.file_size ? formatFileSize(msg.file_size) : 'File'"></div>
+                                            </div>
+                                            <div class="text-orange-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <i class="fas fa-download"></i>
+                                            </div>
                                         </div>
                                     </a>
                                 </div>

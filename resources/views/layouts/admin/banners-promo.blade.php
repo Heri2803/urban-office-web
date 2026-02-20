@@ -419,7 +419,7 @@ function bannerManagement() {
             try {
                 // Load categories dari API
                 try {
-                    const typesResponse = await fetch('{{ route("banners.types") }}');
+                    const typesResponse = await fetch('{{ route("admin.banners.types") }}');
                     if (typesResponse.ok) {
                         const typesData = await typesResponse.json();
                         this.promoTypes = typesData;
@@ -528,7 +528,7 @@ function bannerManagement() {
         async loadBanners() {
             try {
                 this.loading = true;
-                const response = await fetch('{{ route("banners.api") }}');
+                const response = await fetch('{{ route("admin.banners.api") }}');
                 
                 if (response.ok) {
                     const result = await response.json();

@@ -3,7 +3,7 @@
 @section('title', $title)
 
 @section('content')
-<div x-data="settings" class="container-fluid px-4 py-6">
+<div x-data="settings" class="container-fluid px-6 lg:px-8 py-6">
     <!-- Header Section -->
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ $title }}</h1>
@@ -31,10 +31,12 @@
         <span x-text="ui.notification.message"></span>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Modified Grid Layout: 1:5 ratio for wider form area -->
+    <div class="flex flex-col lg:flex-row gap-6">
         
-        <!-- Left Column - Profile Photo -->
-        <div class="lg:col-span-1">
+        <!-- Left Column - Profile Photo (Fixed Width) -->
+        <div class="lg:w-80 flex-shrink-0 space-y-6">
+            <!-- Profile Photo Card -->
             <div class="bg-white rounded-lg shadow-sm p-6">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">Profile Photo</h2>
                 
@@ -67,78 +69,58 @@
                     </button>
                 </div>
             </div>
-
-            <!-- Account Information -->
-            <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
-                <h2 class="text-lg font-semibold text-gray-800 mb-4">Account Information</h2>
-                
-                <div class="space-y-3">
-                    <div>
-                        <p class="text-xs text-gray-500 mb-1">Account Status</p>
-                        <span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">Active</span>
-                    </div>
-                    
-                    <div>
-                        <p class="text-xs text-gray-500 mb-1">Account Created</p>
-                        <p class="text-sm text-gray-900">{{ $accountInfo['created_at'] }}</p>
-                    </div>
-                    
-                    <div>
-                        <p class="text-xs text-gray-500 mb-1">Last Login</p>
-                        <p class="text-sm text-gray-900">{{ $accountInfo['last_login'] }}</p>
-                    </div>
-                    
-                    <div>
-                        <p class="text-xs text-gray-500 mb-1">Branch Assigned</p>
-                        <p class="text-sm text-gray-900">{{ $accountInfo['branch'] }}</p>
-                    </div>
-                    
-                    <div>
-                        <p class="text-xs text-gray-500 mb-1">Work Schedule</p>
-                        <p class="text-sm text-gray-900">{{ $accountInfo['schedule'] }}</p>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <!-- Right Column - Forms -->
-        <div class="lg:col-span-2">
-            <!-- Personal Information -->
-            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <!-- Right Column - Forms (Full Remaining Width) -->
+        <div class="flex-1 space-y-6">
+            <!-- Personal Information - MODIFIED SECTION -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
                 <h2 class="text-lg font-semibold text-gray-800 mb-4">Personal Information</h2>
                 
                 <form @submit.prevent="updateProfile()" class="space-y-4">
                     @csrf
                     @method('PUT')
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Row 1: Full Name, Phone Number, Employee ID (3 columns on desktop) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
-                            <input type="text" x-model="profile.full_name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <input type="text" 
+                                   x-model="profile.full_name" 
+                                   required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
                         </div>
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
-                            <input type="tel" x-model="profile.phone_number" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <input type="tel" 
+                                   x-model="profile.phone_number" 
+                                   required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
                         </div>
                     </div>
                     
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                        <input type="email" x-model="profile.email" class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed" disabled>
-                        <p class="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                    <!-- Row 2: Email and Role (2 columns) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                            <input type="email" 
+                                   x-model="profile.email" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed" 
+                                   disabled>
+                            <p class="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                            <input type="text" 
+                                   value="Admin Receptionist" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed" 
+                                   disabled>
+                        </div>
                     </div>
                     
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
-                        <input type="text" value="Admin Receptionist" class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed" disabled>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Employee ID</label>
-                        <input type="text" value="EMP-2025-001" class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 cursor-not-allowed" disabled>
-                    </div>
-                    
+                    <!-- Action Buttons -->
                     <div class="flex gap-3 pt-2">
                         <button type="submit" 
                                 :disabled="profile.loading"
@@ -152,7 +134,9 @@
                                 Saving...
                             </span>
                         </button>
-                        <button type="button" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+                        <button type="button" 
+                                @click="resetProfileForm()"
+                                class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
                             Cancel
                         </button>
                     </div>
@@ -160,8 +144,8 @@
             </div>
 
             <!-- Change Password -->
-            <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <h2 class="text-lg font-semibold text-gray-800 mb-4">Change Password</h2>
+            <!-- <div class="bg-white rounded-lg shadow-sm p-6"> -->
+                <!-- <h2 class="text-lg font-semibold text-gray-800 mb-4">Change Password</h2>
                 
                 <form @submit.prevent="changePassword()" class="space-y-4">
                     <div>
@@ -181,9 +165,9 @@
                                 </svg>
                             </button>
                         </div>
-                    </div>
+                    </div> -->
                     
-                    <div>
+                    <!-- <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">New Password *</label>
                         <div class="relative">
                             <input :type="getPasswordType('new')" 
@@ -200,9 +184,9 @@
                                     <path x-show="password.showNew" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>
                                 </svg>
                             </button>
-                        </div>
+                        </div> -->
                         <!-- Password Strength Indicator -->
-                        <div class="mt-2">
+                        <!-- <div class="mt-2">
                             <div class="flex gap-1">
                                 <template x-for="i in 4" :key="i">
                                     <div class="h-1 flex-1 rounded transition-colors duration-300"
@@ -211,9 +195,9 @@
                             </div>
                             <p class="text-xs mt-1" x-text="getStrengthText()"></p>
                         </div>
-                    </div>
+                    </div> -->
                     
-                    <div>
+                    <!-- <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Confirm New Password *</label>
                         <div class="relative">
                             <input :type="getPasswordType('confirm')" 
@@ -230,10 +214,10 @@
                                 </svg>
                             </button>
                         </div>
-                    </div>
+                    </div> -->
                     
                     <!-- Password Requirements -->
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <!-- <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
                         <p class="text-sm font-medium text-blue-900 mb-2">Password Requirements:</p>
                         <ul class="text-xs text-blue-800 space-y-1">
                             <li class="flex items-center gap-2">
@@ -261,9 +245,9 @@
                                 At least 1 special character
                             </li>
                         </ul>
-                    </div>
+                    </div> -->
                     
-                    <div class="flex gap-3 pt-2">
+                    <!-- <div class="flex gap-3 pt-2">
                         <button type="submit" 
                                 :disabled="password.loading"
                                 class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed">
@@ -281,9 +265,9 @@
                                 class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
                             Cancel
                         </button>
-                    </div>
-                </form>
-            </div>
+                    </div> -->
+                <!-- </form>
+            </div> -->
         </div>
     </div>
 </div>
@@ -296,7 +280,8 @@
      x-transition:leave="transition ease-in duration-200"
      x-transition:leave-start="opacity-100"
      x-transition:leave-end="opacity-0"
-     class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+     class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+     @click.self="closeLogoutModal()">
     <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
         <div class="p-6">
             <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">

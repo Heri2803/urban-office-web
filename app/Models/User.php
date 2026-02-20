@@ -198,4 +198,23 @@ class User extends Authenticatable
                     ->where('is_read', false)
                     ->count();
     }
+
+    /**
+     * ✅ PASTIKAN RELATIONSHIP INI ADA
+     */
+    public function userBonuses()
+    {
+        return $this->hasMany(UserBonus::class, 'user_id', 'id');
+    }
+    
+    /**
+     * ✅ Optional: Relationship untuk active bonus saja
+     */
+    public function activeBonuses()
+    {
+        return $this->hasMany(UserBonus::class)
+            ->where('status', 'active')
+            ->where('valid_until', '>=', now())
+            ->whereRaw('bonus_hours_total > bonus_hours_used');
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Backend\Admin;
 use App\Models\ServiceHighlight;
 use App\Models\RoomType;
 use App\Models\Room;
+use App\Models\ServiceCategory;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
@@ -14,19 +15,26 @@ class ServiceHighlightController extends Controller
     /**
      * Get initial data for service highlights page
      */
-    public function getInitialData(): JsonResponse
+        public function getInitialData(): JsonResponse
     {
         \Log::info('=== getInitialData called ===');
         
         try {
+            \Log::info('Fetching ServiceCategories...');
+            $serviceCategories = ServiceCategory::with(['roomTypes' => function($query) {
+                $query->active()->orderBy('name');
+            }])->get();
+            \Log::info('ServiceCategories fetched: ' . $serviceCategories->count());
+
             \Log::info('Fetching RoomTypes...');
             $roomTypes = RoomType::with(['rooms' => function($query) {
-                $query->active()->orderBy('room_number'); // ✅ GANTI dari 'name' ke 'room_number'
+                $query->active()->orderBy('room_number');
             }])->active()->get();
             \Log::info('RoomTypes fetched: ' . $roomTypes->count());
 
             \Log::info('Fetching Highlights...');
-            $highlights = ServiceHighlight::with(['roomTypes', 'rooms'])
+            // ✅ LOAD BOTH CATEGORIES AND ROOM TYPES
+            $highlights = ServiceHighlight::with(['serviceCategories', 'roomTypes', 'rooms'])
                 ->ordered()
                 ->get();
             \Log::info('Highlights fetched: ' . $highlights->count());
@@ -40,6 +48,7 @@ class ServiceHighlightController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
+                    'serviceCategories' => $serviceCategories, // ✅ NEW
                     'roomTypes' => $roomTypes,
                     'highlights' => $highlights,
                     'rooms' => $rooms
@@ -69,6 +78,8 @@ class ServiceHighlightController extends Controller
                 'description' => 'nullable|string',
                 'is_active' => 'boolean',
                 'show_in_all_services' => 'boolean',
+                'selected_categories' => 'array', // ✅ NEW
+                'selected_categories.*' => 'exists:service_categories,id', // ✅ NEW
                 'selected_room_types' => 'array',
                 'selected_room_types.*' => 'exists:room_types,id',
                 'selected_rooms' => 'array', 
@@ -84,9 +95,25 @@ class ServiceHighlightController extends Controller
                 'sort_order' => ServiceHighlight::max('sort_order') + 1
             ]);
 
-            // Attach room types if not showing in all services
-            if (!$highlight->show_in_all_services && isset($validated['selected_room_types'])) {
-                $highlight->roomTypes()->sync($validated['selected_room_types']);
+            // ✅ NEW LOGIC: Handle service assignments
+            if ($highlight->show_in_all_services) {
+                // Jika show in all services, attach semua categories
+                $allCategories = ServiceCategory::pluck('id')->toArray();
+                $highlight->syncServices($allCategories, []);
+            } else {
+                // Attach selected categories dan/atau room types
+                $categoryIds = $validated['selected_categories'] ?? [];
+                $roomTypeIds = $validated['selected_room_types'] ?? [];
+                
+                // Validasi: minimal pilih salah satu
+                if (empty($categoryIds) && empty($roomTypeIds)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Please select at least one service category or room type'
+                    ], 422);
+                }
+                
+                $highlight->syncServices($categoryIds, $roomTypeIds);
             }
 
             // Attach specific rooms if provided
@@ -97,13 +124,15 @@ class ServiceHighlightController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Highlight created successfully',
-                'highlight' => $highlight->load(['roomTypes', 'rooms'])
+                'highlight' => $highlight->load(['serviceCategories', 'roomTypes', 'rooms']) // ✅ Load categories
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Store highlight error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create highlight'
+                'message' => 'Failed to create highlight',
+                'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }
@@ -119,6 +148,8 @@ class ServiceHighlightController extends Controller
                 'description' => 'nullable|string',
                 'is_active' => 'boolean',
                 'show_in_all_services' => 'boolean',
+                'selected_categories' => 'array', // ✅ NEW
+                'selected_categories.*' => 'exists:service_categories,id', // ✅ NEW
                 'selected_room_types' => 'array',
                 'selected_room_types.*' => 'exists:room_types,id',
                 'selected_rooms' => 'array',
@@ -133,11 +164,25 @@ class ServiceHighlightController extends Controller
                 'show_in_all_services' => $validated['show_in_all_services'] ?? false
             ]);
 
-            // Sync room types
+            // ✅ NEW LOGIC: Handle service assignments
             if ($serviceHighlight->show_in_all_services) {
-                $serviceHighlight->roomTypes()->detach();
+                // Jika show in all, attach semua categories
+                $allCategories = ServiceCategory::pluck('id')->toArray();
+                $serviceHighlight->syncServices($allCategories, []);
             } else {
-                $serviceHighlight->roomTypes()->sync($validated['selected_room_types'] ?? []);
+                // Attach selected categories dan/atau room types
+                $categoryIds = $validated['selected_categories'] ?? [];
+                $roomTypeIds = $validated['selected_room_types'] ?? [];
+                
+                // Validasi: minimal pilih salah satu
+                if (empty($categoryIds) && empty($roomTypeIds)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Please select at least one service category or room type'
+                    ], 422);
+                }
+                
+                $serviceHighlight->syncServices($categoryIds, $roomTypeIds);
             }
 
             // Sync rooms
@@ -146,13 +191,15 @@ class ServiceHighlightController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Highlight updated successfully',
-                'highlight' => $serviceHighlight->load(['roomTypes', 'rooms'])
+                'highlight' => $serviceHighlight->load(['serviceCategories', 'roomTypes', 'rooms']) // ✅ Load categories
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Update highlight error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update highlight'
+                'message' => 'Failed to update highlight',
+                'error' => config('app.debug') ? $e->getMessage() : null
             ], 500);
         }
     }
@@ -160,10 +207,14 @@ class ServiceHighlightController extends Controller
     /**
      * Remove the specified highlight
      */
-    public function destroy(ServiceHighlight $serviceHighlight): JsonResponse
+        public function destroy(ServiceHighlight $serviceHighlight): JsonResponse
     {
         try {
-            $serviceHighlight->roomTypes()->detach();
+            // ✅ Detach semua relasi dari pivot table
+            \DB::table('service_highlight_room_type')
+                ->where('service_highlight_id', $serviceHighlight->id)
+                ->delete();
+                
             $serviceHighlight->rooms()->detach();
             $serviceHighlight->delete();
 
@@ -173,6 +224,7 @@ class ServiceHighlightController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Delete highlight error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete highlight'

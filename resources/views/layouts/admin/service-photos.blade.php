@@ -450,9 +450,9 @@ function servicePhotos() {
 
         // API endpoints
         api: {
-            roomTypes: '{{ route('service-photos.api.room-types') }}',
-            photos: '{{ route('service-photos.api.photos') }}',
-            upload: '{{ route('service-photos.api.upload') }}',
+            roomTypes: '{{ route('admin.service-photos.api.room-types') }}',
+            photos: '{{ route('admin.service-photos.api.photos') }}',
+            upload: '{{ route('admin.service-photos.api.upload') }}',
         },
 
         async init() {
@@ -836,7 +836,7 @@ function servicePhotos() {
             if (photo.is_primary) return;
 
             try {
-                const response = await fetch(`{{ route('service-photos.api.set-primary', '') }}/${photo.id}`, {
+                const response = await fetch(`{{ route('admin.service-photos.api.set-primary', '') }}/${photo.id}`, {
                     method: 'PUT',
                     headers: {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -866,7 +866,7 @@ function servicePhotos() {
 
         async confirmDelete() {
             try {
-                const response = await fetch(`{{ route('service-photos.api.destroy', '') }}/${this.deletingPhoto.id}`, {
+                const response = await fetch(`{{ route('admin.service-photos.api.destroy', '') }}/${this.deletingPhoto.id}`, {
                     method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',

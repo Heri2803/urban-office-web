@@ -27,25 +27,67 @@
     {{-- Service Tabs --}}
     <div class="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {{-- Tab Headers - Mobile Scrollable --}}
-        <div class="border-b border-gray-200 overflow-x-auto overflow-y-hidden -webkit-overflow-scrolling-touch" 
-            style="scrollbar-width: thin; scrollbar-color: #CBD5E0 #F7FAFC;">
-            <nav class="flex">
+        <div class="border-b border-gray-200">
+            {{-- Mobile: Grid 3x3 (hanya untuk mobile) --}}
+            <nav class="grid grid-cols-2 gap-1.5 md:hidden p-1.5 bg-gray-50 rounded-lg">
                 <template x-for="roomType in roomTypes" :key="roomType.id">
-                    <button 
-                        @click="activeTab = roomType.id"
-                        :class="activeTab === roomType.id ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700'"
-                        class="flex items-center gap-1.5 px-3 py-2.5 border-b-2 font-medium whitespace-nowrap transition-colors text-xs sm:text-sm flex-shrink-0"
-                    >
-                        <span x-text="roomType.icon || '🏢'"></span>
-                        <span x-text="roomType.name.split(' ')[0]"></span>
-                        <span 
-                            class="px-1.5 py-0.5 text-[10px] sm:text-xs rounded-full min-w-[18px] text-center"
-                            :class="activeTab === roomType.id ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'"
-                            x-text="getHighlightCount(roomType.id)"
-                        ></span>
-                    </button>
+                    <div>
+                        <button 
+                            @click="activeTab = roomType.id"
+                            :class="activeTab === roomType.id ? 
+                                'border-blue-500 bg-white text-blue-600 shadow-md ring-2 ring-blue-500 ring-opacity-30' : 
+                                'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:shadow-sm'"
+                            class="w-full h-full flex flex-col items-center justify-center p-2.5 border rounded-lg transition-all duration-200 active:scale-[0.97]"
+                            :aria-selected="activeTab === roomType.id"
+                        >
+                            {{-- Icon dengan circle background --}}
+                            <div :class="activeTab === roomType.id ? 'bg-blue-100' : 'bg-gray-100'" 
+                                class="w-9 h-9 rounded-full flex items-center justify-center mb-1.5">
+                                <span class="text-base" x-text="roomType.icon || '🏢'"></span>
+                            </div>
+                            
+                            {{-- Nama Room Type --}}
+                            <span class="text-[11px] font-semibold text-center line-clamp-1 w-full px-0.5"
+                                x-text="roomType.name.split(' ')[0]"></span>
+                            
+                            {{-- Badge Count --}}
+                            <span x-show="getHighlightCount(roomType.id) > 0"
+                                class="mt-1 px-1.5 py-0.5 text-[10px] rounded-full font-bold"
+                                :class="activeTab === roomType.id ? 
+                                    'bg-blue-600 text-white' : 
+                                    'bg-gray-200 text-gray-600'"
+                                x-text="getHighlightCount(roomType.id)"
+                            ></span>
+                        </button>
+                    </div>
                 </template>
             </nav>
+
+            {{-- Tablet & Desktop: Horizontal Layout --}}
+            <div class="hidden md:block overflow-x-auto overflow-y-hidden scrollbar-thin">
+                <nav class="flex min-w-max">
+                    <template x-for="roomType in roomTypes" :key="roomType.id">
+                        <button 
+                            @click="activeTab = roomType.id"
+                            :class="activeTab === roomType.id ? 
+                                'border-blue-600 text-blue-600 bg-blue-50' : 
+                                'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
+                            class="flex items-center gap-2 px-4 py-3 border-b-2 font-medium whitespace-nowrap transition-colors flex-shrink-0"
+                            :aria-selected="activeTab === roomType.id"
+                        >
+                            <span class="text-base" x-text="roomType.icon || '🏢'"></span>
+                            <span class="text-sm" x-text="roomType.name.split(' ')[0]"></span>
+                            <span 
+                                class="px-2 py-0.5 text-xs rounded-full min-w-[20px] text-center font-bold"
+                                :class="activeTab === roomType.id ? 
+                                    'bg-blue-600 text-white' : 
+                                    'bg-gray-200 text-gray-600'"
+                                x-text="getHighlightCount(roomType.id)"
+                            ></span>
+                        </button>
+                    </template>
+                </nav>
+            </div>
         </div>
 
         {{-- Tab Content --}}
@@ -454,7 +496,7 @@ function serviceHighlights() {
         async loadInitialData() {
             this.loading = true;
             try {
-                const response = await fetch('/highlights/api/data');
+                const response = await fetch('/admin/highlights/api/data');
                 const result = await response.json();
                 
                 if (result.success) {
@@ -589,8 +631,8 @@ function serviceHighlights() {
             this.loading = true;
             try {
                 const url = this.editingHighlight 
-                    ? `/highlights/api/${this.editingHighlight.id}` // ✅ Fix
-                    : '/highlights/api'; // ✅ Fix
+                    ? `/admin/highlights/api/${this.editingHighlight.id}` // ✅ Fix
+                    : '/admin/highlights/api'; // ✅ Fix
                 
                 const method = this.editingHighlight ? 'PUT' : 'POST';
                 
@@ -631,7 +673,7 @@ function serviceHighlights() {
             
             this.loading = true;
             try {
-                const response = await fetch(`/highlights/api/${this.deletingHighlight.id}`, { // ✅ Tambahkan /api
+                const response = await fetch(`/admin/highlights/api/${this.deletingHighlight.id}`, { // ✅ Tambahkan /api
                     method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
@@ -687,7 +729,7 @@ function serviceHighlights() {
             }));
             
             try {
-                const response = await fetch('/highlights/api/reorder', {
+                const response = await fetch('/admin/highlights/api/reorder', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -715,7 +757,7 @@ function serviceHighlights() {
         // Toggle active status
         async toggleHighlightStatus(highlight) {
             try {
-                const response = await fetch(`/highlights/api/${highlight.id}/toggle-status`, {
+                const response = await fetch(`/admin/highlights/api/${highlight.id}/toggle-status`, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')

@@ -17,12 +17,12 @@
                 </svg>
                 <span class="text-sm">Refresh</span>
             </button>
-            <a href="{{ route('admin.booking.walk-in-booking') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+            <!-- <a href="{{ route('admin.booking.walk-in-booking') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
                 <span class="text-sm">Walk-in Booking</span>
-            </a>
+            </a> -->
         </div>
     </div>
 
@@ -41,8 +41,8 @@
                         <span>+12% dari kemarin</span>
                     </p>
                 </div>
-                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
                 </div>
@@ -62,8 +62,8 @@
                         <span>+8% dari kemarin</span>
                     </p>
                 </div>
-                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                 </div>
@@ -101,8 +101,8 @@
                     </h3>
                     <p class="text-xs text-gray-600 mt-2" x-text="stats.occupancyRate + '% Occupancy Rate'">0% Occupancy Rate</p>
                 </div>
-                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                     </svg>
                 </div>
@@ -111,25 +111,31 @@
     </div>
 
     {{-- Chart Section --}}
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h2 class="text-lg font-semibold text-gray-800">Transaction Overview</h2>
-                <p class="text-sm text-gray-600 mt-1">Monitor your daily, monthly, and yearly transactions</p>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6 overflow-hidden">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-6 gap-4">
+            <div class="min-w-0 flex-shrink">
+                <h2 class="text-base md:text-lg font-semibold text-gray-800 truncate">Transaction Overview</h2>
+                <p class="text-xs md:text-sm text-gray-600 mt-1 truncate">Monitor your transactions</p>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 md:gap-3 flex-wrap md:flex-nowrap">
                 {{-- Metric Toggle --}}
-                <div class="flex bg-gray-100 rounded-lg p-1">
-                    <button @click="chartMetric = 'revenue'" :class="chartMetric === 'revenue' ? 'bg-white shadow-sm' : ''" class="px-3 py-1.5 text-sm rounded-md transition">
+                <div class="flex bg-gray-100 rounded-lg p-1 flex-shrink-0">
+                    <button @click="chartMetric = 'revenue'" 
+                            :class="chartMetric === 'revenue' ? 'bg-white shadow-sm' : ''" 
+                            class="px-2 md:px-3 py-1.5 text-xs md:text-sm rounded-md transition whitespace-nowrap">
                         Revenue
                     </button>
-                    <button @click="chartMetric = 'booking'" :class="chartMetric === 'booking' ? 'bg-white shadow-sm' : ''" class="px-3 py-1.5 text-sm rounded-md transition">
+                    <button @click="chartMetric = 'booking'" 
+                            :class="chartMetric === 'booking' ? 'bg-white shadow-sm' : ''" 
+                            class="px-2 md:px-3 py-1.5 text-xs md:text-sm rounded-md transition whitespace-nowrap">
                         Booking
                     </button>
                 </div>
                 
                 {{-- Period Filter --}}
-                <select x-model="chartPeriod" @change="updateChart()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select x-model="chartPeriod" 
+                        @change="updateChart()" 
+                        class="px-3 md:px-4 py-1.5 md:py-2 border border-gray-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 flex-shrink-0 min-w-0">
                     <option value="daily">7 Hari Terakhir</option>
                     <option value="monthly">12 Bulan Terakhir</option>
                     <option value="yearly">3 Tahun Terakhir</option>
@@ -137,197 +143,282 @@
             </div>
         </div>
 
-        {{-- Chart Canvas --}}
-        <div class="h-80">
-            <canvas id="transactionChart"></canvas>
+        {{-- Chart Canvas - FIXED: Add max-width constraint --}}
+        <div class="h-64 md:h-80 w-full">
+            <canvas id="transactionChart" class="max-w-full"></canvas>
         </div>
     </div>
 
     {{-- Recent Transactions --}}
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="flex items-center justify-between mb-6">
-            <div>
-                <h2 class="text-lg font-semibold text-gray-800">Recent Transactions</h2>
-                <p class="text-sm text-gray-600 mt-1">Latest 50 bookings and their payment status</p>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        {{-- Header --}}
+        <div class="px-4 md:px-6 pt-4 md:pt-6 pb-4">
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                    <h2 class="text-base md:text-lg font-semibold text-gray-800 truncate">Recent Transactions</h2>
+                    <p class="text-xs md:text-sm text-gray-600 mt-1 truncate">Latest 50 bookings</p>
+                </div>
+                <a href="{{ route('admin.booking.all') }}" 
+                class="text-xs md:text-sm text-blue-600 hover:text-blue-700 font-medium inline-flex items-center gap-1 flex-shrink-0">
+                    <span class="whitespace-nowrap">View All</span>
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
             </div>
-            {{-- ✅ ADD: Link to All Bookings --}}
-            <a href="{{ route('admin.booking.all') }}" class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
-                View All Bookings
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </a>
         </div>
 
-        {{-- Service Tabs - ✅ DYNAMIC COUNTS --}}
-        <div class="border-b border-gray-200 mb-4">
-            <nav class="flex gap-6 overflow-x-auto whitespace-nowrap">
-                <button @click="activeServiceTab = 'all'" 
-                        :class="activeServiceTab === 'all' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
-                        class="py-3 px-1 border-b-2 font-medium text-sm transition">
-                    <span x-text="`Semua (${tabCounts.all})`">Semua (0)</span>
-                </button>
-                <button @click="activeServiceTab = 'meeting'" 
-                        :class="activeServiceTab === 'meeting' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
-                        class="py-3 px-1 border-b-2 font-medium text-sm transition">
-                    <span x-text="`Meeting Room (${tabCounts.meeting})`">Meeting Room (0)</span>
-                </button>
-                <button @click="activeServiceTab = 'private'" 
-                        :class="activeServiceTab === 'private' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
-                        class="py-3 px-1 border-b-2 font-medium text-sm transition">
-                    <span x-text="`Private Office (${tabCounts.private})`">Private Office (0)</span>
-                </button>
-                <button @click="activeServiceTab === 'sharing'" 
-                        :class="activeServiceTab === 'sharing' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
-                        class="py-3 px-1 border-b-2 font-medium text-sm transition">
-                    <span x-text="`Sharing Room (${tabCounts.sharing})`">Sharing Room (0)</span>
-                </button>
-                <button @click="activeServiceTab = 'coworking'" 
-                        :class="activeServiceTab === 'coworking' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
-                        class="py-3 px-1 border-b-2 font-medium text-sm transition">
-                    <span x-text="`Coworking (${tabCounts.coworking})`">Coworking (0)</span>
-                </button>
-                <button @click="activeServiceTab = 'virtual'" 
-                        :class="activeServiceTab === 'virtual' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
-                        class="py-3 px-1 border-b-2 font-medium text-sm transition">
-                    <span x-text="`Virtual Office (${tabCounts.virtual})`">Virtual Office (0)</span>
-                </button>
-                <button @click="activeServiceTab = 'event'" 
-                        :class="activeServiceTab === 'event' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
-                        class="py-3 px-1 border-b-2 font-medium text-sm transition">
-                    <span x-text="`Event Space (${tabCounts.event})`">Event Space (0)</span>
-                </button>
-            </nav>
-        </div>
-
-        {{-- Filter & Entries --}}
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-3">
-                <label class="text-sm text-gray-600">Show</label>
-                <select x-model="entriesPerPage" class="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="5">5</option>
-                    <option value="10">10</option>
-                    <option value="20">20</option>
-                </select>
-                <label class="text-sm text-gray-600">entries</label>
-            </div>
-            
-            <div class="flex items-center gap-3">
-                <div class="flex bg-gray-100 rounded-lg p-1">
-                    <button @click="statusFilter = 'all'" 
-                            :class="statusFilter === 'all' ? 'bg-white shadow-sm' : ''" 
-                            class="px-3 py-1.5 text-xs rounded-md transition">
-                        All
+        {{-- Service Tabs - COMPACT VERSION --}}
+        <div class="w-full border-b border-gray-200 bg-white">
+            <div class="overflow-x-auto scrollbar-hide">
+                <div class="flex px-2 space-x-1 md:space-x-3 min-w-max">
+                    <button @click="activeServiceTab = 'all'" 
+                            :class="activeServiceTab === 'all' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
+                            class="py-1.5 md:py-2.5 border-b-2 font-medium text-[10px] md:text-sm transition flex-shrink-0 whitespace-nowrap px-1">
+                        <span class="hidden xs:inline" x-text="`Semua (${tabCounts.all})`"></span>
+                        <span class="xs:hidden">All</span>
                     </button>
-                    <button @click="statusFilter = 'settlement'" 
-                            :class="statusFilter === 'settlement' ? 'bg-white shadow-sm' : ''" 
-                            class="px-3 py-1.5 text-xs rounded-md transition">
-                        Settlement
+                    <button @click="activeServiceTab = 'meeting'" 
+                            :class="activeServiceTab === 'meeting' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
+                            class="py-1.5 md:py-2.5 border-b-2 font-medium text-[10px] md:text-sm transition flex-shrink-0 whitespace-nowrap px-1">
+                        <span class="hidden xs:inline" x-text="`Meeting (${tabCounts.meeting})`"></span>
+                        <span class="xs:hidden">Meet</span>
                     </button>
-                    <button @click="statusFilter = 'pending'" 
-                            :class="statusFilter === 'pending' ? 'bg-white shadow-sm' : ''" 
-                            class="px-3 py-1.5 text-xs rounded-md transition">
-                        Pending
+                    <button @click="activeServiceTab = 'private'" 
+                            :class="activeServiceTab === 'private' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
+                            class="py-1.5 md:py-2.5 border-b-2 font-medium text-[10px] md:text-sm transition flex-shrink-0 whitespace-nowrap px-1">
+                        <span class="hidden xs:inline" x-text="`Private (${tabCounts.private})`"></span>
+                        <span class="xs:hidden">Priv</span>
                     </button>
-                    <button @click="statusFilter = 'expire'" 
-                            :class="statusFilter === 'expire' ? 'bg-white shadow-sm' : ''" 
-                            class="px-3 py-1.5 text-xs rounded-md transition">
-                        Expired
+                    <button @click="activeServiceTab = 'sharing'" 
+                            :class="activeServiceTab === 'sharing' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
+                            class="py-1.5 md:py-2.5 border-b-2 font-medium text-[10px] md:text-sm transition flex-shrink-0 whitespace-nowrap px-1">
+                        <span class="hidden xs:inline">Sharing</span>
+                        <span class="xs:hidden">Share</span>
+                    </button>
+                    <button @click="activeServiceTab = 'coworking'" 
+                            :class="activeServiceTab === 'coworking' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
+                            class="py-1.5 md:py-2.5 border-b-2 font-medium text-[10px] md:text-sm transition flex-shrink-0 whitespace-nowrap px-1">
+                        <span class="hidden xs:inline">Coworking</span>
+                        <span class="xs:hidden">Cowork</span>
+                    </button>
+                    <button @click="activeServiceTab = 'virtual'" 
+                            :class="activeServiceTab === 'virtual' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
+                            class="py-1.5 md:py-2.5 border-b-2 font-medium text-[10px] md:text-sm transition flex-shrink-0 whitespace-nowrap px-1">
+                        <span class="hidden xs:inline">Virtual</span>
+                        <span class="xs:hidden">Virtual</span>
+                    </button>
+                    <button @click="activeServiceTab = 'event'" 
+                            :class="activeServiceTab === 'event' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-600 hover:text-gray-800'" 
+                            class="py-1.5 md:py-2.5 border-b-2 font-medium text-[10px] md:text-sm transition flex-shrink-0 whitespace-nowrap px-1">
+                        <span class="hidden xs:inline">Event</span>
+                        <span class="xs:hidden">Event</span>
                     </button>
                 </div>
             </div>
         </div>
 
-        {{-- Table --}}
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead class="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Booking ID</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Customer</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Service</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status Payment</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Time</th>
-                        <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    {{-- ✅ Show message if no data --}}
-                    <template x-if="filteredTransactions.length === 0">
-                        <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-gray-500">
-                                <div class="flex flex-col items-center justify-center">
-                                    <svg class="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                                    </svg>
-                                    <p class="text-sm">No transactions found</p>
-                                </div>
-                            </td>
-                        </tr>
-                    </template>
-                    
-                    <template x-for="(transaction, index) in filteredTransactions" :key="transaction.id">
-                        <tr class="hover:bg-gray-50 transition cursor-pointer" @click="viewDetail(transaction)">
-                            <td class="px-4 py-4">
-                                <span class="text-sm font-medium text-blue-600" x-text="transaction.bookingId"></span>
-                            </td>
-                            <td class="px-4 py-4">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-800" x-text="transaction.customerName"></p>
-                                    <p class="text-xs text-gray-500" x-text="transaction.customerPhone"></p>
-                                </div>
-                            </td>
-                            <td class="px-4 py-4">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-800" x-text="transaction.service"></p>
-                                    <p class="text-xs text-gray-500" x-text="transaction.package"></p>
-                                </div>
-                            </td>
-                            <td class="px-4 py-4">
-                                <span x-show="transaction.status === 'settlement'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                                    </svg>
-                                    Settlement
-                                </span>
-                                <span x-show="transaction.status === 'pending'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
-                                    </svg>
-                                    Pending
-                                </span>
-                                <span x-show="transaction.status === 'expire'" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-                                    </svg>
-                                    Expired
-                                </span>
-                            </td>
-                            <td class="px-4 py-4">
-                                <p class="text-sm text-gray-800" x-text="transaction.time"></p>
-                            </td>
-                            <td class="px-4 py-4">
-                                {{-- ✅ SIMPLIFIED: Single button that redirects --}}
-                                <button @click.stop="viewDetail(transaction)" 
-                                        class="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition flex items-center gap-1">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                    </svg>
-                                    View
-                                </button>
-                            </td>
-                        </tr>
-                    </template>
-                </tbody>
-            </table>
+        {{-- Filters --}}
+        <div class="px-4 md:px-6 py-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                {{-- Entries per page --}}
+                <div class="flex items-center gap-2">
+                    <label class="text-xs md:text-sm text-gray-600 flex-shrink-0">Show</label>
+                    <select x-model="entriesPerPage" 
+                            class="px-2 md:px-3 py-1 md:py-1.5 border border-gray-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 flex-shrink-0">
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                    </select>
+                    <label class="text-xs md:text-sm text-gray-600 flex-shrink-0">entries</label>
+                </div>
+                
+                {{-- Status filter --}}
+                <div class="w-full sm:w-auto overflow-x-auto scrollbar-hide">
+                    <div class="flex bg-gray-100 rounded-lg p-1 w-max sm:w-auto">
+                        <button @click="statusFilter = 'all'" 
+                                :class="statusFilter === 'all' ? 'bg-white shadow-sm' : ''" 
+                                class="px-2 md:px-3 py-1 md:py-1.5 text-xs rounded-md transition flex-shrink-0">
+                            All
+                        </button>
+                        <button @click="statusFilter = 'settlement'" 
+                                :class="statusFilter === 'settlement' ? 'bg-white shadow-sm' : ''" 
+                                class="px-2 md:px-3 py-1 md:py-1.5 text-xs rounded-md transition flex-shrink-0">
+                            Settlement
+                        </button>
+                        <button @click="statusFilter = 'pending'" 
+                                :class="statusFilter === 'pending' ? 'bg-white shadow-sm' : ''" 
+                                class="px-2 md:px-3 py-1 md:py-1.5 text-xs rounded-md transition flex-shrink-0">
+                            Pending
+                        </button>
+                        <button @click="statusFilter = 'expire'" 
+                                :class="statusFilter === 'expire' ? 'bg-white shadow-sm' : ''" 
+                                class="px-2 md:px-3 py-1 md:py-1.5 text-xs rounded-md transition flex-shrink-0">
+                            Expired
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        {{-- Pagination - ✅ DYNAMIC --}}
-        <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
-            <p class="text-sm text-gray-600" x-text="`Showing ${paginationInfo.from} to ${paginationInfo.to} of ${paginationInfo.total} entries`">
-                Showing 0 to 0 of 0 entries
-            </p>
+        {{-- Table - CONDITIONAL MOBILE/DESKTOP --}}
+<div class="w-full overflow-x-auto">
+    <table class="w-full divide-y divide-gray-200" style="min-width: 650px;">
+        <thead class="bg-gray-50">
+            <tr>
+                <th scope="col" 
+                    class="px-2 md:px-4 py-2 md:py-3 text-left text-[10px] md:text-xs font-semibold text-gray-600 uppercase tracking-wider w-[15%]">
+                    Booking ID
+                </th>
+                <th scope="col" 
+                    class="px-2 md:px-4 py-2 md:py-3 text-left text-[10px] md:text-xs font-semibold text-gray-600 uppercase tracking-wider w-[20%]">
+                    Customer
+                </th>
+                <th scope="col" 
+                    class="px-2 md:px-4 py-2 md:py-3 text-left text-[10px] md:text-xs font-semibold text-gray-600 uppercase tracking-wider w-[20%]">
+                    Service
+                </th>
+                <th scope="col" 
+                    class="px-2 md:px-4 py-2 md:py-3 text-left text-[10px] md:text-xs font-semibold text-gray-600 uppercase tracking-wider w-[15%]">
+                    Status
+                </th>
+                <th scope="col" 
+                    class="px-2 md:px-4 py-2 md:py-3 text-left text-[10px] md:text-xs font-semibold text-gray-600 uppercase tracking-wider w-[15%]">
+                    Time
+                </th>
+                <th scope="col" 
+                    class="px-2 md:px-4 py-2 md:py-3 text-left text-[10px] md:text-xs font-semibold text-gray-600 uppercase tracking-wider w-[15%]">
+                    Action
+                </th>
+            </tr>
+        </thead>
+        
+        <tbody class="bg-white divide-y divide-gray-200">
+            <template x-for="transaction in filteredTransactions" :key="transaction.id">
+                <tr class="hover:bg-gray-50 transition cursor-pointer" @click="viewDetail(transaction)">
+                    
+                    {{-- Booking ID --}}
+                    <td class="px-2 md:px-4 py-2 md:py-3 w-[15%]">
+                        <div class="overflow-hidden">
+                            {{-- Mobile: Sensor, Desktop: Full --}}
+                            <span class="text-[10px] md:text-sm font-medium text-blue-600 block truncate" 
+                                  :title="'#' + transaction.bookingId"
+                                  x-text="window.innerWidth < 768 ? sensorBookingId(transaction.bookingId) : '#' + transaction.bookingId">
+                            </span>
+                        </div>
+                    </td>
+                    
+                    {{-- Customer --}}
+                    <td class="px-2 md:px-4 py-2 md:py-3 w-[20%]">
+                        <div class="overflow-hidden">
+                            {{-- Mobile: Sensor, Desktop: Full --}}
+                            <p class="text-[10px] md:text-sm font-medium text-gray-800 truncate" 
+                               :title="transaction.customerName"
+                               x-text="window.innerWidth < 768 ? sensorCustomerName(transaction.customerName) : transaction.customerName">
+                            </p>
+                            <p class="text-[9px] md:text-xs text-gray-500 truncate" 
+                               :title="transaction.customerPhone"
+                               x-text="window.innerWidth < 768 ? sensorPhone(transaction.customerPhone) : formatPhone(transaction.customerPhone)">
+                            </p>
+                        </div>
+                    </td>
+                    
+                    {{-- Service --}}
+                    <td class="px-2 md:px-4 py-2 md:py-3 w-[20%]">
+                        <div class="overflow-hidden">
+                            {{-- Mobile: Sensor, Desktop: Full --}}
+                            <p class="text-[10px] md:text-sm font-medium text-gray-800 truncate" 
+                               :title="transaction.service"
+                               x-text="window.innerWidth < 768 ? sensorService(transaction.service) : transaction.service">
+                            </p>
+                            <p class="text-[9px] md:text-xs text-gray-500 truncate" 
+                               :title="transaction.package"
+                               x-text="window.innerWidth < 768 ? sensorPackage(transaction.package) : transaction.package">
+                            </p>
+                        </div>
+                    </td>
+                    
+                    {{-- Status --}}
+                    <td class="px-2 md:px-4 py-2 md:py-3 w-[15%]">
+                        <div class="overflow-hidden">
+                            {{-- Mobile: Icon only, Desktop: Icon + Text --}}
+                            <span x-show="transaction.status === 'settlement'" 
+                                  :class="window.innerWidth < 768 
+                                    ? 'inline-flex items-center justify-center px-1 py-0.5 rounded-full text-[8px] font-medium bg-green-100 text-green-800 w-full' 
+                                    : 'inline-flex items-center px-1.5 md:px-2 py-0.5 md:py-1 rounded-full text-[9px] md:text-xs font-medium bg-green-100 text-green-800 truncate max-w-full'">
+                                <svg :class="window.innerWidth < 768 ? 'w-2 h-2' : 'w-2.5 h-2.5 md:w-3 md:h-3 mr-0.5'" 
+                                     fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span x-show="window.innerWidth >= 768" class="truncate">Paid</span>
+                            </span>
+                            
+                            {{-- Pending --}}
+                            <span x-show="transaction.status === 'pending'" 
+                                  :class="window.innerWidth < 768 
+                                    ? 'inline-flex items-center justify-center px-1 py-0.5 rounded-full text-[8px] font-medium bg-yellow-100 text-yellow-800 w-full' 
+                                    : 'inline-flex items-center px-1.5 md:px-2 py-0.5 md:py-1 rounded-full text-[9px] md:text-xs font-medium bg-yellow-100 text-yellow-800 truncate max-w-full'">
+                                <svg :class="window.innerWidth < 768 ? 'w-2 h-2' : 'w-2.5 h-2.5 md:w-3 md:h-3 mr-0.5'" 
+                                     fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span x-show="window.innerWidth >= 768" class="truncate">Pending</span>
+                            </span>
+                            
+                            {{-- Expire --}}
+                            <span x-show="transaction.status === 'expire'" 
+                                  :class="window.innerWidth < 768 
+                                    ? 'inline-flex items-center justify-center px-1 py-0.5 rounded-full text-[8px] font-medium bg-red-100 text-red-800 w-full' 
+                                    : 'inline-flex items-center px-1.5 md:px-2 py-0.5 md:py-1 rounded-full text-[9px] md:text-xs font-medium bg-red-100 text-red-800 truncate max-w-full'">
+                                <svg :class="window.innerWidth < 768 ? 'w-2 h-2' : 'w-2.5 h-2.5 md:w-3 md:h-3 mr-0.5'" 
+                                     fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span x-show="window.innerWidth >= 768" class="truncate">Expired</span>
+                            </span>
+                        </div>
+                    </td>
+                    
+                    {{-- Time --}}
+                    <td class="px-2 md:px-4 py-2 md:py-3 w-[15%]">
+                        <div class="overflow-hidden">
+                            {{-- Mobile: Sensor, Desktop: Full --}}
+                            <p class="text-[10px] md:text-sm text-gray-800 truncate" 
+                               :title="transaction.time"
+                               x-text="window.innerWidth < 768 ? sensorTime(transaction.time) : transaction.time">
+                            </p>
+                        </div>
+                    </td>
+                    
+                    {{-- Action --}}
+                    <td class="px-2 md:px-4 py-2 md:py-3 w-[15%]">
+                        <div class="overflow-hidden">
+                            <button @click.stop="viewDetail(transaction)" 
+                                    :class="window.innerWidth < 768 
+                                      ? 'px-1.5 py-1 bg-blue-600 text-white text-[9px] rounded-lg hover:bg-blue-700 transition inline-flex items-center justify-center w-full' 
+                                      : 'px-2 md:px-3 py-1 md:py-1.5 bg-blue-600 text-white text-[10px] md:text-xs rounded-lg hover:bg-blue-700 transition inline-flex items-center gap-1 truncate'">
+                                <svg :class="window.innerWidth < 768 ? 'w-2.5 h-2.5' : 'w-3 h-3'" 
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                                <span x-show="window.innerWidth >= 768" class="truncate">View</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </template>
+        </tbody>
+    </table>
+</div>
+
+        {{-- Pagination --}}
+        <div class="px-4 md:px-6 py-4 border-t border-gray-200">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <p class="text-xs md:text-sm text-gray-600 text-center sm:text-left" x-text="`Showing ${paginationInfo.from} to ${paginationInfo.to} of ${paginationInfo.total} entries`">
+                    Showing 0 to 0 of 0 entries
+                </p>
+            </div>
         </div>
     </div>
 
@@ -629,7 +720,7 @@ function dashboardData() {
                 console.log('🔄 Loading real chart data...');
 
                 const response = await fetch(
-                    `/dashboard/chart-data?period=${this.chartPeriod}&metric=${this.chartMetric}`
+                    `/admin/dashboard/chart-data?period=${this.chartPeriod}&metric=${this.chartMetric}`
                 );
                 
                 if (!response.ok) {
@@ -733,7 +824,7 @@ function dashboardData() {
         async fetchDashboardStats() {
             try {
                 console.log('📊 Fetching dashboard stats...');
-                const response = await fetch(`/dashboard/stats?location_id=${this.currentLocationId}`);
+                const response = await fetch(`/admin/dashboard/stats?location_id=${this.currentLocationId}`);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
@@ -758,7 +849,7 @@ function dashboardData() {
                 console.log('📋 Fetching all recent transactions...');
                 
                 // ✅ Remove date filter to get all recent bookings
-                const url = `/booking/all/api/data?per_page=50`;
+                const url = `/admin/booking/all/api/data?per_page=50`;
                 console.log('🔗 Fetching from:', url);
                 
                 const response = await fetch(url);
@@ -834,22 +925,6 @@ function dashboardData() {
         // ==========================================
         // COMPUTED PROPERTIES
         // ==========================================
-        get filteredTransactions() {
-            let filtered = [...this.allTransactions];
-
-            // Filter by service tab
-            if (this.activeServiceTab !== 'all') {
-                filtered = filtered.filter(t => t.serviceType === this.activeServiceTab);
-            }
-
-            // Filter by status
-            if (this.statusFilter !== 'all') {
-                filtered = filtered.filter(t => t.status === this.statusFilter);
-            }
-
-            // Limit by entries per page
-            return filtered.slice(0, parseInt(this.entriesPerPage));
-        },
 
         get tabCounts() {
             return {
@@ -948,13 +1023,165 @@ function dashboardData() {
             const url = `{{ route('admin.booking.all') }}?booking_id=${transaction.id}&show_modal=true`;
             window.location.href = url;
         },
+
+        truncateText(text, maxLength = 15) {
+            if (!text) return '';
+            
+            // Untuk mobile, gunakan truncate CSS, tapi backup dengan JS
+            if (window.innerWidth < 640) {
+                // Jika text lebih panjang dari maxLength, potong dan tambahkan ...
+                if (text.length > maxLength) {
+                    return text.substring(0, maxLength) + '...';
+                }
+            }
+            
+            return text;
+        },
+
+        // Di Alpine.js component, tambahkan helper functions:
+        formatPhone(phone) {
+            if (!phone) return '';
+            
+            // Untuk mobile, tampilkan format singkat
+            if (window.innerWidth < 640) {
+                if (phone.length > 10) {
+                    return phone.substring(0, 4) + '...' + phone.substring(phone.length - 4);
+                }
+                return phone;
+            }
+            
+            // Untuk desktop, format normal
+            return phone.replace(/(\d{4})(\d{4})(\d{4})/, '$1-$2-$3');
+        },
+
+        formatTime(time) {
+            if (!time) return '';
+            // Format untuk mobile: "10:00 AM" atau "Today 10:00"
+            if (window.innerWidth < 640) {
+                // Jika time mengandung tanggal, ambil jam saja
+                if (time.includes(' ')) {
+                    const parts = time.split(' ');
+                    return parts.length > 1 ? parts[1] : time;
+                }
+                return time.length > 8 ? time.substring(0, 8) : time;
+            }
+            return time;
+        },
+
+        abbreviateService(service) {
+            if (!service) return '';
+            if (window.innerWidth < 640) {
+                const abbreviations = {
+                    'Meeting Room': 'Meeting',
+                    'Private Office': 'Private',
+                    'Sharing Space': 'Sharing', 
+                    'Coworking Space': 'Coworking',
+                    'Virtual Office': 'Virtual',
+                    'Event Space': 'Event'
+                };
+                return abbreviations[service] || service.substring(0, 10) + '...';
+            }
+            return service;
+        },
+
+        abbreviatePackage(packageName) {
+            if (!packageName) return '';
+            if (window.innerWidth < 640) {
+                return packageName.length > 12 ? packageName.substring(0, 10) + '...' : packageName;
+            }
+            return packageName;
+        },
+
+        // Sensor functions - hanya untuk mobile
+sensorBookingId(bookingId) {
+    if (!bookingId) return '#N/A';
+    const id = String(bookingId);
+    
+    // Mobile: sensor dengan titik-titik
+    if (id.length <= 4) return '#' + id;
+    return '#' + id.substring(0, 2) + '...' + id.substring(id.length - 2);
+},
+
+sensorCustomerName(name) {
+    if (!name) return 'Guest';
+    
+    const words = name.split(' ');
+    if (words.length === 1) {
+        return words[0].length > 4 ? words[0].substring(0, 3) + '...' : words[0];
+    }
+    const first = words[0].charAt(0) + '.';
+    const second = words[1].length > 4 ? words[1].substring(0, 4) + '...' : words[1];
+    return first + ' ' + second;
+},
+
+sensorPhone(phone) {
+    if (!phone) return '';
+    
+    if (phone.length <= 10) return phone;
+    return phone.substring(0, 4) + '...' + phone.substring(phone.length - 4);
+},
+
+sensorService(service) {
+    if (!service) return '';
+    
+    const firstWord = service.split(' ')[0];
+    return firstWord.length > 6 ? firstWord.substring(0, 5) + '...' : firstWord;
+},
+
+sensorPackage(packageName) {
+    if (!packageName) return '';
+    
+    const words = packageName.split(' ');
+    if (words.length === 1) {
+        return packageName.length > 8 ? packageName.substring(0, 7) + '...' : packageName;
+    }
+    const short = words[0] + ' ' + words[1];
+    return short.length > 10 ? short.substring(0, 9) + '...' : short;
+},
+
+sensorTime(time) {
+    if (!time) return '';
+    
+    if (time.includes('Today')) return 'Today';
+    if (time.includes('Tomorrow')) return 'Tom';
+    
+    const timeMatch = time.match(/(\d{1,2}):(\d{2})/);
+    if (timeMatch) return timeMatch[1] + ':' + timeMatch[2];
+    
+    return time.length > 8 ? time.substring(0, 7) + '...' : time;
+},
+
+
     }
 }
 </script>
-@endpush
+
 <style>
 [x-cloak] { display: none !important; }
+/* Untuk memastikan truncate bekerja */
+.truncate-fix {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    display: block;
+}
+
+/* Responsive padding dan font */
+@media (max-width: 767px) {
+    /* Mobile: compact styling */
+    .mobile-compact {
+        font-size: 9px !important;
+    }
+}
+
+@media (min-width: 768px) {
+    /* Tablet/Desktop: normal styling */
+    .mobile-compact {
+        font-size: inherit !important;
+    }
+}
 </style>
+@endpush
 @endsection
 
 

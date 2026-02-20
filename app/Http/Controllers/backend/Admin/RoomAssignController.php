@@ -135,8 +135,6 @@ class RoomAssignController extends Controller
     private function getRoomTypeIcon($roomTypeName)
     {
         $icons = [
-            'Meeting Room' => '🏢',
-            'Private Office' => '🚪', 
             'Sharing Room' => '👥',
             'Multi Purpose' => '🏢',
             'Virtual Office' => '💻',
@@ -398,4 +396,5 @@ class RoomAssignController extends Controller
         
         return $parts ? implode(', ', $parts) : 'No duration';
     }
+
 }

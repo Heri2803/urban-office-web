@@ -11,6 +11,8 @@ class ServicePhoto extends Model
     use HasFactory;
 
     protected $fillable = [
+        'room_id',
+        'location_id',
         'room_type_id',
         'filename',
         'original_name',
@@ -28,10 +30,22 @@ class ServicePhoto extends Model
         'file_size' => 'integer'
     ];
 
+    //  LOCATION RELATIONSHIP
+    public function location()
+    {
+        return $this->belongsTo(Location::class);
+    }
+
     // Relationship dengan room type
     public function roomType()
     {
         return $this->belongsTo(RoomType::class);
+    }
+
+    // Room relationship
+    public function room()
+    {
+        return $this->belongsTo(Room::class);
     }
 
     // Relationship dengan user yang upload
@@ -56,10 +70,19 @@ class ServicePhoto extends Model
     public function setAsPrimary()
     {
         \DB::transaction(function () {
-            // Unset primary photos untuk room type yang sama
-            self::where('room_type_id', $this->room_type_id)
-                ->where('is_primary', true)
-                ->update(['is_primary' => false]);
+            $query = self::where('room_type_id', $this->room_type_id)
+                        ->where('location_id', $this->location_id);
+            
+            // Jika ada room_id, reset hanya untuk room tersebut
+            if ($this->room_id) {
+                $query->where('room_id', $this->room_id);
+            } else {
+                // Jika tidak ada room_id, reset untuk semua rooms dengan type tersebut
+                $query->whereNull('room_id');
+            }
+            
+            $query->where('is_primary', true)
+                  ->update(['is_primary' => false]);
 
             // Set this photo as primary
             $this->update(['is_primary' => true]);
@@ -83,5 +106,18 @@ class ServicePhoto extends Model
     public function getUploadedAtAttribute()
     {
         return $this->created_at->diffForHumans();
+    }
+
+    // Filter by location
+    public function scopeForLocation($query, $locationId)
+    {
+        return $query->where('location_id', $locationId);
+    }
+    
+    // Filter by room type and location
+    public function scopeForRoomTypeAndLocation($query, $roomTypeId, $locationId)
+    {
+        return $query->where('room_type_id', $roomTypeId)
+                    ->where('location_id', $locationId);
     }
 }

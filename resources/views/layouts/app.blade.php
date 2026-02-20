@@ -200,7 +200,7 @@
 <body class="antialiased bg-gray-50 text-gray-900" x-data="layout">
 
     {{-- Sidebar (ELEMEN x-data HARUS ADA SETELAH SCRIPT DEFINISINYA) --}}
-    <div x-data="sidebar" class="sidebar-wrapper">
+    <div class="sidebar-wrapper">
         @include('layouts.components.sidebar')
     </div>
 
@@ -214,6 +214,8 @@
     @include('layouts.components.maintanance-modal')
     @include('layouts.components.commingsoon-modal')
     @include('layouts.components.promo-modal')
+    
+    @stack('scripts')
 
 </body>
 </html>

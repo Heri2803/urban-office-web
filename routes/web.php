@@ -22,7 +22,7 @@ use App\Http\Controllers\Booking\ServicePriceController;
 use App\Http\Controllers\Booking\PaymentController;
 use App\Http\Controllers\Backend\MitraPanel\MitraAccessController;
 use App\Http\Controllers\Booking\LunchOptionController;
-
+use App\Http\Controllers\Booking\BonusController;
 
     Route::get('cities', [BookingApiController::class, 'getCities']);
     Route::get('locations', [BookingApiController::class, 'getLocations']);
@@ -56,6 +56,17 @@ Route::prefix('payment')->name('payment.')->group(function () {
 
 Route::post('/transactions/v2', [TransactionController::class, 'storeV2'])
     ->name('transactions.store.v2');
+
+// ============ API BONUS CUSTOMER ============
+Route::prefix('api')->name('api.')->middleware('auth')->group(function () {
+    Route::prefix('customer/bonus')->name('customer.bonus.')->group(function () {
+        Route::get('/', [BonusController::class, 'index']); 
+        Route::get('/{id}', [BonusController::class, 'show']);
+        Route::get('/usage-history/all', [BonusController::class, 'usageHistory']);
+    });
+    Route::get('/customer/bonus-claims/history', [BonusController::class, 'claimHistory'])
+        ->name('customer.bonus-claims.history');
+});
 
 // Root route - redirect berdasarkan status login
 Route::get('/', function () {
@@ -149,7 +160,27 @@ Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(functi
 
     Route::get('/invoice', [InvoiceController::class, 'index'])->name('invoice');
 
-    Route::get('/reward', [TransactionController::class, 'index'])->name('reward');
+    Route::get('/reward', function () {
+        $user = Auth::user();
+        
+        // Ambil data transaksi
+        $transactions = Transaction::where('user_id', $user->id)
+            ->whereIn('status', ['settlement', 'pending', 'failed'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(5);
+        
+        $totalGross = $transactions->where('status', 'settlement')->sum('gross_amount');
+        
+        $grossByType = $transactions->where('status', 'settlement')
+            ->groupBy('room_type')
+            ->map(function($items) {
+                return $items->sum('gross_amount');
+            });
+        
+        // ✅ PATH YANG BENAR: layouts.dashboard.reward
+        return view('layouts.dashboard.reward', compact('transactions', 'totalGross', 'grossByType'));
+        
+    })->name('reward');
 
     Route::get('/bookingform', function () {
         $user = App\Http\Controllers\AuthController::getUser();
@@ -186,20 +217,11 @@ Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(functi
 
 });
 
-
-
 Route::middleware(['auth'])->group(function() {
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
 });
 
-Route::get('/clear-cache', function () {
-    Artisan::call('config:clear');
-    Artisan::call('cache:clear');
-    Artisan::call('route:clear');
-    Artisan::call('view:clear');
-    Artisan::call('config:cache');
-    return "Cache Laravel sudah dibersihkan ðŸš€";
-});
+
 
 // Route untuk clear session manual (untuk development)
 Route::get('/clear-session', function () {

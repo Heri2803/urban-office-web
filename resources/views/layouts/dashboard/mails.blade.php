@@ -524,33 +524,6 @@ document.addEventListener('alpine:init', () => {
             //     this.checkForNewMessages();
             // }, 30000);
         },
-
-        // Check for new messages
-        // async checkForNewMessages() {
-        //     const openTransactions = Object.keys(this.uiState).filter(
-        //         id => this.uiState[id].showMessages
-        //     );
-            
-        //     if (openTransactions.length === 0) return;
-
-        //     try {
-        //         const transactionIds = openTransactions.join(',');
-        //         const response = await fetch(`/messages/check-updates?transactions=${transactionIds}`, {
-        //             headers: {
-        //                 'Accept': 'application/json',
-        //                 'X-CSRF-TOKEN': this.csrfToken,
-        //                 'X-Requested-With': 'XMLHttpRequest'
-        //             }
-        //         });
-
-        //         if (response.ok) {
-        //             const data = await response.json();
-        //             // Process updates if any
-        //         }
-        //     } catch (error) {
-        //         console.error('Error checking for updates:', error);
-        //     }
-        // }
     }));
 });
 

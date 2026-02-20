@@ -13,17 +13,20 @@ use App\Http\Controllers\Backend\Admin\AdminSettingsController;
 use App\Http\Controllers\Backend\Admin\MessageController;
 use App\Http\Controllers\Backend\Admin\ExistingCustomerBookingController;
 use App\Http\Controllers\Backend\Admin\AdminServicePriceController;
+use App\Http\Controllers\Backend\Admin\BonusManagementController;
+use App\Http\Controllers\Backend\Admin\BonusClaimController;
 
-Route::get('/admin/dashboard', [BookingController::class, 'index'])->name('admin.dashboard');
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::get('/dashboard', [BookingController::class, 'index'])->name('dashboard');
 Route::get('/dashboard/stats', [BookingController::class, 'getDashboardStats'])->name('dashboard.stats');
 Route::get('/dashboard/chart-data', [BookingController::class, 'getChartData'])->name('dashboard.chart-data');
 
-Route::get('/admin/messages', function () {
+Route::get('/messages', function () {
     return view('layouts.admin.message-page');
-})->name('admin.messages');
+})->name('messages');
 
 // ✅ TAMBAHKAN ROUTES MESSAGING DI SINI - SETELAH DASHBOARD, SEBELUM SETTINGS
-Route::prefix('admin/messages')->middleware(['auth'])->group(function () {
+Route::prefix('/messages')->middleware(['auth'])->group(function () {
     Route::get('/users', [MessageController::class, 'getAllMessageUsers']);
     Route::get('/conversations', [MessageController::class, 'getMessageHistory']);
     Route::post('/broadcast', [MessageController::class, 'broadcastToAll']);
@@ -36,7 +39,7 @@ Route::prefix('admin/messages')->middleware(['auth'])->group(function () {
 });
 
 // ✅ ADMIN SETTINGS ROUTES
-Route::prefix('admin/settings')->name('admin.settings.')->group(function () {
+Route::prefix('admin/settings')->name('settings.')->group(function () {
     Route::get('/', [AdminSettingsController::class, 'show'])->name('index');
     Route::put('/profile', [AdminSettingsController::class, 'updateProfile'])->name('profile.update');
     Route::put('/password', [AdminSettingsController::class, 'updatePassword'])->name('password.update');
@@ -45,27 +48,27 @@ Route::prefix('admin/settings')->name('admin.settings.')->group(function () {
 });
 
 // ✅ Route utama untuk admin.settings
-Route::get('/admin/settings', [AdminSettingsController::class, 'show'])->name('admin.settings');
+Route::get('/settings', [AdminSettingsController::class, 'show'])->name('settings');
 
 // ✅ BOOKING ROUTES - TAMBAHKAN EXISTING CUSTOMER PAGE
 Route::get('/booking/all', function () {
     return view('layouts.admin.booking-all');
-})->name('admin.booking.all');
+})->name('booking.all');
 
-Route::get('/booking/room-assignment', [RoomAssignController::class, 'index'])->name('admin.booking.room-assignment');
+Route::get('/booking/room-assignment', [RoomAssignController::class, 'index'])->name('booking.room-assignment');
 
-Route::get('/booking/service-confirmation', [ServiceConfirmationController::class, 'index'])->name('admin.booking.service-confirmation');
+Route::get('/booking/service-confirmation', [ServiceConfirmationController::class, 'index'])->name('booking.service-confirmation');
 
 Route::get('/booking/booking-history', function () {
     return view('layouts.admin.booking-history');
-})->name('admin.booking.history');
+})->name('booking.history');
 
 Route::get('/booking/walk-in-booking', function () {
     return view('layouts.admin.walk-in-booking');
-})->name('admin.booking.walk-in-booking');
+})->name('booking.walk-in-booking');
 
 // ✅ TAMBAHKAN: Existing Customer Booking Page
-Route::get('/booking/existing-customer', [ExistingCustomerBookingController::class, 'index'])->name('admin.booking.existing-customer');
+Route::get('/booking/existing-customer', [ExistingCustomerBookingController::class, 'index'])->name('booking.existing-customer');
 
 // ✅ BOOKING API ROUTES GROUP
 Route::prefix('booking')->name('admin.booking.')->group(function () {
@@ -111,16 +114,18 @@ Route::prefix('booking')->name('admin.booking.')->group(function () {
 // Rooms
 Route::get('/room-manegement', function () {
     return view('layouts.admin.room-management');
-})->name('admin.room-management');
+})->name('room-management');
 
 // Content Management Routes
 Route::get('/service-photos', function () {
     return view('layouts.admin.service-photos');
-})->name('admin.content.service-photos');
+})->name('content.service-photos');
 
 // ✅ SERVICE PHOTOS API
 Route::prefix('service-photos')->name('service-photos.')->group(function () {
     Route::prefix('api')->name('api.')->group(function () {
+        Route::get('/rooms', [ServicePhotoController::class, 'getRooms'])->name('rooms');
+        Route::get('/locations', [ServicePhotoController::class, 'getLocations'])->name('locations');
         Route::get('/room-types', [ServicePhotoController::class, 'getRoomTypes'])->name('room-types');
         Route::get('/photos', [ServicePhotoController::class, 'index'])->name('photos');
         Route::post('/upload', [ServicePhotoController::class, 'store'])->name('upload');
@@ -178,13 +183,13 @@ Route::prefix('room-management')->group(function () {
 
 Route::get('/highlights', function () {
     return view('layouts.admin.service-highlight');
-})->name('admin.content.highlights');
+})->name('content.highlights');
 
 Route::get('/pricing', function () {
     return view('layouts.admin.pricing');
-})->name('admin.pricing');
+})->name('pricing');
 
-Route::prefix('pricing')->name('admin.pricing.')->group(function () {
+Route::prefix('pricing')->name('pricing.')->group(function () {
     
     // ======================
     // DASHBOARD & STATISTICS
@@ -282,7 +287,48 @@ Route::prefix('pricing')->name('admin.pricing.')->group(function () {
         ->name('api.apply-to-all-rooms');
 });
 
+// BONUS MANAGEMENT & CLAIM
+Route::prefix('bonus')->name('bonus.')->group(function () {
+    
+    // ===== BONUS RULES CRUD =====
+    Route::prefix('rules')->name('rules.')->group(function () {
+        Route::get('/', [BonusManagementController::class, 'index'])->name('index');
+        Route::post('/', [BonusManagementController::class, 'store'])->name('store');
+        Route::get('/{id}', [BonusManagementController::class, 'show'])->name('show');
+        Route::put('/{id}', [BonusManagementController::class, 'update'])->name('update');
+        Route::delete('/{id}', [BonusManagementController::class, 'destroy'])->name('destroy');
+    });
+    
+    // ===== MANUAL ADD BONUS =====
+    Route::post('/manual-add', [BonusManagementController::class, 'manualAddBonus'])
+        ->name('manual-add');
+    
+    // ===== CUSTOMER BONUS LIST =====
+    Route::get('/customers/{user_id}', [BonusClaimController::class, 'customerBonuses'])
+        ->name('customers.bonuses');
+
+    Route::get('/customers-with-active-bonus', [BonusClaimController::class, 'customersWithActiveBonus'])
+    ->name('customers.with-active-bonus');
+    
+    // ===== AVAILABLE ROOMS CHECK =====
+    Route::get('/rooms/available', [BonusClaimController::class, 'availableRooms'])
+        ->name('rooms.available');
+    
+    // ===== CLAIM BONUS =====
+    Route::post('/claim', [BonusClaimController::class, 'claim'])
+        ->name('claim');
+    
+    // ===== CLAIM HISTORY =====
+    Route::get('/claims', [BonusClaimController::class, 'index'])
+        ->name('claims.index');
+    
+    // ===== CANCEL CLAIM =====
+    Route::post('/claims/{id}/cancel', [BonusClaimController::class, 'cancel'])
+        ->name('claims.cancel');
+});
+
 // Dashboard API routes
 Route::get('/dashboard/transactions', [BookingController::class, 'getTransactions'])->name('dashboard.transactions');
 Route::get('/dashboard/chart-data', [BookingController::class, 'getChartData'])->name('dashboard.chart-data');
 
+});

@@ -22,6 +22,12 @@ class Room extends Model
         'maintenance_reason',
     ];
 
+    // Relasi ke ServicePhoto
+    public function servicePhotos()
+    {
+        return $this->hasMany(ServicePhoto::class);
+    }
+
     // Relasi ke RoomType
     public function roomType()
     {

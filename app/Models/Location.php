@@ -12,6 +12,11 @@ class Location extends Model
 
     protected $fillable = ['name', 'address','city_id'];
 
+    public function servicePhotos()
+    {
+        return $this->hasMany(ServicePhoto::class);
+    }
+
     public function city()
     {
         return $this->belongsTo(City::class, 'city_id');
@@ -44,5 +49,14 @@ class Location extends Model
     public function customers()
     {
         return $this->hasMany(User::class)->where('role', 'customer');
+    }
+
+     // ✅ HELPER: Get room types available at this location
+    public function getAvailableRoomTypes()
+    {
+        // Untuk sekarang, ambil dari rooms yang ada
+        return RoomType::whereHas('rooms', function($query) {
+            $query->where('location_id', $this->id);
+        })->get();
     }
 }

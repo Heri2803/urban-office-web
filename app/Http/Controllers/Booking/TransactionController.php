@@ -278,6 +278,13 @@ public function store(Request $request)
         \Midtrans\Config::$isProduction = config('midtrans.is_production', false);
         \Midtrans\Config::$isSanitized = true;
         \Midtrans\Config::$is3ds = true;
+        \Midtrans\Config::$overrideNotifUrl = 'https://bacf-118-99-123-11.ngrok-free.app/midtrans/notification';
+
+        // ✅ TAMBAHKAN LOG INI UNTUK DEBUG
+        Log::info('🔧 NOTIFICATION URL CONFIG', [
+            'override_url' => \Midtrans\Config::$overrideNotifUrl,
+            'using_ngrok' => true
+        ]);
 
         Log::info('Midtrans Config', [
             'is_production' => config('midtrans.is_production'),
@@ -551,82 +558,109 @@ private function generateDurationLabel($paket, $duration)
 
 public function notificationHandler(Request $request)
 {
-    \Midtrans\Config::$serverKey    = config('midtrans.server_key');
-    \Midtrans\Config::$isProduction = config('midtrans.is_production');
-    \Midtrans\Config::$isSanitized  = true;
-    \Midtrans\Config::$is3ds        = true;
+    // ✅ LOG RAW REQUEST
+    Log::info('=== MIDTRANS NOTIFICATION RAW ===', [
+        'content' => $request->getContent()
+    ]);
+
+    // ✅ PASTIKAN HTTP 200
+    http_response_code(200);
+    header('Content-Type: application/json');
 
     try {
-        // ✅ Gunakan Notification resmi Midtrans
-        $notif = new \Midtrans\Notification();
+        // Konfigurasi Midtrans
+        \Midtrans\Config::$serverKey = config('midtrans.server_key');
+        \Midtrans\Config::$isProduction = config('midtrans.is_production');
+        \Midtrans\Config::$isSanitized = true;
+        \Midtrans\Config::$is3ds = true;
 
+        // Ambil notifikasi
+        $notif = new \Midtrans\Notification();
+        
         $transactionStatus = $notif->transaction_status;
-        $orderId           = $notif->order_id;
-        $paymentType       = $notif->payment_type;
-        $fraudStatus       = $notif->fraud_status ?? null;
+        $orderId = $notif->order_id;
+        $paymentType = $notif->payment_type;
+        $fraudStatus = $notif->fraud_status ?? null;
+
+        Log::info('Processing notification', [
+            'order_id' => $orderId,
+            'status' => $transactionStatus,
+            'payment_type' => $paymentType
+        ]);
 
         if (!$orderId) {
-            return response()->json(['error' => 'Order ID tidak ditemukan'], 400);
+            echo json_encode(['status' => 'OK']);
+            exit;
         }
 
+        // ✅ CARI TRANSAKSI
         $transaction = Transaction::where('order_id', $orderId)->first();
+        
         if (!$transaction) {
-            return response()->json(['error' => 'Transaksi tidak ditemukan'], 404);
+            Log::error('Transaction not found: ' . $orderId);
+            echo json_encode(['status' => 'OK']);
+            exit;
         }
 
-        // ✅ Update status berdasarkan status Midtrans
+        // ✅ UPDATE STATUS - PASTIKAN INI
+        $oldStatus = $transaction->status;
+        
+        // Mapping status
         switch ($transactionStatus) {
-
             case 'capture':
-                if ($paymentType == 'credit_card') {
-                    $transaction->status = ($fraudStatus == 'challenge')
-                        ? 'challenge'
-                        : 'settlement';
-                }
+                $transaction->status = ($fraudStatus == 'challenge') ? 'challenge' : 'settlement';
                 break;
-
+                
             case 'settlement':
                 $transaction->status = 'settlement';
                 break;
-
+                
             case 'pending':
                 $transaction->status = 'pending';
                 break;
-
+                
             case 'deny':
-                $transaction->status = 'deny';
-                break;
-
             case 'cancel':
-                $transaction->status = 'cancel';
-                break;
-
             case 'expire':
-                $transaction->status = 'expire';
+                $transaction->status = 'failed';
                 break;
-
+                
             default:
                 $transaction->status = 'pending';
         }
 
-        // ✅ Simpan payment type
+        // ✅ UPDATE PAYMENT TYPE
         $transaction->payment_type = $paymentType;
-        $transaction->save();
+        
+        // ✅ GUNAKAN DB TRANSACTION UNTUK UPDATE
+        DB::beginTransaction();
+        try {
+            $transaction->save();
+            DB::commit();
+            
+            Log::info('Transaction updated successfully', [
+                'order_id' => $orderId,
+                'old_status' => $oldStatus,
+                'new_status' => $transaction->status
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to save transaction', [
+                'error' => $e->getMessage()
+            ]);
+        }
 
-        return response()->json([
-            'success' => true,
-            'status'  => $transaction->status
-        ]);
+        echo json_encode(['success' => true]);
+        exit;
 
     } catch (\Exception $e) {
-
-        // ✅ Logging tetap mempertahankan gaya coding Anda
-        Log::error(
-            'Midtrans notification error: ' . $e->getMessage(),
-            $request->all() // seperti versi Anda sebelumnya
-        );
-
-        return response()->json(['error' => 'Terjadi kesalahan server'], 500);
+        Log::error('Midtrans notification error', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        echo json_encode(['status' => 'OK']);
+        exit;
     }
 }
 

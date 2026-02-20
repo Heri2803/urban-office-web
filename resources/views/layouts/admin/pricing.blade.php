@@ -1357,7 +1357,7 @@ function pricingManagement() {
 
         async fetchServiceCategories() {
             try {
-                const response = await fetch('/pricing/api/service-categories');
+                const response = await fetch('/admin/pricing/api/service-categories');
                 const data = await response.json();
                 
                 if (data.success) {
@@ -1380,8 +1380,8 @@ function pricingManagement() {
 
         async fetchAllRequests() {
             try {
-    
-                const response = await fetch('/pricing/api/requests/history');
+
+                const response = await fetch('/admin/pricing/api/requests/history');
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -1473,7 +1473,7 @@ function pricingManagement() {
         async fetchRoomTypesWithPrices() {
             try {
                 
-                const response = await fetch('/pricing/api/prices-by-roomtype');
+                const response = await fetch('/admin/pricing/api/prices-by-roomtype');
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -1848,7 +1848,7 @@ function pricingManagement() {
                     throw new Error('CSRF token not found');
                 }
                 
-                const response = await fetch('/pricing/api/request', {
+                const response = await fetch('/admin/pricing/api/request', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1946,7 +1946,7 @@ function pricingManagement() {
                     throw new Error('CSRF token not found');
                 }
                 
-                const response = await fetch(`/pricing/api/requests/${this.editingRequestId}/update`, {
+                const response = await fetch(`/admin/pricing/api/requests/${this.editingRequestId}/update`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -2009,7 +2009,7 @@ function pricingManagement() {
                     throw new Error('CSRF token not found');
                 }
                 
-                const response = await fetch(`/pricing/api/requests/${this.deletingRequestId}/delete`, {
+                const response = await fetch(`/admin/pricing/api/requests/${this.deletingRequestId}/delete`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',

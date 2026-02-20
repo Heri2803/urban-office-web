@@ -9,8 +9,8 @@
     <div class="mb-8">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-gray-800 mb-2">Service Confirmation 📑</h1>
-                <p class="text-gray-600">Manage and confirm bookings for Coworking Space and Event Space.</p>
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-800 mb-2">Service Bookings 📑</h1>
+                <p class="text-gray-600">Monitor real-time booking status from database.</p>
             </div>
             <div class="flex flex-wrap gap-3">
                 <!-- Quick Stats -->
@@ -19,7 +19,7 @@
                         <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
                         <div>
                             <p class="text-sm text-gray-600">Pending</p>
-                            <p class="text-lg font-bold text-gray-800" x-text="totalPending"></p>
+                            <p class="text-lg font-bold text-gray-800" x-text="totalStats.pending"></p>
                         </div>
                     </div>
                 </div>
@@ -28,17 +28,25 @@
                         <div class="w-3 h-3 bg-green-500 rounded-full"></div>
                         <div>
                             <p class="text-sm text-gray-600">Confirmed</p>
-                            <p class="text-lg font-bold text-gray-800" x-text="totalConfirmed"></p>
+                            <p class="text-lg font-bold text-gray-800" x-text="totalStats.settlement"></p>
                         </div>
                     </div>
                 </div>
+                <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <div>
+                        <p class="text-sm text-gray-600">Expired</p>
+                        <p class="text-lg font-bold text-gray-800" x-text="totalStats.expired"></p>
+                    </div>
+                </div>
+            </div>
             </div>
         </div>
     </div>
 
     <!-- Filter Section yang Lebih Clean -->
-    <div class="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100" 
-         x-data="filterState()">
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
             <h2 class="text-xl font-semibold text-gray-700">Filter Bookings</h2>
             <div class="flex gap-3">
@@ -64,33 +72,41 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
                 <div class="flex gap-2">
-                    <input type="date" x-model="startDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
-                    <input type="date" x-model="endDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    <input type="date" x-model="filterStartDate" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    <input type="date" x-model="filterEndDate" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
                 </div>
             </div>
 
-            <!-- Di bagian filter -->
+            <!-- Service Type Filter -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Service Type</label>
-                <select x-model="serviceType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <select x-model="filterServiceType" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
                     <option value="">All Services</option>
-                    <option value="Coworking Space">Coworking Space</option> <!-- ✅ Update -->
-                    <option value="Event Space">Event Space</option> <!-- ✅ Update -->
+                    <option value="Coworking Space">Coworking Space</option>
+                    <option value="Event Space">Event Space</option>
                 </select>
             </div>
 
+            <!-- Status Filter -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select x-model="status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <select x-model="filterStatus" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
                     <option value="">All Status</option>
-                    <option value="settlement">Waiting Confirmation</option>
-                    <option value="confirmed">Confirmed</option>
+                    <option value="settlement">Confirmed</option>
+                    <option value="pending">Waiting Payment</option>
+                    <option value="expired">Expired</option>
                 </select>
             </div>
 
+            <!-- Time Frame Filter -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Time Frame</label>
-                <select x-model="timeFrame" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <select x-model="filterTimeFrame" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
                     <option value="">All Time</option>
                     <option value="today">Today</option>
                     <option value="tomorrow">Tomorrow</option>
@@ -102,10 +118,10 @@
     </div>
 
     <!-- Service Cards Grid - Hanya Coworking & Event Space -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        
+    <div class="space-y-8">
+    
         <!-- Coworking Space Card -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden">
             <div class="p-6 border-b border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
@@ -115,7 +131,7 @@
                             </svg>
                             Coworking Space
                         </h2>
-                        <p class="text-sm text-blue-700 mt-1" x-text="`Pending: ${coworkingStats.pending} | Confirmed: ${coworkingStats.confirmed} | Capacity: ${coworkingStats.capacity}`"></p>
+                        <p class="text-sm text-blue-700 mt-1" x-text="`Confirmed: ${coworkingStats.settlement} | Waiting: ${coworkingStats.pending} | Expired: ${coworkingStats.expired} | Capacity: ${coworkingStats.capacity}`"></p>
                     </div>
                     <div class="bg-white rounded-lg px-3 py-2 border border-blue-200">
                         <p class="text-xs text-blue-600 font-medium">Real-time Updates</p>
@@ -123,133 +139,153 @@
                 </div>
             </div>
 
-            <div class="p-6 space-y-6">
-                <!-- Action Section -->
-                <div class="pb-6 border-b border-gray-200">
-                    <h3 class="text-md font-semibold text-gray-700 mb-4">Confirm New Booking</h3>
-                    <div class="space-y-4">
-                        <div class="p-4 rounded-lg bg-blue-50 border border-blue-200">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Select Pending Booking</label>
-                            <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" 
-                                    x-model="selectedCoworkingBooking">
-                                <option value="">-- Select Booking --</option>
-                                <template x-for="booking in filteredCoworkingPending" :key="booking.id">
-                                    <option :value="booking.id" x-text="`${booking.customer_name} - ${booking.booking_code} - ${formatDate(booking.booking_date)}`"></option>
-                                </template>
-                            </select>
-                            <button @click="openConfirmModal(selectedCoworkingBooking, 'coworking')" 
-                                    :disabled="!selectedCoworkingBooking"
-                                    :class="!selectedCoworkingBooking ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'"
-                                    class="w-full mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg transition-colors font-medium text-sm shadow-md">
-                                Confirm Booking
+            <div class="p-6">
+                <!-- Booking Lists dengan GRID LAYOUT dan PAGINATION -->
+                <div class="space-y-8">
+                    <!-- Unified Coworking Bookings Section -->
+                    <div class="space-y-4" id="coworking-section">
+                        <!-- Header dengan Pagination Info -->
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <h3 class="text-md font-semibold text-gray-700 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                    </svg>
+                                    All Bookings
+                                </h3>
+                                <span class="text-xs font-bold px-3 py-1 bg-blue-100 text-blue-800 rounded-full"
+                                    x-text="filteredCoworkingBookings.length"></span>
+                            </div>
+                            
+                            <!-- Pagination Info -->
+                            <div class="text-xs text-gray-500" 
+                                x-show="pagination.coworking.totalPages > 1">
+                                Page <span class="font-semibold" x-text="pagination.coworking.currentPage"></span>
+                                of <span class="font-semibold" x-text="pagination.coworking.totalPages"></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Grid Cards untuk semua status -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <template x-for="booking in paginatedCoworking" :key="booking.id">
+                                <!-- Booking Card - DINAMIS BERDASARKAN STATUS -->
+                                <div class="bg-gradient-to-br rounded-xl p-5 hover:shadow-lg transition-all duration-300 h-full"
+                                    :class="getStatusCardClass(booking.status)">
+                                    
+                                    <!-- Header -->
+                                    <div class="flex justify-between items-start mb-4 pb-3 border-b"
+                                        :class="getStatusBadgeClass(booking.status).replace('bg-', 'border-') + '/50'">
+                                        <div class="space-y-1">
+                                            <p class="text-sm font-bold text-gray-900 truncate" 
+                                            x-text="booking.booking_code"></p>
+                                            <p class="text-xs text-gray-600 truncate" 
+                                            x-text="booking.customer_name"></p>
+                                        </div>
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full shrink-0 flex items-center gap-1"
+                                            :class="getStatusBadgeClass(booking.status)">
+                                            <span x-html="getStatusIcon(booking.status)"></span>
+                                            <span x-text="getStatusDisplay(booking.status).text"></span>
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Compact Details -->
+                                    <div class="space-y-3 mb-4">
+                                        <div>
+                                            <p class="text-xs text-gray-500 mb-1">Date & Time</p>
+                                            <div class="space-y-1">
+                                                <p class="text-sm font-medium text-gray-900" 
+                                                x-text="formatDate(booking.booking_date)"></p>
+                                                <p class="text-xs text-gray-700" 
+                                                x-text="booking.start_time + ' - ' + (booking.end_time || '...')"></p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <p class="text-xs text-gray-500">Duration</p>
+                                                <p class="text-xs font-medium text-gray-900" 
+                                                x-text="formatDuration(booking.duration_type, booking.duration_value)"></p>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs text-gray-500">Amount</p>
+                                                <p class="text-xs font-bold text-blue-600" 
+                                                x-text="`Rp ${formatPrice(booking.amount)}`"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Status Info -->
+                                    <div class="mt-4 p-3 rounded-lg border text-center"
+                                        :class="booking.status === 'settlement' ? 'bg-green-50 border-green-200' :
+                                                booking.status === 'pending' ? 'bg-yellow-50 border-yellow-200' :
+                                                'bg-red-50 border-red-200'">
+                                        <p class="text-xs font-medium mb-1"
+                                        :class="booking.status === 'settlement' ? 'text-green-700' :
+                                                booking.status === 'pending' ? 'text-yellow-700' :
+                                                'text-red-700'">
+                                            <span x-show="booking.status === 'pending'">Expires in:</span>
+                                            <span x-show="booking.status === 'settlement'">Booking starts in:</span>
+                                            <span x-show="booking.status === 'expired'">Expired since:</span>
+                                        </p>
+                                        <span class="text-sm font-bold block"
+                                            :class="getBookingStatusClass(booking.booking_date, booking.start_time)"
+                                            x-text="getRemainingTime(booking.booking_date, booking.start_time, booking.status)">
+                                        </span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        
+                        <!-- Pagination Controls -->
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-200"
+                            x-show="pagination.coworking.totalPages > 1">
+                            
+                            <!-- Previous Button -->
+                            <button @click="prevPage('coworking')"
+                                    :disabled="pagination.coworking.currentPage === 1"
+                                    :class="pagination.coworking.currentPage === 1 ? 
+                                            'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'"
+                                    class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                                Previous
                             </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Booking Lists dengan Real-time Countdown -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Waiting Confirmation -->
-                    <div>
-                        <h3 class="text-md font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                            <span class="w-3 h-3 bg-yellow-500 rounded-full animate-pulse"></span>
-                            Waiting Confirmation (<span x-text="coworkingStats.pending"></span>)
-                        </h3>
-                        <div class="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
-                            <template x-for="booking in filteredCoworkingPending" :key="booking.id">
-                                <div class="border border-yellow-300 bg-yellow-50 rounded-lg p-4">
-                                    <div class="flex justify-between items-start mb-3">
-                                        <div>
-                                            <p class="text-sm font-bold text-gray-900" x-text="booking.booking_code"></p>
-                                            <p class="text-xs text-gray-600" x-text="booking.customer_name"></p>
-                                        </div>
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-200 text-yellow-800">
-                                            Settlement
-                                        </span>
-                                    </div>
-                                    <div class="text-xs text-gray-600 space-y-1">
-                                        <div class="flex justify-between">
-                                            <span>Booking Date:</span>
-                                            <span class="text-gray-900 font-medium" x-text="formatDate(booking.booking_date)"></span>
-                                        </div>
-                                        <!-- Di bagian booking lists - perbaiki tampilan waktu -->
-                                        <div class="flex justify-between">
-                                            <span>Time:</span>
-                                            <span class="text-gray-900" x-text="booking.start_time + ' - ' + (booking.end_time || 'Calculating...')"></span>
-                                        </div>
-
-                                        <!-- Real-time Countdown -->
-                                        <div class="flex justify-between items-center pt-2 mt-2 border-t border-yellow-200">
-                                            <span class="text-yellow-700 font-medium" x-text="getBookingStatus(booking.booking_date, booking.start_time) === 'Upcoming' ? 'Starts in:' : 'Ends in:'"></span>
-                                            <span class="text-sm font-bold" 
-                                                :class="getBookingStatusClass(booking.booking_date, booking.start_time)"
-                                                x-text="getRemainingTime(booking.booking_date, booking.start_time)"></span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span>Duration:</span>
-                                            <span class="text-gray-900" x-text="formatDuration(booking.duration_type, booking.duration_value)"></span>
-                                        </div>
-                                        <!-- Real-time Countdown -->
-                                        <div class="flex justify-between items-center pt-2 mt-2 border-t border-yellow-200">
-                                            <span class="text-yellow-700 font-medium">Starts in:</span>
-                                            <span class="text-sm font-bold text-yellow-700" 
-                                                  x-text="getRemainingTime(booking.booking_date, booking.start_time)"></span>
-                                        </div>
-                                        <div class="flex justify-between font-bold text-sm text-blue-600 pt-2">
-                                            <span>Amount:</span>
-                                            <span x-text="`Rp ${formatPrice(booking.amount)}`"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-
-                    <!-- Confirmed Bookings -->
-                    <div>
-                        <h3 class="text-md font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                            <span class="w-3 h-3 bg-green-500 rounded-full"></span>
-                            Confirmed (<span x-text="coworkingStats.confirmed"></span>)
-                        </h3>
-                        <div class="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
-                            <template x-for="booking in filteredCoworkingConfirmed" :key="booking.id">
-                                <div class="border border-green-300 bg-green-50 rounded-lg p-4">
-                                    <div class="flex justify-between items-start mb-3">
-                                        <div>
-                                            <p class="text-sm font-bold text-gray-900" x-text="booking.booking_code"></p>
-                                            <p class="text-xs text-gray-600" x-text="booking.customer_name"></p>
-                                        </div>
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-200 text-green-800">
-                                            Confirmed
-                                        </span>
-                                    </div>
-                                    <div class="text-xs text-gray-600 space-y-1 mb-3">
-                                        <div class="flex justify-between">
-                                            <span>Booking Date:</span>
-                                            <span class="text-gray-900 font-medium" x-text="formatDate(booking.booking_date)"></span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span>Start Time:</span>
-                                            <span class="text-gray-900" x-text="booking.start_time"></span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span>Duration:</span>
-                                            <span class="text-gray-900" x-text="formatDuration(booking.duration_type, booking.duration_value)"></span>
-                                        </div>
-                                        <!-- Real-time Countdown untuk Confirmed -->
-                                        <div class="flex justify-between items-center pt-2 mt-2 border-t border-green-200">
-                                            <span class="text-green-700 font-medium">Status:</span>
-                                            <span class="text-xs font-bold" 
-                                                  :class="getBookingStatusClass(booking.booking_date, booking.start_time)"
-                                                  x-text="getBookingStatus(booking.booking_date, booking.start_time)"></span>
-                                        </div>
-                                    </div>
-                                    <button @click="openCancelModal(booking.id, 'coworking')" 
-                                            class="w-full px-3 py-1.5 bg-red-100 text-red-700 text-xs rounded-lg hover:bg-red-200 transition-colors font-medium">
-                                        Cancel Confirmation
+                            
+                            <!-- Page Numbers -->
+                            <div class="hidden sm:flex items-center gap-1" 
+                                x-show="pagination.coworking.totalPages <= 5">
+                                <template x-for="page in pagination.coworking.totalPages" :key="page">
+                                    <button @click="goToPage('coworking', page)"
+                                            :class="page === pagination.coworking.currentPage ? 
+                                                    'bg-blue-600 text-white' : 
+                                                    'bg-white text-gray-700 hover:bg-gray-100'"
+                                            class="w-8 h-8 flex items-center justify-center text-sm font-medium border border-gray-300 rounded-lg">
+                                        <span x-text="page"></span>
                                     </button>
-                                </div>
-                            </template>
+                                </template>
+                            </div>
+                            
+                            <!-- Page Info (for many pages) -->
+                            <div class="text-sm text-gray-600" 
+                                x-show="pagination.coworking.totalPages > 5">
+                                <span x-text="pagination.coworking.currentPage"></span>
+                                of
+                                <span x-text="pagination.coworking.totalPages"></span>
+                                pages
+                            </div>
+                            
+                            <!-- Next Button -->
+                            <button @click="nextPage('coworking')"
+                                    :disabled="pagination.coworking.currentPage === pagination.coworking.totalPages"
+                                    :class="pagination.coworking.currentPage === pagination.coworking.totalPages ? 
+                                            'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'"
+                                    class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg flex items-center gap-2">
+                                Next
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -257,7 +293,7 @@
         </div>
 
         <!-- Event Space Card -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden">
             <div class="p-6 border-b border-orange-200 bg-gradient-to-r from-orange-50 to-orange-100">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
@@ -267,271 +303,180 @@
                             </svg>
                             Event Space
                         </h2>
-                        <p class="text-sm text-orange-700 mt-1" x-text="`Pending: ${eventSpaceStats.pending} | Confirmed: ${eventSpaceStats.confirmed}`"></p>
+                        <p class="text-sm text-orange-700 mt-1" x-text="`Confirmed: ${eventSpaceStats.settlement} | Waiting: ${eventSpaceStats.pending} | Expired: ${eventSpaceStats.expired}`"></p>
                     </div>
                     <div class="bg-white rounded-lg px-3 py-2 border border-orange-200">
                         <p class="text-xs text-orange-600 font-medium">Cleanup Schedule Included</p>
                     </div>
                 </div>
+                
+                <!-- Cleanup Notice -->
+                <div class="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div class="flex items-start gap-3">
+                        <div class="p-2 bg-orange-100 rounded-lg">
+                            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-orange-800">Cleanup Schedule</p>
+                            <p class="text-xs text-orange-700 mt-0.5">1 hour block time is automatically added after each event for cleanup</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="p-6 space-y-6">
-                <!-- Action Section -->
-                <div class="pb-6 border-b border-gray-200">
-                    <h3 class="text-md font-semibold text-gray-700 mb-4">Confirm New Booking</h3>
-                    <div class="space-y-4">
-                        <div class="p-3 mb-3 rounded-lg bg-blue-100 border border-blue-300">
-                            <div class="flex items-start gap-2">
-                                <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <div>
-                                    <p class="text-sm font-medium text-blue-800">Cleanup Schedule</p>
-                                    <p class="text-xs text-blue-700 mt-0.5">1 hour block time after each event for cleanup</p>
-                                </div>
+            <div class="p-6">
+                <!-- Booking Lists DUA KOLOM dengan SCROLL HORIZONTAL -->
+                <div class="space-y-8">
+                    <!-- Unified Event Space Bookings Section -->
+                    <div class="space-y-4" id="eventSpace-section">
+                        <!-- Header dengan Pagination Info -->
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <h3 class="text-md font-semibold text-gray-700 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                    </svg>
+                                    All Bookings
+                                </h3>
+                                <span class="text-xs font-bold px-3 py-1 bg-orange-100 text-orange-800 rounded-full"
+                                    x-text="filteredEventSpaceBookings.length"></span>
+                            </div>
+                            
+                            <!-- Pagination Info -->
+                            <div class="text-xs text-gray-500" 
+                                x-show="pagination.eventSpace.totalPages > 1">
+                                Page <span class="font-semibold" x-text="pagination.eventSpace.currentPage"></span>
+                                of <span class="font-semibold" x-text="pagination.eventSpace.totalPages"></span>
                             </div>
                         </div>
-                        <div class="p-4 rounded-lg bg-orange-50 border border-orange-200">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Select Pending Booking</label>
-                            <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm"
-                                    x-model="selectedEventSpaceBooking">
-                                <option value="">-- Select Booking --</option>
-                                <template x-for="booking in filteredEventSpacePending" :key="booking.id">
-                                    <option :value="booking.id" x-text="`${booking.customer_name} - ${booking.booking_code} - ${formatDate(booking.booking_date)}`"></option>
+                        
+                        <!-- Grid Cards untuk semua status -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <template x-for="booking in paginatedEventSpace" :key="booking.id">
+                                <!-- Booking Card - DINAMIS BERDASARKAN STATUS -->
+                                <div class="bg-gradient-to-br rounded-xl p-5 hover:shadow-lg transition-all duration-300 h-full"
+                                    :class="getStatusCardClass(booking.status)">
+                                    
+                                    <!-- Header -->
+                                    <div class="flex justify-between items-start mb-4 pb-3 border-b"
+                                        :class="getStatusBadgeClass(booking.status).replace('bg-', 'border-') + '/50'">
+                                        <div class="space-y-1">
+                                            <p class="text-sm font-bold text-gray-900 truncate" 
+                                            x-text="booking.booking_code"></p>
+                                            <p class="text-xs text-gray-600 truncate" 
+                                            x-text="booking.customer_name"></p>
+                                        </div>
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full shrink-0 flex items-center gap-1"
+                                            :class="getStatusBadgeClass(booking.status)">
+                                            <span x-html="getStatusIcon(booking.status)"></span>
+                                            <span x-text="getStatusDisplay(booking.status).text"></span>
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Compact Details -->
+                                    <div class="space-y-3 mb-4">
+                                        <div>
+                                            <p class="text-xs text-gray-500 mb-1">Event Date</p>
+                                            <p class="text-sm font-medium text-gray-900" 
+                                            x-text="formatDate(booking.booking_date)"></p>
+                                        </div>
+                                        
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <p class="text-xs text-gray-500">Event Time</p>
+                                                <p class="text-xs font-medium text-gray-900" 
+                                                x-text="booking.start_time + ' - ' + (booking.end_time || '...')"></p>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs text-gray-500">Cleanup</p>
+                                                <p class="text-xs font-medium text-orange-700" 
+                                                x-text="`${booking.end_time} - ${addOneHour(booking.end_time)}`"></p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <p class="text-xs text-gray-500">Amount</p>
+                                            <p class="text-xs font-bold text-orange-600" 
+                                            x-text="`Rp ${formatPrice(booking.amount)}`"></p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Status Info -->
+                                    <div class="mt-4 p-3 rounded-lg border text-center"
+                                        :class="booking.status === 'settlement' ? 'bg-green-50 border-green-200' :
+                                                booking.status === 'pending' ? 'bg-yellow-50 border-yellow-200' :
+                                                'bg-red-50 border-red-200'">
+                                        <p class="text-xs font-medium mb-1"
+                                        :class="booking.status === 'settlement' ? 'text-green-700' :
+                                                booking.status === 'pending' ? 'text-yellow-700' :
+                                                'text-red-700'">
+                                            <span x-show="booking.status === 'pending'">Expires in:</span>
+                                            <span x-show="booking.status === 'settlement'">Booking starts in:</span>
+                                            <span x-show="booking.status === 'expired'">Expired since:</span>
+                                        </p>
+                                        <span class="text-sm font-bold block"
+                                            :class="getBookingStatusClass(booking.booking_date, booking.start_time)"
+                                            x-text="getRemainingTime(booking.booking_date, booking.start_time, booking.status)">
+                                        </span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        
+                        <!-- Pagination Controls -->
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-200"
+                            x-show="pagination.eventSpace.totalPages > 1">
+                            
+                            <!-- Previous Button -->
+                            <button @click="prevPage('eventSpace')"
+                                    :disabled="pagination.eventSpace.currentPage === 1"
+                                    :class="pagination.eventSpace.currentPage === 1 ? 
+                                            'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'"
+                                    class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                </svg>
+                                Previous
+                            </button>
+                            
+                            <!-- Page Numbers -->
+                            <div class="hidden sm:flex items-center gap-1" 
+                                x-show="pagination.eventSpace.totalPages <= 5">
+                                <template x-for="page in pagination.eventSpace.totalPages" :key="page">
+                                    <button @click="goToPage('eventSpace', page)"
+                                            :class="page === pagination.eventSpace.currentPage ? 
+                                                    'bg-blue-600 text-white' : 
+                                                    'bg-white text-gray-700 hover:bg-gray-100'"
+                                            class="w-8 h-8 flex items-center justify-center text-sm font-medium border border-gray-300 rounded-lg">
+                                        <span x-text="page"></span>
+                                    </button>
                                 </template>
-                            </select>
-                            <button @click="openConfirmModal(selectedEventSpaceBooking, 'event_space')" 
-                                    :disabled="!selectedEventSpaceBooking"
-                                    :class="!selectedEventSpaceBooking ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-700'"
-                                    class="w-full mt-3 px-4 py-2 bg-orange-600 text-white rounded-lg transition-colors font-medium text-sm shadow-md">
-                                Confirm Booking
+                            </div>
+                            
+                            <!-- Page Info (for many pages) -->
+                            <div class="text-sm text-gray-600" 
+                                x-show="pagination.eventSpace.totalPages > 5">
+                                <span x-text="pagination.eventSpace.currentPage"></span>
+                                of
+                                <span x-text="pagination.eventSpace.totalPages"></span>
+                                pages
+                            </div>
+                            
+                            <!-- Next Button -->
+                            <button @click="nextPage('eventSpace')"
+                                    :disabled="pagination.eventSpace.currentPage === pagination.eventSpace.totalPages"
+                                    :class="pagination.eventSpace.currentPage === pagination.eventSpace.totalPages ? 
+                                            'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'"
+                                    class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg flex items-center gap-2">
+                                Next
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
                             </button>
                         </div>
                     </div>
-                </div>
-
-                <!-- Booking Lists dengan Real-time Countdown -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Waiting Confirmation -->
-                    <div>
-                        <h3 class="text-md font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                            <span class="w-3 h-3 bg-yellow-500 rounded-full animate-pulse"></span>
-                            Waiting Confirmation (<span x-text="eventSpaceStats.pending"></span>)
-                        </h3>
-                        <div class="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
-                            <template x-for="booking in filteredEventSpacePending" :key="booking.id">
-                                <div class="border border-yellow-300 bg-yellow-50 rounded-lg p-4">
-                                    <div class="flex justify-between items-start mb-3">
-                                        <div>
-                                            <p class="text-sm font-bold text-gray-900" x-text="booking.booking_code"></p>
-                                            <p class="text-xs text-gray-600" x-text="booking.customer_name"></p>
-                                        </div>
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-200 text-yellow-800">
-                                            Settlement
-                                        </span>
-                                    </div>
-                                    <div class="text-xs text-gray-600 space-y-1">
-                                        <div class="flex justify-between">
-                                            <span>Event Date:</span>
-                                            <span class="text-gray-900 font-medium" x-text="formatDate(booking.booking_date)"></span>
-                                        </div>
-                                        <!-- Di bagian booking lists - perbaiki tampilan waktu -->
-                                        <div class="flex justify-between">
-                                            <span>Time:</span>
-                                            <span class="text-gray-900" x-text="booking.start_time + ' - ' + (booking.end_time || 'Calculating...')"></span>
-                                        </div>
-
-                                        <!-- Real-time Countdown -->
-                                        <div class="flex justify-between items-center pt-2 mt-2 border-t border-yellow-200">
-                                            <span class="text-yellow-700 font-medium" x-text="getBookingStatus(booking.booking_date, booking.start_time) === 'Upcoming' ? 'Starts in:' : 'Ends in:'"></span>
-                                            <span class="text-sm font-bold" 
-                                                :class="getBookingStatusClass(booking.booking_date, booking.start_time)"
-                                                x-text="getRemainingTime(booking.booking_date, booking.start_time)"></span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span>Cleanup:</span>
-                                            <span class="text-orange-700" x-text="`${booking.end_time} - ${addOneHour(booking.end_time)}`"></span>
-                                        </div>
-                                        <!-- Real-time Countdown -->
-                                        <div class="flex justify-between items-center pt-2 mt-2 border-t border-yellow-200">
-                                            <span class="text-yellow-700 font-medium">Starts in:</span>
-                                            <span class="text-sm font-bold text-yellow-700" 
-                                                  x-text="getRemainingTime(booking.booking_date, booking.start_time)"></span>
-                                        </div>
-                                        <div class="flex justify-between font-bold text-sm text-orange-600 pt-2">
-                                            <span>Amount:</span>
-                                            <span x-text="`Rp ${formatPrice(booking.amount)}`"></span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-
-                    <!-- Confirmed Bookings -->
-                    <div>
-                        <h3 class="text-md font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                            <span class="w-3 h-3 bg-green-500 rounded-full"></span>
-                            Confirmed (<span x-text="eventSpaceStats.confirmed"></span>)
-                        </h3>
-                        <div class="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
-                            <template x-for="booking in filteredEventSpaceConfirmed" :key="booking.id">
-                                <div class="border border-green-300 bg-green-50 rounded-lg p-4">
-                                    <div class="flex justify-between items-start mb-3">
-                                        <div>
-                                            <p class="text-sm font-bold text-gray-900" x-text="booking.booking_code"></p>
-                                            <p class="text-xs text-gray-600" x-text="booking.customer_name"></p>
-                                        </div>
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-200 text-green-800">
-                                            Confirmed
-                                        </span>
-                                    </div>
-                                    <div class="text-xs text-gray-600 space-y-1 mb-3">
-                                        <div class="flex justify-between">
-                                            <span>Event Date:</span>
-                                            <span class="text-gray-900 font-medium" x-text="formatDate(booking.booking_date)"></span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span>Time:</span>
-                                            <span class="text-gray-900" x-text="`${booking.start_time} - ${booking.end_time}`"></span>
-                                        </div>
-                                        <div class="flex justify-between">
-                                            <span>Cleanup:</span>
-                                            <span class="text-orange-700" x-text="`${booking.end_time} - ${addOneHour(booking.end_time)}`"></span>
-                                        </div>
-                                        <!-- Real-time Status -->
-                                        <div class="flex justify-between items-center pt-2 mt-2 border-t border-green-200">
-                                            <span class="text-green-700 font-medium">Status:</span>
-                                            <span class="text-xs font-bold" 
-                                                  :class="getBookingStatusClass(booking.booking_date, booking.start_time)"
-                                                  x-text="getBookingStatus(booking.booking_date, booking.start_time)"></span>
-                                        </div>
-                                    </div>
-                                    <button @click="openCancelModal(booking.id, 'event_space')" 
-                                            class="w-full px-3 py-1.5 bg-red-100 text-red-700 text-xs rounded-lg hover:bg-red-200 transition-colors font-medium">
-                                        Cancel Confirmation
-                                    </button>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Confirmation Modal -->
-    <div id="confirmModal" x-show="showConfirmModal" 
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-        class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-xl max-w-md w-full" @click.outside="closeConfirmModal">
-            <div class="p-6">
-                <div class="flex items-center justify-center w-12 h-12 mx-auto bg-green-100 rounded-full mb-4">
-                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                </div>
-                <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">Confirm Booking</h3>
-                <p class="text-sm text-gray-600 text-center mb-6">Are you sure you want to confirm this booking?</p>
-                
-                <!-- ✅ Tambahkan x-show untuk mencegah akses null -->
-                <div class="bg-gray-50 rounded-lg p-4 mb-6" x-show="selectedBooking">
-                    <template x-if="selectedBooking">
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Booking ID:</span>
-                                <span class="font-medium text-gray-900" x-text="selectedBooking.booking_code"></span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Customer:</span>
-                                <span class="font-medium text-gray-900" x-text="selectedBooking.customer_name"></span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Service:</span>
-                                <span class="font-medium text-gray-900" x-text="selectedBooking.room_type === 'coworking_space' ? 'Coworking Space' : 'Event Space'"></span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Date:</span>
-                                <span class="font-medium text-gray-900" x-text="formatDate(selectedBooking.booking_date)"></span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Time:</span>
-                                <span class="font-medium text-gray-900" x-text="selectedBooking.start_time"></span>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-                
-                <div class="flex gap-3">
-                    <button @click="closeConfirmModal" 
-                            class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
-                        Cancel
-                    </button>
-                    <button @click="confirmBookingAction" 
-                            :disabled="!selectedBooking"
-                            :class="!selectedBooking ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-700'"
-                            class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg transition-colors font-medium">
-                        Confirm Booking
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Cancel Confirmation Modal -->
-    <div id="cancelModal" x-show="showCancelModal"
-        x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0"
-        x-transition:enter-end="opacity-100"
-        x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100"
-        x-transition:leave-end="opacity-0"
-        class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg shadow-xl max-w-md w-full" @click.outside="closeCancelModal">
-            <div class="p-6">
-                <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
-                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </div>
-                <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">Cancel Confirmation</h3>
-                <p class="text-sm text-gray-600 text-center mb-6">Are you sure you want to cancel this confirmation? The booking will return to waiting confirmation list.</p>
-                
-                <!-- ✅ Tambahkan x-show untuk mencegah akses null -->
-                <div class="bg-gray-50 rounded-lg p-4 mb-6" x-show="selectedBooking">
-                    <template x-if="selectedBooking">
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Booking ID:</span>
-                                <span class="font-medium text-gray-900" x-text="selectedBooking.booking_code"></span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Customer:</span>
-                                <span class="font-medium text-gray-900" x-text="selectedBooking.customer_name"></span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Service:</span>
-                                <span class="font-medium text-gray-900" x-text="selectedBooking.room_type === 'coworking_space' ? 'Coworking Space' : 'Event Space'"></span>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-                
-                <div class="flex gap-3">
-                    <button @click="closeCancelModal" 
-                            class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
-                        No, Keep It
-                    </button>
-                    <button @click="cancelConfirmationAction" 
-                            :disabled="!selectedBooking"
-                            :class="!selectedBooking ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-700'"
-                            class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg transition-colors font-medium">
-                        Yes, Cancel
-                    </button>
                 </div>
             </div>
         </div>
@@ -543,65 +488,294 @@
 <script>
 function serviceConfirmation() {
     return {
+        // Filter states
+        filterStartDate: '',
+        filterEndDate: '',
+        filterServiceType: '',
+        filterStatus: '',
+        filterTimeFrame: '',
         // Modal states
-        showConfirmModal: false,
-        showCancelModal: false,
         showSuccessNotification: false,
         showErrorNotification: false,
         successMessage: '',
         errorMessage: '',
-        selectedBooking: null,
-        selectedServiceType: '',
+        statusFilter: '',
+
+        pagination: {
+            coworking: { currentPage: 1, perPage: 6, totalPages: 1 },
+            eventSpace: { currentPage: 1, perPage: 6, totalPages: 1 }
+        },
+
+        filterParams: {
+            startDate: '',
+            endDate: '',
+            serviceType: '',
+            status: '',
+            timeFrame: ''
+        },
+
         
         // Data dari backend
         coworkingBookings: @json($coworkingBookings ?? []),
         eventSpaceBookings: @json($eventSpaceBookings ?? []),
-        
-        // Selected bookings untuk dropdown
-        selectedCoworkingBooking: '',
-        selectedEventSpaceBooking: '',
 
         // ✅ NEW: Real-time properties
         autoRefreshInterval: null,
         isLoading: false,
         lastRefresh: null,
 
-        // Computed properties
-        // Di Alpine.js - Perbaiki computed properties
-        get filteredCoworkingPending() {
-            return this.coworkingBookings.filter(b => b.status === 'settlement');
+        // filter functions
+        applyFilters() {
+            console.log('🎯 Applying filters:', {
+                startDate: this.filterStartDate,
+                endDate: this.filterEndDate,
+                serviceType: this.filterServiceType,
+                status: this.filterStatus,
+                timeFrame: this.filterTimeFrame
+            });
+            
+            // Reset pagination ke page 1
+            this.resetAllPagination();
+            
+            // Untuk client-side filtering, tidak perlu API call
+            console.log('✅ Filters applied (client-side)');
         },
-        get filteredCoworkingConfirmed() {
-            return this.coworkingBookings.filter(b => b.status === 'confirmed');
+        
+        resetFilters() {
+            this.filterStartDate = '';
+            this.filterEndDate = '';
+            this.filterServiceType = '';
+            this.filterStatus = '';
+            this.filterTimeFrame = '';
+            
+            console.log('🔄 All filters reset');
+            
+            // Reset pagination
+            this.resetAllPagination();
         },
-        get filteredEventSpacePending() {
-            return this.eventSpaceBookings.filter(b => b.status === 'settlement');
+
+        // TAMBAHKAN: Filter berdasarkan statusFilter
+        get filteredCoworkingBookings() {
+            let filtered = this.coworkingBookings;
+            
+            console.log('🔍 Filtering coworking with serviceType:', this.filterServiceType);
+            
+            // 1. Filter by service type
+            if (this.filterServiceType) {
+                if (this.filterServiceType === 'Coworking Space') {
+                    // TAMPILKAN hanya Coworking
+                    const allowedTypes = ['coworking_space', 'Coworking Space'];
+                    filtered = filtered.filter(b => allowedTypes.includes(b.room_type));
+                    console.log('✅ Showing ONLY Coworking Space');
+                } else if (this.filterServiceType === 'Event Space') {
+                    // SEMBUNYIKAN semua Coworking (tampilkan 0)
+                    filtered = [];
+                    console.log('🚫 Hiding all Coworking (showing Event Space)');
+                }
+            }
+            
+            // 2. Filter lainnya (status, date, dll)
+            if (this.filterStatus) {
+                filtered = filtered.filter(b => b.status === this.filterStatus);
+            }
+            
+            if (this.filterStartDate) {
+                const startDate = new Date(this.filterStartDate);
+                filtered = filtered.filter(b => {
+                    const bookingDate = new Date(b.booking_date);
+                    return bookingDate >= startDate;
+                });
+            }
+            
+            if (this.filterEndDate) {
+                const endDate = new Date(this.filterEndDate);
+                filtered = filtered.filter(b => {
+                    const bookingDate = new Date(b.booking_date);
+                    return bookingDate <= endDate;
+                });
+            }
+            
+            if (this.filterTimeFrame) {
+                filtered = this.applyTimeFrameFilter(filtered, this.filterTimeFrame);
+            }
+            
+            console.log(`📊 Filtered coworking: ${filtered.length} bookings`);
+            return filtered;
         },
-        get filteredEventSpaceConfirmed() {
-            return this.eventSpaceBookings.filter(b => b.status === 'confirmed');
+
+
+        get filteredEventSpaceBookings() {
+            let filtered = this.eventSpaceBookings;
+            
+            console.log('🔍 Filtering event space with serviceType:', this.filterServiceType);
+            
+            // 1. Filter by service type
+            if (this.filterServiceType) {
+                if (this.filterServiceType === 'Event Space') {
+                    // TAMPILKAN hanya Event Space
+                    const allowedTypes = ['event_space', 'Event Space'];
+                    filtered = filtered.filter(b => allowedTypes.includes(b.room_type));
+                    console.log('✅ Showing ONLY Event Space');
+                } else if (this.filterServiceType === 'Coworking Space') {
+                    // SEMBUNYIKAN semua Event Space (tampilkan 0)
+                    filtered = [];
+                    console.log('🚫 Hiding all Event Space (showing Coworking Space)');
+                }
+            }
+            
+            // 2. Filter lainnya (status, date, dll)
+            if (this.filterStatus) {
+                filtered = filtered.filter(b => b.status === this.filterStatus);
+            }
+            
+            if (this.filterStartDate) {
+                const startDate = new Date(this.filterStartDate);
+                filtered = filtered.filter(b => {
+                    const bookingDate = new Date(b.booking_date);
+                    return bookingDate >= startDate;
+                });
+            }
+            
+            if (this.filterEndDate) {
+                const endDate = new Date(this.filterEndDate);
+                filtered = filtered.filter(b => {
+                    const bookingDate = new Date(b.booking_date);
+                    return bookingDate <= endDate;
+                });
+            }
+            
+            if (this.filterTimeFrame) {
+                filtered = this.applyTimeFrameFilter(filtered, this.filterTimeFrame);
+            }
+            
+            console.log(`📊 Filtered event space: ${filtered.length} bookings`);
+            return filtered;
         },
+
+
+        // TAMBAHKAN: Real-time stats
         get coworkingStats() {
-            const pending = this.filteredCoworkingPending.length;
-            const confirmed = this.filteredCoworkingConfirmed.length;
+            const settlement = this.coworkingBookings.filter(b => b.status === 'settlement').length;
+            const pending = this.coworkingBookings.filter(b => b.status === 'pending').length;
+            const expired = this.coworkingBookings.filter(b => b.status === 'expired').length;
+            
             return {
+                settlement: settlement,
                 pending: pending,
-                confirmed: confirmed,
+                expired: expired,
+                total: this.coworkingBookings.length,
                 capacity: this.calculateCapacity(this.coworkingBookings)
             };
         },
+
         get eventSpaceStats() {
-            const pending = this.filteredEventSpacePending.length;
-            const confirmed = this.filteredEventSpaceConfirmed.length;
+            const settlement = this.eventSpaceBookings.filter(b => b.status === 'settlement').length;
+            const pending = this.eventSpaceBookings.filter(b => b.status === 'pending').length;
+            const expired = this.eventSpaceBookings.filter(b => b.status === 'expired').length;
+            
             return {
+                settlement: settlement,
                 pending: pending,
-                confirmed: confirmed
+                expired: expired,
+                total: this.eventSpaceBookings.length
             };
         },
-        get totalPending() {
-            return this.coworkingStats.pending + this.eventSpaceStats.pending;
+
+        // TAMBAHKAN: Total stats untuk header
+        get totalStats() {
+            return {
+                settlement: this.coworkingStats.settlement + this.eventSpaceStats.settlement,
+                pending: this.coworkingStats.pending + this.eventSpaceStats.pending,
+                expired: this.coworkingStats.expired + this.eventSpaceStats.expired
+            };
         },
-        get totalConfirmed() {
-            return this.coworkingStats.confirmed + this.eventSpaceStats.confirmed;
+
+        // TAMBAHKAN: Paginated data baru
+        get paginatedCoworking() {
+            const start = (this.pagination.coworking.currentPage - 1) * 
+                        this.pagination.coworking.perPage;
+            const end = start + this.pagination.coworking.perPage;
+            return this.filteredCoworkingBookings.slice(start, end);
+        },
+
+        get paginatedEventSpace() {
+            const start = (this.pagination.eventSpace.currentPage - 1) * 
+                        this.pagination.eventSpace.perPage;
+            const end = start + this.pagination.eventSpace.perPage;
+            return this.filteredEventSpaceBookings.slice(start, end);
+        },
+
+        // TAMBAHKAN: Fungsi untuk display status
+        getStatusDisplay(status) {
+            const statusMap = {
+                'settlement': { 
+                    text: 'Confirmed', 
+                    color: 'green',
+                    bgColor: 'green',
+                    icon: 'check-circle'
+                },
+                'pending': { 
+                    text: 'Waiting Payment', 
+                    color: 'yellow',
+                    bgColor: 'yellow',
+                    icon: 'clock'
+                },
+                'expired': { 
+                    text: 'Expired', 
+                    color: 'red',
+                    bgColor: 'red',
+                    icon: 'x-circle'
+                }
+            };
+            
+            return statusMap[status] || { 
+                text: 'Unknown', 
+                color: 'gray',
+                bgColor: 'gray',
+                icon: 'question-mark'
+            };
+        },
+
+        getStatusBadgeClass(status) {
+            const map = {
+                'settlement': 'bg-green-100 text-green-800 border-green-200',
+                'pending': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                'expired': 'bg-red-100 text-red-800 border-red-200'
+            };
+            return map[status] || 'bg-gray-100 text-gray-800 border-gray-200';
+        },
+
+        getStatusCardClass(status) {
+            const map = {
+                'settlement': 'from-green-50 to-white border-green-200 hover:border-green-300',
+                'pending': 'from-yellow-50 to-white border-yellow-200 hover:border-yellow-300',
+                'expired': 'from-red-50 to-white border-red-200 hover:border-red-300'
+            };
+            return map[status] || 'from-gray-50 to-white border-gray-200';
+        },
+
+        getStatusIcon(status) {
+            const icons = {
+                'settlement': `<svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>`,
+                'pending': `<svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>`,
+                'expired': `<svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>`
+            };
+            return icons[status] || '';
+        },
+
+        // Computed properties
+
+        calculateCapacity(bookings) {
+            const maxCapacity = 20;
+            const settlementCount = bookings.filter(b => b.status === 'settlement').length;
+            const percentage = (settlementCount / maxCapacity) * 100;
+            return `${settlementCount}/${maxCapacity} (${Math.round(percentage)}%)`;
         },
         
         // ✅ NEW: Last refresh time
@@ -623,6 +797,184 @@ function serviceConfirmation() {
             
             // Initial data validation
             this.validateInitialData();
+
+            // ✅ NEW: Setup pagination watchers
+            this.setupPaginationWatchers();
+            
+            // ✅ NEW: Update initial pagination stats
+            this.updateAllPaginationStats();
+        },
+
+        setupPaginationWatchers() {
+            // Update pagination ketika data berubah
+            this.$watch('filteredCoworkingBookings', () => {
+                this.updatePaginationStats('coworking');
+            });
+            
+            this.$watch('filteredEventSpaceBookings', () => {
+                this.updatePaginationStats('eventSpace');
+            });
+        },
+
+        // UPDATE: Di updateAllPaginationStats()
+        updateAllPaginationStats() {
+            this.updatePaginationStats('coworking');
+            this.updatePaginationStats('eventSpace');
+        },
+        
+        // ✅ NEW: Update pagination statistics untuk satu section
+        updatePaginationStats(section) {
+            const filteredData = this.getFilteredDataBySection(section);
+            const pagination = this.pagination[section];
+            
+            if (filteredData && pagination) {
+                // Calculate total pages
+                pagination.totalPages = Math.max(1, Math.ceil(filteredData.length / pagination.perPage));
+                
+                // Reset to page 1 jika current page melebihi total pages
+                if (pagination.currentPage > pagination.totalPages && pagination.totalPages > 0) {
+                    pagination.currentPage = 1;
+                }
+                
+                console.log(`Updated pagination for ${section}:`, {
+                    currentPage: pagination.currentPage,
+                    totalPages: pagination.totalPages,
+                    totalItems: filteredData.length,
+                    perPage: pagination.perPage
+                });
+            }
+        },
+        
+        // ✅ NEW: Helper untuk mendapatkan filtered data berdasarkan section
+        getFilteredDataBySection(section) {
+            const dataMap = {
+                'coworking': () => this.filteredCoworkingBookings,
+                'eventSpace': () => this.filteredEventSpaceBookings
+            };
+            
+            return dataMap[section] ? dataMap[section]() : [];
+        },
+
+        // Helper function untuk time frame filtering
+        applyTimeFrameFilter(bookings, timeFrame) {
+            const today = new Date();
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay());
+            
+            switch(timeFrame) {
+                case 'today':
+                    return bookings.filter(b => {
+                        const bookingDate = new Date(b.booking_date);
+                        return bookingDate.toDateString() === today.toDateString();
+                    });
+                    
+                case 'tomorrow':
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(today.getDate() + 1);
+                    return bookings.filter(b => {
+                        const bookingDate = new Date(b.booking_date);
+                        return bookingDate.toDateString() === tomorrow.toDateString();
+                    });
+                    
+                case 'this_week':
+                    const endOfWeek = new Date(startOfWeek);
+                    endOfWeek.setDate(startOfWeek.getDate() + 6);
+                    return bookings.filter(b => {
+                        const bookingDate = new Date(b.booking_date);
+                        return bookingDate >= startOfWeek && bookingDate <= endOfWeek;
+                    });
+                    
+                case 'next_week':
+                    const nextWeekStart = new Date(startOfWeek);
+                    nextWeekStart.setDate(startOfWeek.getDate() + 7);
+                    const nextWeekEnd = new Date(nextWeekStart);
+                    nextWeekEnd.setDate(nextWeekStart.getDate() + 6);
+                    return bookings.filter(b => {
+                        const bookingDate = new Date(b.booking_date);
+                        return bookingDate >= nextWeekStart && bookingDate <= nextWeekEnd;
+                    });
+                    
+                default:
+                    return bookings;
+            }
+        },
+        
+        // ✅ NEW: Pagination navigation methods
+        nextPage(section) {
+            if (this.pagination[section].currentPage < this.pagination[section].totalPages) {
+                this.pagination[section].currentPage++;
+                this.scrollToSectionTop(section);
+            }
+        },
+        
+        prevPage(section) {
+            if (this.pagination[section].currentPage > 1) {
+                this.pagination[section].currentPage--;
+                this.scrollToSectionTop(section);
+            }
+        },
+        
+        goToPage(section, page) {
+            if (page >= 1 && page <= this.pagination[section].totalPages) {
+                this.pagination[section].currentPage = page;
+                this.scrollToSectionTop(section);
+            }
+        },
+        
+        // UPDATE: Di scrollToSectionTop()
+        scrollToSectionTop(section) {
+            setTimeout(() => {
+                const element = document.getElementById(`${section}-section`);
+                if (element) {
+                    element.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                }
+            }, 50);
+        },
+        
+        // ✅ NEW: Reset pagination ke page 1 (saat filter diterapkan)
+        resetAllPagination() {
+            Object.keys(this.pagination).forEach(section => {
+                this.pagination[section].currentPage = 1;
+            });
+            console.log('All pagination reset to page 1');
+        },
+        
+        // ✅ NEW: Responsive perPage adjustment (optional)
+        adjustPerPageBasedOnScreen() {
+            const width = window.innerWidth;
+            let perPage = 6; // Default
+            
+            if (width < 640) { // Mobile
+                perPage = 2; // 1 kolom × 2 rows
+            } else if (width < 1024) { // Tablet
+                perPage = 4; // 2 kolom × 2 rows
+            } else { // Desktop
+                perPage = 6; // 3 kolom × 2 rows
+            }
+            
+            // Update semua sections
+            Object.keys(this.pagination).forEach(section => {
+                this.pagination[section].perPage = perPage;
+            });
+            
+            this.updateAllPaginationStats();
+        },
+        
+        // ✅ NEW: Cleanup pagination (saat component di-destroy)
+        destroy() {
+            // Clear auto-refresh interval
+            if (this.autoRefreshInterval) {
+                clearInterval(this.autoRefreshInterval);
+                console.log('Auto-refresh stopped');
+            }
+            
+            // Remove resize listener jika ada
+            if (this.resizeListener) {
+                window.removeEventListener('resize', this.resizeListener);
+            }
         },
 
         // ✅ NEW: Start auto-refresh interval
@@ -638,33 +990,6 @@ function serviceConfirmation() {
             }, 30000);
             
             console.log('Auto-refresh started (30 seconds interval)');
-        },
-
-        // ✅ NEW: Setup reactive watchers
-        setupWatchers() {
-            // Cleanup selected booking ketika modal ditutup
-            this.$watch('showConfirmModal', (value) => {
-                if (!value) {
-                    this.selectedBooking = null;
-                    this.selectedServiceType = '';
-                }
-            });
-            
-            this.$watch('showCancelModal', (value) => {
-                if (!value) {
-                    this.selectedBooking = null;
-                    this.selectedServiceType = '';
-                }
-            });
-            
-            // Log perubahan data untuk debugging
-            this.$watch('coworkingBookings', (newVal, oldVal) => {
-                console.log('Coworking bookings updated:', newVal.length, 'items');
-            });
-            
-            this.$watch('eventSpaceBookings', (newVal, oldVal) => {
-                console.log('Event space bookings updated:', newVal.length, 'items');
-            });
         },
 
         // ✅ NEW: Validate initial data
@@ -706,10 +1031,24 @@ function serviceConfirmation() {
             }
             
             this.isLoading = true;
-            console.log('🔄 Refreshing data from server...');
+            console.log('🔄 Refreshing data from server...', this.filterParams);
             
             try {
-                const response = await fetch('/booking/service-confirmation/api/data');
+                // Build query parameters dari filter
+                const queryParams = new URLSearchParams();
+                
+                // Tambahkan parameter filter jika ada
+                if (this.filterParams.startDate) queryParams.append('start_date', this.filterParams.startDate);
+                if (this.filterParams.endDate) queryParams.append('end_date', this.filterParams.endDate);
+                if (this.filterParams.serviceType) queryParams.append('service_type', this.filterParams.serviceType);
+                if (this.filterParams.status) queryParams.append('status', this.filterParams.status);
+                if (this.filterParams.timeFrame) queryParams.append('time_frame', this.filterParams.timeFrame);
+                
+                // Build URL dengan query parameters
+                const url = `/booking/service-confirmation/api/data?${queryParams.toString()}`;
+                console.log('📤 Request URL:', url);
+                
+                const response = await fetch(url);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -745,9 +1084,6 @@ function serviceConfirmation() {
 
         // ✅ NEW: Smart update bookings data
         updateBookingsData(newCoworking, newEventSpace) {
-            // Preserve current state
-            const currentSelectedId = this.selectedBooking?.id;
-            const currentSelectedType = this.selectedServiceType;
             
             console.log('Updating bookings data:', {
                 newCoworking: newCoworking.length,
@@ -757,11 +1093,6 @@ function serviceConfirmation() {
             // Update dengan smart merge
             this.coworkingBookings = this.mergeBookingsData(this.coworkingBookings, newCoworking, 'coworking');
             this.eventSpaceBookings = this.mergeBookingsData(this.eventSpaceBookings, newEventSpace, 'event_space');
-
-            // Restore selected booking state
-            if (currentSelectedId) {
-                this.restoreSelectedBooking(currentSelectedId, currentSelectedType);
-            }
         },
 
         // ✅ NEW: Smart merge function dengan conflict resolution
@@ -802,20 +1133,22 @@ function serviceConfirmation() {
             return local.status !== server.status;
         },
 
-        // ✅ NEW: Restore selected booking setelah refresh
-        restoreSelectedBooking(bookingId, serviceType) {
-            const bookings = serviceType === 'coworking' ? this.coworkingBookings : this.eventSpaceBookings;
-            const foundBooking = bookings.find(b => b.id == bookingId);
+        setupWatchers() {
+            // Log perubahan data untuk debugging
+            this.$watch('coworkingBookings', (newVal, oldVal) => {
+                console.log('Coworking bookings updated:', newVal.length, 'items');
+                this.updateAllPaginationStats(); // Update pagination ketika data berubah
+            });
             
-            if (foundBooking) {
-                this.selectedBooking = foundBooking;
-                this.selectedServiceType = serviceType;
-                console.log('Restored selected booking:', foundBooking.booking_code);
-            } else {
-                console.warn('Selected booking not found after refresh, clearing selection');
-                this.selectedBooking = null;
-                this.selectedServiceType = '';
-            }
+            this.$watch('eventSpaceBookings', (newVal, oldVal) => {
+                console.log('Event space bookings updated:', newVal.length, 'items');
+                this.updateAllPaginationStats(); // Update pagination ketika data berubah
+            });
+            
+            // Update pagination ketika filter berubah
+            this.$watch('statusFilter', () => {
+                this.resetAllPagination(); // Reset ke page 1 saat filter berubah
+            });
         },
 
         // ✅ NEW: Manual refresh dengan user feedback
@@ -841,177 +1174,34 @@ function serviceConfirmation() {
             }, 5000);
         },
 
-        // Modal Methods
-         openConfirmModal(bookingId, serviceType) {
-            console.log('🔓 Opening confirm modal for:', bookingId, serviceType);
-            
-            const bookings = serviceType === 'coworking' ? this.coworkingBookings : this.eventSpaceBookings;
-            console.log('Available bookings:', bookings.map(b => ({ id: b.id, code: b.booking_code })));
-            
-            this.selectedBooking = bookings.find(b => b.id == bookingId);
-            this.selectedServiceType = serviceType;
-            
-            if (this.selectedBooking) {
-                console.log('✅ Found booking:', this.selectedBooking.booking_code, this.selectedBooking);
-                this.showConfirmModal = true;
-            } else {
-                console.error('❌ Booking not found:', bookingId, 'in', serviceType);
-                console.error('Available IDs:', bookings.map(b => b.id));
-                this.showError('Booking not found. Please refresh and try again.');
-            }
-        },
-
-        openCancelModal(bookingId, serviceType) {
-            console.log('Opening cancel modal for:', bookingId, serviceType);
-            
-            const bookings = serviceType === 'coworking' ? this.coworkingBookings : this.eventSpaceBookings;
-            this.selectedBooking = bookings.find(b => b.id == bookingId);
-            this.selectedServiceType = serviceType;
-            
-            if (this.selectedBooking) {
-                console.log('Found booking:', this.selectedBooking.booking_code);
-                this.showCancelModal = true;
-            } else {
-                console.error('Booking not found:', bookingId);
-                this.showError('Booking not found. Please refresh and try again.');
-            }
-        },
-
-        closeConfirmModal() {
-            this.showConfirmModal = false;
-            this.selectedBooking = null;
-            this.selectedServiceType = '';
-        },
-
-        closeCancelModal() {
-            this.showCancelModal = false;
-            this.selectedBooking = null;
-            this.selectedServiceType = '';
-        },
-
-        async confirmBookingAction() {
-            if (!this.selectedBooking) return;
-            
-            try {
-                const response = await fetch(`/booking/service-confirmation/${this.selectedBooking.id}/confirm`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    this.showSuccessNotification = true;
-                    this.successMessage = result.message;
-                    
-                    // Update local data
-                    if (this.selectedServiceType === 'coworking') {
-                        const index = this.coworkingBookings.findIndex(b => b.id === this.selectedBooking.id);
-                        if (index !== -1) {
-                            this.coworkingBookings[index].status = 'confirmed';
-                        }
-                    } else {
-                        const index = this.eventSpaceBookings.findIndex(b => b.id === this.selectedBooking.id);
-                        if (index !== -1) {
-                            this.eventSpaceBookings[index].status = 'confirmed';
-                        }
-                    }
-                    
-                    // Reset dropdown selection
-                    this.selectedCoworkingBooking = '';
-                    this.selectedEventSpaceBooking = '';
-                    
-                    // ✅ NEW: Trigger immediate refresh untuk sync dengan server
-                    setTimeout(() => {
-                        this.refreshData();
-                    }, 1000);
-                    
-                    setTimeout(() => {
-                        this.showSuccessNotification = false;
-                    }, 3000);
-                } else {
-                    throw new Error(result.message);
-                }
-            } catch (error) {
-                this.showErrorNotification = true;
-                this.errorMessage = error.message;
-                
-                setTimeout(() => {
-                    this.showErrorNotification = false;
-                }, 5000);
-            }
-            
-            this.closeConfirmModal();
-        },
-
-        async cancelConfirmationAction() {
-            if (!this.selectedBooking) return;
-            
-            try {
-                const response = await fetch(`/booking/service-confirmation/${this.selectedBooking.id}/cancel`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    this.showSuccessNotification = true;
-                    this.successMessage = result.message;
-                    
-                    // Update local data
-                    if (this.selectedServiceType === 'coworking') {
-                        const index = this.coworkingBookings.findIndex(b => b.id === this.selectedBooking.id);
-                        if (index !== -1) {
-                            this.coworkingBookings[index].status = 'settlement';
-                        }
-                    } else {
-                        const index = this.eventSpaceBookings.findIndex(b => b.id === this.selectedBooking.id);
-                        if (index !== -1) {
-                            this.eventSpaceBookings[index].status = 'settlement';
-                        }
-                    }
-                    
-                    // ✅ NEW: Trigger immediate refresh untuk sync dengan server
-                    setTimeout(() => {
-                        this.refreshData();
-                    }, 1000);
-                    
-                    setTimeout(() => {
-                        this.showSuccessNotification = false;
-                    }, 3000);
-                } else {
-                    throw new Error(result.message);
-                }
-            } catch (error) {
-                this.showErrorNotification = true;
-                this.errorMessage = error.message;
-                
-                setTimeout(() => {
-                    this.showErrorNotification = false;
-                }, 5000);
-            }
-            
-            this.closeCancelModal();
-        },
-
         // Utility functions
-        getRemainingTime(bookingDate, startTime) {
-            if (!bookingDate || !startTime) {
-                return 'Invalid time';
+        getRemainingTime(bookingDate, startTime, status) {
+            if (!bookingDate || !startTime) return 'Invalid time';
+            
+            if (status === 'expired') {
+                return 'Payment Timeout';
             }
             
+            // Untuk pending, hitung waktu sampai expired
+            if (status === 'pending') {
+                // Asumsi: pending expired dalam 24 jam dari waktu booking dibuat
+                const bookingTime = new Date(bookingDate + 'T' + startTime);
+                const expiryTime = new Date(bookingTime.getTime() + (24 * 60 * 60 * 1000)); // 24 jam
+                const now = new Date();
+                
+                if (now > expiryTime) {
+                    return 'Expired';
+                }
+                
+                const diffMs = expiryTime - now;
+                return this.formatTimeRemaining(diffMs, false);
+            }
+            
+            // Untuk settlement, hitung waktu booking normal
             try {
                 const now = new Date();
                 const bookingDateTime = new Date(`${bookingDate}T${startTime}`);
                 
-                // Validasi date
                 if (isNaN(bookingDateTime.getTime())) {
                     return 'Invalid date';
                 }
@@ -1019,7 +1209,7 @@ function serviceConfirmation() {
                 const diffMs = bookingDateTime - now;
                 
                 if (diffMs <= 0) {
-                    // Sudah mulai, hitung waktu sampai selesai
+                    // Sudah mulai
                     const endTime = this.calculateActualEndTime(bookingDate, startTime);
                     const endDateTime = new Date(`${bookingDate}T${endTime}`);
                     const remainingMs = endDateTime - now;
@@ -1028,11 +1218,10 @@ function serviceConfirmation() {
                         return 'Completed';
                     }
                     
-                    // Tampilkan waktu tersisa sampai selesai
                     return this.formatTimeRemaining(remainingMs, true);
                 }
                 
-                // Belum mulai, hitung waktu sampai mulai
+                // Belum mulai
                 return this.formatTimeRemaining(diffMs, false);
                 
             } catch (error) {
@@ -1158,13 +1347,6 @@ function serviceConfirmation() {
             return date.toTimeString().slice(0, 5);
         },
 
-        calculateCapacity(bookings) {
-            const maxCapacity = 20;
-            const confirmedCount = bookings.filter(b => b.status === 'confirmed').length;
-            const percentage = (confirmedCount / maxCapacity) * 100;
-            return `${confirmedCount}/${maxCapacity} (${Math.round(percentage)}%)`;
-        },
-
         // ✅ NEW: Cleanup function
         destroy() {
             if (this.autoRefreshInterval) {
@@ -1175,52 +1357,9 @@ function serviceConfirmation() {
     }
 }
 
-function filterState() {
-    return {
-        startDate: '',
-        endDate: '',
-        serviceType: '',
-        status: '',
-        timeFrame: '',
-        
-        applyFilters() {
-            const filters = {
-                startDate: this.startDate,
-                endDate: this.endDate,
-                serviceType: this.serviceType,
-                status: this.status,
-                timeFrame: this.timeFrame
-            };
-            
-            console.log('Applying filters:', filters);
-            
-            // ✅ NEW: Trigger refresh dengan filter
-            if (window.Alpine && Alpine.$data && Alpine.$data.serviceConfirmation) {
-                Alpine.$data.serviceConfirmation.refreshData();
-            }
-        },
-        
-        resetFilters() {
-            this.startDate = '';
-            this.endDate = '';
-            this.serviceType = '';
-            this.status = '';
-            this.timeFrame = '';
-            
-            console.log('Filters reset');
-            
-            // ✅ NEW: Refresh data setelah reset filter
-            if (window.Alpine && Alpine.$data && Alpine.$data.serviceConfirmation) {
-                Alpine.$data.serviceConfirmation.refreshData();
-            }
-        }
-    }
-}
-
 // Initialize when page loads
 document.addEventListener('alpine:init', () => {
     Alpine.data('serviceConfirmation', serviceConfirmation);
-    Alpine.data('filterState', filterState);
 });
 
 // ✅ NEW: Global function untuk manual refresh
@@ -1230,19 +1369,4 @@ window.refreshServiceConfirmation = function() {
     }
 };
 </script>
-
-<style>
-.custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #d1d5db;
-    border-radius: 3px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: #9ca3af;
-}
-</style>
 @endpush

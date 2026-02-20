@@ -16,8 +16,20 @@
 >
     {{-- Header --}}
     <div class="p-6 border-b border-gray-200">
-        <h2 class="text-xl font-semibold text-gray-800">Admin Panel</h2>
-        <p class="text-xs text-gray-500 mt-1">Urban Office Management</p>
+        <div class="flex flex-col items-center text-center">
+            {{-- Logo --}}
+            <img 
+                src="{{ asset('assets/LOGO_URBAN_OFFICE.png') }}" 
+                alt="Logo Urban Office" 
+                class="w-24 h-24 object-contain"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+            >
+            
+            {{-- Teks di bawah Logo --}}
+            <div>
+                <h2 class="text-xl font-semibold text-gray-800">Admin Panel</h2>
+            </div>
+        </div>
     </div>
 
     {{-- Navigation --}}
@@ -73,10 +85,10 @@
                     Service Confirmation
                 </a>
                 
-                <a href="{{ route('admin.booking.history') }}" 
+                <!-- <a href="{{ route('admin.booking.history') }}" 
                    class="block px-2 py-1.5 rounded transition {{ request()->routeIs('admin.booking.history') ? 'bg-orange-50 text-orange-600 font-medium' : 'text-gray-700 hover:bg-gray-100' }}">
                     Booking History
-                </a>
+                </a> -->
             </div>
         </div>
 
@@ -119,7 +131,7 @@
                     Service Photos
                 </a>
                 
-                <a href="{{ route('banners.index') }}" 
+                <a href="{{ route('admin.banners.index') }}" 
                     class="block px-2 py-1.5 rounded transition {{ request()->routeIs('banners.*') ? 'bg-orange-50 text-orange-600 font-medium' : 'text-gray-700 hover:bg-gray-100' }}">
                         Banner Promo
                 </a>
@@ -217,11 +229,11 @@
            class="flex items-center px-4 py-2.5 hover:bg-gray-50 transition {{ request()->routeIs('admin.booking.service-confirmation') ? 'bg-orange-50 text-orange-600 font-medium' : 'text-gray-700' }}">
             <span class="text-sm">Service Confirmation</span>
         </a>
-        <a href="{{ route('admin.booking.history') }}" 
+        <!-- <a href="{{ route('admin.booking.history') }}" 
            @click="showBookingModal = false"
            class="flex items-center px-4 py-2.5 hover:bg-gray-50 transition {{ request()->routeIs('admin.booking.history') ? 'bg-orange-50 text-orange-600 font-medium' : 'text-gray-700' }}">
             <span class="text-sm">Booking History</span>
-        </a>
+        </a> -->
     </div>
 
     {{-- Content Management Popup Modal --}}
@@ -245,7 +257,7 @@
            class="flex items-center px-4 py-2.5 hover:bg-gray-50 transition {{ request()->routeIs('admin.content.service-photos') ? 'bg-orange-50 text-orange-600 font-medium' : 'text-gray-700' }}">
             <span class="text-sm">Service Photos</span>
         </a>
-        <a href="{{ route('banners.index') }}" 
+        <a href="{{ route('admin.banners.index') }}" 
            @click="showContentModal = false"
            class="flex items-center px-4 py-2.5 hover:bg-gray-50 transition {{ request()->routeIs('banners.*') ? 'bg-orange-50 text-orange-600 font-medium' : 'text-gray-700' }}">
             <span class="text-sm">Banner Promo</span>

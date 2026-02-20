@@ -628,7 +628,7 @@ function roomManagement() {
             
             try {
                 console.log('🔄 Loading rooms from API...');
-                const roomsResponse = await fetch('/room-management/unique-rooms');
+                const roomsResponse = await fetch('/admin/room-management/unique-rooms');
                 
                 if (!roomsResponse.ok) {
                     throw new Error(`HTTP error! status: ${roomsResponse.status}`);
@@ -756,7 +756,7 @@ function roomManagement() {
 
                     console.log('📤 Update payload:', payload);
 
-                    const response = await fetch('/room-management/rooms/' + this.editingRoom.id, {
+                    const response = await fetch('/admin/room-management/rooms/' + this.editingRoom.id, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
@@ -831,7 +831,7 @@ function roomManagement() {
 
                     console.log('📤 Create payload (FIXED):', payload);
 
-                    const response = await fetch('/room-management/rooms', {
+                    const response = await fetch('/admin/room-management/rooms', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -912,7 +912,7 @@ function roomManagement() {
 
         async confirmDelete() {
             try {
-                const response = await fetch('/room-management/rooms/' + this.deletingRoom.id, {
+                const response = await fetch('/admin/room-management/rooms/' + this.deletingRoom.id, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1008,7 +1008,7 @@ function roomManagement() {
 
                 console.log('📤 Maintenance payload:', payload);
 
-                const response = await fetch('/room-management/rooms/' + this.selectedRoom.id + '/maintenance', {
+                const response = await fetch('/admin/room-management/rooms/' + this.selectedRoom.id + '/maintenance', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1117,7 +1117,7 @@ function roomManagement() {
                 }
 
                 console.log(`🔄 Refreshing status for room ${room.number} (ID: ${roomId})`);
-                const response = await fetch(`/room-management/${roomId}/status`);
+                const response = await fetch(`/admin/room-management/${roomId}/status`);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);

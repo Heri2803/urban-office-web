@@ -10,14 +10,46 @@
     {{-- Page Header --}}
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-800">🚪 Room Assignment</h1>
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-3">
+                {{-- Icon dari file gambar --}}
+                <img 
+                    src="{{ asset('assets/door.png') }}" 
+                    alt="Door Icon" 
+                    class="w-8 h-8 object-contain filter brightness-0 saturate-0 opacity-60"
+                >
+                <span>Room Assignment</span>
+            </h1>
             <p class="text-sm text-gray-500 mt-1">Assign customers to specific rooms</p>
             <p x-show="lastUpdated" class="text-xs text-gray-400 mt-1">
                 Last updated: <span x-text="lastUpdated"></span>
                 <span x-show="isLoading" class="text-blue-500"> (Updating...)</span>
             </p>
+            {{-- ✅ Mode Indicator --}}
+            <div class="mt-2 flex items-center gap-2">
+                <span class="text-xs font-medium" 
+                    :class="isBonusClaim ? 'text-purple-600' : 'text-blue-600'"
+                    x-text="isBonusClaim ? '🎁 Bonus Claim Mode' : '🏠 Room Assignment Mode'">
+                </span>
+            </div>
         </div>
         <div class="flex gap-2">
+            {{-- ✅ Mode Toggle Buttons --}}
+            <div class="flex bg-gray-100 rounded-lg p-1">
+                <button 
+                    @click="isBonusClaim = false; selectedRoom = null; selectedCustomer = null"
+                    :class="!isBonusClaim ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:text-gray-800'"
+                    class="px-3 py-2 rounded-md text-xs font-medium transition"
+                >
+                    🏠 Room
+                </button>
+                <button 
+                    @click="isBonusClaim = true; selectedRoom = null; selectedCustomer = null"
+                    :class="isBonusClaim ? 'bg-purple-600 text-white shadow-md' : 'text-gray-600 hover:text-gray-800'"
+                    class="px-3 py-2 rounded-md text-xs font-medium transition"
+                >
+                    🎁 Bonus
+                </button>
+            </div>
             <button 
                 @click="refreshData()" 
                 :disabled="isLoading"
@@ -95,10 +127,23 @@
                     <button 
                         @click="activeTab = service.id; selectedRoom = null; selectedCustomer = null;"
                         :class="activeTab === service.id ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                        class="px-4 md:px-6 py-3 md:py-4 border-b-2 font-medium text-sm whitespace-nowrap transition"
+                        class="px-4 md:px-6 py-3 md:py-4 border-b-2 font-medium text-sm whitespace-nowrap transition flex items-center"
                     >
-                        <span x-text="service.icon"></span>
-                        <span x-text="service.name" class="ml-2"></span>
+                        {{-- Tentukan icon mana yang pakai gambar --}}
+                        <div class="mr-2 w-5 h-5 flex items-center justify-center">
+                            <template x-if="service.name === 'Meeting Room' || service.name === 'Private Office'">
+                                {{-- Pakai gambar door.png --}}
+                                <img src="{{ asset('assets/door.png') }}" 
+                                    :alt="service.name" 
+                                    class="w-full h-full object-contain">
+                            </template>
+                            <template x-if="service.name !== 'Meeting Room' && service.name !== 'Private Office'">
+                                {{-- Pakai icon dari backend --}}
+                                <span x-text="service.icon"></span>
+                            </template>
+                        </div>
+                        
+                        <span x-text="service.name"></span>
                         <span x-text="`(${service.rooms.length})`" class="ml-1 text-xs opacity-75"></span>
                     </button>
                 </template>
@@ -158,8 +203,10 @@
 
                     {{-- Room Selection Grid --}}
                     <div class="mb-6">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">
-                            <span x-text="service.icon"></span>
+                        <h3 class="text-lg md:text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2 md:gap-3">
+                            <img src="{{ asset('assets/door.png') }}" 
+                                alt="Room Icon" 
+                                class="w-6 h-6 md:w-7 md:h-7 object-contain">
                             Select Room Number
                         </h3>
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
@@ -236,76 +283,148 @@
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-semibold text-gray-700 mb-2">
-                                    Select Customer (Settlement Status Only)
+                                    <span x-show="!isBonusClaim">Select Customer (Settlement Status Only)</span>
+                                    <span x-show="isBonusClaim">🎁 Select Customer with Active Bonus</span>
                                 </label>
+                                
                                 <select 
                                     x-model="selectedCustomer"
+                                    @change="isBonusClaim && loadCustomerBonusDetails()"
                                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                                 >
                                     <option value="">-- Choose Customer --</option>
                                     <template x-for="customer in getSettlementCustomers(service.id)" :key="customer.orderId">
-                                        <option :value="customer.orderId">
-                                            <span x-text="customer.orderId"></span> - 
+                                        <option :value="customer.orderId" :data-bonus-id="customer.bonus_id">
                                             <span x-text="customer.name"></span> - 
                                             <span x-text="customer.duration"></span>
+                                            <span x-show="isBonusClaim" x-text="` (${customer.remaining_hours}h)`" class="text-purple-600"></span>
                                         </option>
                                     </template>
                                 </select>
                                 
-                                {{-- Customer Details --}}
-                                <template x-if="selectedCustomer">
-                                    <div class="mt-3 p-3 bg-white rounded-lg border border-gray-200">
+                                {{-- Customer Details with Bonus Info --}}
+                                <template x-if="selectedCustomer && isBonusClaim">
+                                    <div class="mt-3 p-4 bg-purple-50 rounded-lg border border-purple-200">
                                         <template x-for="customer in getSettlementCustomers(service.id)" :key="customer.orderId">
                                             <div x-show="customer.orderId === selectedCustomer">
-                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                                                    <div>
-                                                        <span class="text-gray-500">Name:</span>
-                                                        <span class="font-medium ml-2" x-text="customer.name"></span>
+                                                <div class="flex items-center gap-3 mb-3">
+                                                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                                        <span class="text-purple-600 font-bold">🎁</span>
                                                     </div>
                                                     <div>
-                                                        <span class="text-gray-500">Email:</span>
-                                                        <span class="font-medium ml-2" x-text="customer.email"></span>
+                                                        <h4 class="font-semibold text-gray-800" x-text="customer.name"></h4>
+                                                        <p class="text-xs text-gray-500" x-text="customer.email"></p>
                                                     </div>
-                                                    <div>
-                                                        <span class="text-gray-500">Phone:</span>
-                                                        <span class="font-medium ml-2" x-text="customer.phone"></span>
+                                                </div>
+                                                
+                                                {{-- Bonus Progress --}}
+                                                <div class="mb-3">
+                                                    <div class="flex justify-between text-xs mb-1">
+                                                        <span class="text-gray-600">Bonus Hours</span>
+                                                        <span class="font-bold text-purple-600" x-text="`${customer.remaining_hours}h / ${customer.total_hours || customer.remaining_hours}h`"></span>
                                                     </div>
-                                                    <div>
-                                                        <span class="text-gray-500">Duration:</span>
-                                                        <span class="font-medium ml-2" x-text="customer.duration"></span>
+                                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                                        <div class="bg-purple-600 h-2 rounded-full" 
+                                                            :style="`width: ${(customer.remaining_hours / (customer.total_hours || customer.remaining_hours)) * 100}%`">
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <span class="text-gray-500">Check-in:</span>
-                                                        <span class="font-medium ml-2" x-text="customer.checkIn"></span>
-                                                    </div>
-                                                    <div>
-                                                        <span class="text-gray-500">Price:</span>
-                                                        <span class="font-medium ml-2" x-text="'Rp ' + formatNumber(customer.price)"></span>
-                                                    </div>
+                                                    <p class="text-xs text-gray-500 mt-1">
+                                                        Valid until: <span x-text="customer.valid_until"></span>
+                                                    </p>
+                                                </div>
+                                                
+                                                {{-- Quick Actions dengan Active State --}}
+                                                <div class="flex gap-2">
+                                                    <button 
+                                                        @click="claimForm.duration = Math.min(1, customer.remaining_hours)"
+                                                        :class="[
+                                                            'text-xs px-2 py-1 rounded transition',
+                                                            claimForm.duration === 1 
+                                                                ? 'bg-purple-600 text-white shadow-md' 
+                                                                : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                                                        ]"
+                                                    >
+                                                        1 hour
+                                                        <span x-show="claimForm.duration === 1" class="ml-1">✓</span>
+                                                    </button>
+                                                    
+                                                    <button 
+                                                        @click="claimForm.duration = Math.min(2, customer.remaining_hours)"
+                                                        :class="[
+                                                            'text-xs px-2 py-1 rounded transition',
+                                                            claimForm.duration === 2 
+                                                                ? 'bg-purple-600 text-white shadow-md' 
+                                                                : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                                                        ]"
+                                                    >
+                                                        2 hours
+                                                        <span x-show="claimForm.duration === 2" class="ml-1">✓</span>
+                                                    </button>
+                                                    
+                                                    <button 
+                                                        @click="claimForm.duration = Math.min(4, customer.remaining_hours)"
+                                                        :class="[
+                                                            'text-xs px-2 py-1 rounded transition',
+                                                            claimForm.duration === 4 
+                                                                ? 'bg-purple-600 text-white shadow-md' 
+                                                                : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                                                        ]"
+                                                    >
+                                                        4 hours
+                                                        <span x-show="claimForm.duration === 4" class="ml-1">✓</span>
+                                                    </button>
+                                                </div>
+
+                                                {{-- Tampilkan durasi yang dipilih --}}
+                                                <div x-show="claimForm.duration" class="mt-2 text-sm text-purple-700">
+                                                    ✅ Selected: <span class="font-bold" x-text="claimForm.duration"></span> hour(s)
                                                 </div>
                                             </div>
                                         </template>
                                     </div>
                                 </template>
 
+                                {{-- Existing Customer Details for Room Assignment --}}
+                                <template x-if="selectedCustomer && !isBonusClaim">
+                                    {{-- ... existing code ... --}}
+                                </template>
+
                                 {{-- No Customers Available --}}
-                                <div x-show="getSettlementCustomers(service.id).length === 0" class="mt-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                    <p class="text-sm text-yellow-800">⚠️ No customers with settlement status available for this service.</p>
+                                <div x-show="getSettlementCustomers(service.id).length === 0" 
+                                    x-transition
+                                    class="mt-3 p-4"
+                                    :class="isBonusClaim ? 'bg-purple-50 border-purple-200' : 'bg-yellow-50 border-yellow-200'"
+                                >
+                                    <p x-show="!isBonusClaim" class="text-sm text-yellow-800">
+                                        ⚠️ No customers with settlement status available.
+                                    </p>
+                                    <div x-show="isBonusClaim" class="text-sm text-purple-800">
+                                        <p class="font-medium mb-2">🎁 No customers with active bonus</p>
+                                        <a href="{{ route('admin.bonus.rules.index') }}" 
+                                        class="inline-block bg-purple-600 text-white px-4 py-2 rounded-lg text-xs hover:bg-purple-700">
+                                            + Add Bonus to Customer
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
 
                             {{-- Action Buttons --}}
                             <div class="flex flex-col sm:flex-row gap-3">
                                 <button 
-                                    @click="confirmAssignment()"
-                                    :disabled="!selectedCustomer"
-                                    :class="selectedCustomer ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed'"
-                                    class="flex-1 px-6 py-3 text-white rounded-lg font-semibold transition text-sm"
+                                    @click="isBonusClaim ? submitBonusClaim() : confirmAssignment()"
+                                    :disabled="isBonusClaim ? (!selectedCustomer || !claimForm.room_id) : !selectedCustomer"
+                                    :class="[
+                                        isBonusClaim 
+                                            ? (selectedCustomer && claimForm.room_id ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-300 cursor-not-allowed')
+                                            : (selectedCustomer ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-300 cursor-not-allowed')
+                                    ]"
+                                    class="flex-1 px-6 py-3 text-white rounded-lg font-semibold transition text-sm flex items-center justify-center gap-2"
                                 >
-                                    ✅ Confirm Assignment
+                                    <span x-show="!isBonusClaim">✅ Confirm Assignment</span>
+                                    <span x-show="isBonusClaim">🎁 Confirm Bonus Claim</span>
                                 </button>
                                 <button 
-                                    @click="selectedRoom = null; selectedCustomer = null;"
+                                    @click="selectedRoom = null; selectedCustomer = null; isBonusClaim && resetBonusClaim()"
                                     class="flex-1 sm:flex-initial px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold transition text-sm"
                                 >
                                     ❌ Cancel
@@ -539,6 +658,7 @@ function roomAssignment() {
         showToast: false,
         toastMessage: '',
         activeTab: 'meeting-room',
+        isBonusClaim: false, 
         
         // Selection State
         selectedRoom: null,
@@ -547,16 +667,30 @@ function roomAssignment() {
         // Modal Data
         confirmData: {},
         cancelData: {},
-        
+
         // Data Collections
         services: [],
         rooms: [],
         customers: [], // Untuk kompatibilitas
+        customersWithBonus: [],
+
+        claimForm: {
+            user_id: null,
+            user_bonus_id: null,
+            room_id: null,
+            booking_date: null,
+            start_time: null,
+            duration: 1,
+            jumlah_orang: 1,
+            notes: ''
+        },
         
         // Loading & Status
         isLoading: false,
+        isLoadingBonus: false,
         lastUpdated: null,
         isOnline: true,
+        _initialized: false,
         
         // Intervals
         refreshInterval: null,
@@ -564,16 +698,44 @@ function roomAssignment() {
         dataSyncInterval: null,
 
         async init() {
-            console.log('🚀 Room Assignment initialized - REAL-TIME MODE');
-            await this.loadInitialData();
+            if (this._initialized) return;
+            this._initialized = true;
             
-            // ✅ REAL-TIME: Frontend countdown setiap detik
-            this.setupSecondBySecondUpdates();
+            console.log('🚀 Room Assignment initialized');
             
-            // ✅ DATA SYNC: Polling untuk new bookings (30 detik)
-            this.setupDataSync();
-            
-            console.log('✅ Real-time system activated');
+            try {
+                // Load data
+                await Promise.all([
+                    this.loadInitialData(),
+                    this.loadCustomersWithBonus()
+                ]);
+                
+                // ✅ Smart mode detection
+                const hasRegularCustomers = this.customers.length > 0;
+                const hasBonusCustomers = this.customersWithBonus.length > 0;
+                
+                if (!hasRegularCustomers && hasBonusCustomers) {
+                    this.isBonusClaim = true;
+                    console.log('🎁 Auto-enabled Bonus Mode');
+                } else if (hasRegularCustomers && !hasBonusCustomers) {
+                    this.isBonusClaim = false;
+                    console.log('🏠 Using Room Assignment Mode');
+                }
+                // Else: keep current mode or let user toggle
+                
+                this.setupSecondBySecondUpdates();
+                this.setupDataSync();
+                
+                console.log('✅ System activated', {
+                    mode: this.isBonusClaim ? '🎁 BONUS' : '🏠 ROOM',
+                    regularCustomers: this.customers.length,
+                    bonusCustomers: this.customersWithBonus.length
+                });
+                
+            } catch (error) {
+                console.error('❌ Init failed:', error);
+                this.showError('Failed to initialize');
+            }
         },
 
         setupSecondBySecondUpdates() {
@@ -591,7 +753,7 @@ function roomAssignment() {
         async loadInitialData() {
             try {
                 this.isLoading = true;
-                const response = await fetch('/booking/room-assignment/api/rooms-status?t=' + Date.now());
+                const response = await fetch('/admin/booking/room-assignment/api/rooms-status?t=' + Date.now());
                 const data = await response.json();
                 
                 if (data.success) {
@@ -717,7 +879,7 @@ function roomAssignment() {
 
         async syncNewBookings() {
             try {
-                const response = await fetch('/booking/room-assignment/api/rooms-status?t=' + Date.now());
+                const response = await fetch('/admin/booking/room-assignment/api/rooms-status?t=' + Date.now());
                 const data = await response.json();
                 
                 if (data.success) {
@@ -778,26 +940,140 @@ function roomAssignment() {
             if (room.status === 'available') {
                 this.selectedRoom = room;
                 this.selectedCustomer = null;
+                
+                // ✅ Set room_id di claimForm jika bonus mode
+                if (this.isBonusClaim) {
+                    this.claimForm.room_id = room.id;
+                    console.log('✅ Room selected for bonus claim:', room.number);
+                }
+                
                 console.log('✅ Room selected:', room.number);
             } else {
                 console.log('❌ Room not available:', room.number, room.status);
             }
         },
 
+        loadCustomerBonusDetails() {
+            if (!this.selectedCustomer || !this.isBonusClaim) return;
+            
+            console.log('🔍 Loading bonus details for:', this.selectedCustomer);
+            
+            // Find selected customer dari customersWithBonus
+            const customer = this.customersWithBonus.find(c => 
+                `BONUS-${c.bonus_id}` === this.selectedCustomer
+            );
+            
+            if (customer) {
+                // Update claimForm dengan customer data
+                this.claimForm.user_id = customer.user_id;
+                this.claimForm.user_bonus_id = customer.bonus_id;
+                this.claimForm.booking_date = new Date().toISOString().split('T')[0];
+                this.claimForm.start_time = new Date().toTimeString().slice(0, 5);
+                
+                console.log('✅ Claim form updated:', this.claimForm);
+            }
+        },
+
+        async submitBonusClaim() {
+            if (!this.selectedCustomer || !this.claimForm.room_id) {
+                this.showError('Please select both customer and room');
+                return;
+            }
+            
+            try {
+                this.isLoading = true;
+                
+                const response = await fetch('/admin/bonus/claim', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(this.claimForm)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.showSuccess('🎁 Bonus claimed successfully!');
+                    
+                    // Reset form
+                    this.resetBonusClaim();
+                    
+                    // Refresh ALL data
+                    this.isLoading = true;
+                    await Promise.all([
+                        this.loadInitialData(),
+                        this.loadCustomersWithBonus()
+                    ]);
+                    
+                    console.log('✅ All data refreshed after claim');
+                    
+                } else {
+                    throw new Error(data.message || 'Failed to claim bonus');
+                }
+                
+            } catch (error) {
+                console.error('❌ Bonus claim failed:', error);
+                this.showError('Failed to claim bonus: ' + error.message);
+            } finally {
+                this.isLoading = false;
+            }
+        },
+
+        // ✅ TAMBAHKAN: Reset bonus claim form
+        resetBonusClaim() {
+            this.claimForm = {
+                user_id: null,
+                user_bonus_id: null,
+                room_id: null,
+                booking_date: null,
+                start_time: null,
+                duration: 1,
+                jumlah_orang: 1,
+                notes: ''
+            };
+            this.selectedRoom = null;
+            this.selectedCustomer = null;
+            console.log('🧹 Bonus claim form reset');
+        },
+
         // Untuk customer dropdown (jika masih digunakan)
         getSettlementCustomers(serviceId) {
-            // ✅ Return empty array karena kita tidak butuh assignment functionality
-            return [];
+            console.log('🔍 getSettlementCustomers:', {
+                mode: this.isBonusClaim ? '🎁 BONUS' : '🏠 ROOM',
+                serviceId: serviceId,
+                bonusCount: this.customersWithBonus?.length || 0,
+                regularCount: this.customers?.length || 0
+            });
             
-            // Atau jika ingin tetap load customers, uncomment:
-            /*
-            if (!this.customers || this.customers.length === 0) {
-                this.loadCustomersFromAPI();
+            // BONUS MODE
+            if (this.isBonusClaim) {
+                const mapped = this.customersWithBonus?.map(c => ({
+                    orderId: `BONUS-${c.bonus_id}`,
+                    name: c.name,
+                    email: c.email,
+                    phone: c.phone || '-',
+                    duration: `${c.remaining_hours}h available`,
+                    user_id: c.user_id,
+                    bonus_id: c.bonus_id,
+                    remaining_hours: c.remaining_hours,
+                    total_hours: c.total_hours,
+                    valid_until: c.valid_until
+                })) || [];
+                
+                console.log('✅ Returning bonus customers:', mapped.length);
+                return mapped;
             }
-            return this.customers.filter(customer => 
+            
+            // ROOM ASSIGNMENT MODE
+            const filtered = this.customers.filter(customer => 
                 customer.service_category_id === this.getServiceIdFromTab(serviceId)
             );
-            */
+            
+            console.log('✅ Returning regular customers:', filtered.length);
+            return filtered;
         },
 
         getServiceIdFromTab(serviceTabId) {
@@ -811,7 +1087,7 @@ function roomAssignment() {
 
         async loadCustomersFromAPI() {
             try {
-                const response = await fetch('/booking/room-assignment/api/available-customers');
+                const response = await fetch('/admin/booking/room-assignment/api/available-customers');
                 const data = await response.json();
                 
                 if (data.success) {
@@ -819,6 +1095,33 @@ function roomAssignment() {
                 }
             } catch (error) {
                 console.error('❌ Customers load failed:', error);
+            }
+        },
+
+        // Load customers with bonus - reuse existing pattern
+        async loadCustomersWithBonus() {
+            try {
+                this.isLoadingBonus = true; // ✅ Simple flag
+                const response = await fetch('/admin/bonus/customers-with-active-bonus');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.customersWithBonus = data.data || [];
+                    console.log(`✅ Loaded ${this.customersWithBonus.length} bonus customers`);
+                } else {
+                    throw new Error(data.message || 'Unknown error');
+                }
+            } catch (error) {
+                console.error('❌ Bonus load failed:', error);
+                this.customersWithBonus = []; // ✅ Fallback to empty array
+                this.showError('Could not load bonus customers');
+            } finally {
+                this.isLoadingBonus = false;
             }
         },
 
@@ -839,12 +1142,28 @@ function roomAssignment() {
                 return;
             }
 
+            // Find customer name
+            let customerName = 'Customer';
+            
+            if (this.isBonusClaim) {
+                const customer = this.customersWithBonus.find(c => 
+                    `BONUS-${c.bonus_id}` === this.selectedCustomer
+                );
+                customerName = customer?.name || 'Customer';
+            } else {
+                const customer = this.customers.find(c => 
+                    c.orderId === this.selectedCustomer
+                );
+                customerName = customer?.name || 'Customer';
+            }
+
             this.confirmData = {
                 roomNumber: this.selectedRoom.number,
-                customerName: 'Customer Name', // Ganti dengan data customer sebenarnya
+                customerName: customerName,
                 roomId: this.selectedRoom.id,
                 customerOrderId: this.selectedCustomer
             };
+            
             this.showConfirmModal = true;
         },
 
@@ -921,6 +1240,27 @@ function roomAssignment() {
             } finally {
                 this.isLoading = false;
             }
+        },
+
+        // Tambah method untuk toggle mode
+        toggleMode(mode) {
+            this.isBonusClaim = mode === 'bonus';
+            this.selectedRoom = null;
+            this.selectedCustomer = null;
+            
+            if (this.isBonusClaim) {
+                this.resetBonusClaim();
+                if (this.customersWithBonus.length === 0) {
+                    this.loadCustomersWithBonus();
+                }
+            }
+            
+            console.log('🔄 Mode switched to:', mode, {
+                isBonusClaim: this.isBonusClaim,
+                customersCount: this.isBonusClaim 
+                    ? this.customersWithBonus?.length 
+                    : this.customers?.length
+            });
         },
 
         // Utility Functions

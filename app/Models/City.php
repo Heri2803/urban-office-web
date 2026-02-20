@@ -17,6 +17,11 @@ class City extends Model
         return $this->hasMany(Location::class, 'city_id');
     }
 
+    public function city()
+    {
+        return $this->belongsTo(City::class);
+    }
+
     public function transactions()
     {
         return $this->hasMany(Transaction::class, 'city_id');

@@ -546,7 +546,7 @@ function bookingAllData() {
                 params.append('per_page', this.entriesPerPage);
                 params.append('page', this.currentPage);
                 
-                const response = await fetch(`/booking/all/api/data?${params.toString()}`);
+                const response = await fetch(`/admin/booking/all/api/data?${params.toString()}`);
                 const result = await response.json();
                 
                 if (result.success) {

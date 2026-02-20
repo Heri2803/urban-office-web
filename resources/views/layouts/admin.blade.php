@@ -36,8 +36,8 @@
         <div class="flex-1 flex flex-col md:ml-60 transition-all duration-200">
 
             {{-- HEADER --}}
-            <header class="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
-                <div class="px-4 md:px-6">
+            <header class="sticky top-0 z-40 ">
+                <div class="px-4 md:px-6 bg-white rounded-xl shadow-sm border border-gray-200">
                     @include('layouts.admin.components.header-profile')
                 </div>
             </header>
