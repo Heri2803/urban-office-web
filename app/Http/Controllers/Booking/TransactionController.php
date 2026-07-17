@@ -18,16 +18,21 @@ use App\Models\User;
 use App\Models\Room;
 use App\Models\LunchOption;
 use Carbon\Carbon;
+use App\Traits\DocumentHelperTrait;
+use App\Services\PromoService;
+use App\Models\Promo;
 
 
 class TransactionController extends Controller
 {
+    use DocumentHelperTrait;
+
     public function __construct()
     {
         try {
             // Load konfigurasi Midtrans dari config/midtrans.php
             Config::$serverKey    = config('midtrans.server_key');
-            Config::$isProduction = config('midtrans.is_production');
+            Config::$isProduction = config('...is_production');
             Config::$isSanitized  = true;
             Config::$is3ds        = true;
 
@@ -38,51 +43,6 @@ class TransactionController extends Controller
         } catch (Exception $e) {
             Log::error('Midtrans configuration error: ' . $e->getMessage());
         }
-    }
-
-    private function calculateAmount(string $roomType, array $params): int
-    {
-        $amount = 0;
-
-        try {
-            switch ($roomType) {
-                case 'Virtual Office':
-                    if (isset($params['paket'])) {
-                        if ($params['paket'] === 'monthly') {
-                            $amount = ($params['bulan'] ?? 1) * 1000000; // contoh: 1 jt / bulan
-                        } elseif ($params['paket'] === 'yearly') {
-                            $amount = ($params['tahun'] ?? 1) * 10000000; // contoh: 10 jt / tahun
-                        }
-                    }
-                    break;
-
-                case 'Event Space':
-                    $amount = ($params['jumlah_orang'] ?? 0) * 100000; // contoh: 100rb / orang
-                    break;
-
-                case 'Meeting Room':
-                    $amount = ($params['jumlah_orang'] ?? 0) * ($params['jam'] ?? 1) * 50000; // contoh: 50rb / orang per jam
-                    break;
-
-                case 'Coworking Space':
-                    $amount = ($params['jumlah_orang'] ?? 0) * 75000; // contoh: 75rb / orang
-                    break;
-
-                default:
-                    throw new Exception('Invalid room type: ' . $roomType);
-            }
-
-            // Minimum amount validation
-            if ($amount <= 0) {
-                throw new Exception('Invalid amount calculated: ' . $amount);
-            }
-
-        } catch (Exception $e) {
-            Log::error('Amount calculation error: ' . $e->getMessage(), $params);
-            throw $e;
-        }
-
-        return $amount;
     }
     
 // function kirim data baru ke tabel transaction 
@@ -105,6 +65,7 @@ public function store(Request $request)
             'phone'         => 'nullable|string|max:20',
 
             'booking_date'  => 'nullable|date|after_or_equal:today',
+            'contract_date' => 'nullable|date|after_or_equal:today',
             'start_time'    => 'nullable|date_format:H:i',
             'jumlah_orang'  => 'nullable|integer|min:1|max:1000',
 
@@ -117,6 +78,12 @@ public function store(Request $request)
 
             'service_category_id' => 'nullable|exists:service_categories,id',
             'status_pkp'    => 'nullable|in:Non PKP,PKP',
+            'coffee_break'  => 'nullable|string|max:255',
+            'company_name'  => 'nullable|string|max:255',
+            'company_address' => ['nullable','string','max:1000',\Illuminate\Validation\Rule::requiredIf(in_array($request->room_type, ['Virtual Office', 'Private Office'])),],
+            'notes'         => 'nullable|string',
+            'nik'           => 'nullable|string|max:255',
+            'npwp'          => 'nullable|string|max:50',
 
             'subtotal'      => 'required|numeric|min:0',
             'admin_fee'     => 'required|numeric|min:0',
@@ -126,7 +93,10 @@ public function store(Request $request)
             'lunches' => 'nullable|array',
             'lunches.*.lunch_option_id' => 'required_with:lunches|exists:lunch_options,id',
             'lunches.*.quantity' => 'required_with:lunches|integer|min:1',
-            'lunch_total' => 'nullable|numeric|min:0'
+            'lunch_total' => 'nullable|numeric|min:0',
+            
+            'promo_code'    => 'nullable|string',
+            'discount_amount'=> 'nullable|numeric|min:0',
         ]);
 
         $userId = Auth::id();
@@ -167,6 +137,7 @@ public function store(Request $request)
             'room_type'    => $validated['room_type'],
             'jumlah_orang' => $validated['jumlah_orang'] ?? null,
             'booking_date' => $validated['booking_date'] ?? null,
+            'contract_date'=> $validated['contract_date'] ?? null,
             'start_time'   => $validated['start_time'] ?? null,
 
             'paket'        => $validated['paket'],
@@ -178,6 +149,12 @@ public function store(Request $request)
 
             'service_category_id' => $validated['service_category_id'] ?? null,
             'status_pkp'   => $validated['status_pkp'] ?? 'Non PKP',
+            'coffee_break' => $validated['coffee_break'] ?? null,
+            'company_name' => $validated['company_name'] ?? null,
+            'company_address' => $validated['company_address'] ?? null,
+            'notes'        => $validated['notes'] ?? null,
+            'nik'          => $validated['nik'] ?? null,
+            'npwp'         => $validated['npwp'] ?? null,
 
             'phone'        => $validated['phone'] ?? null,
             'nama_lengkap' => $validated['nama_lengkap'],
@@ -193,6 +170,9 @@ public function store(Request $request)
             'snap_token'   => null,
             'transaction_time' => now(),
             'is_read'      => false,
+            
+            'promo_code'   => $validated['promo_code'] ?? null,
+            'discount_amount' => 0, // Akan diupdate nanti setelah divalidasi
         ]);
 
         // ✅ PROCESS LUNCH ITEMS - GUNAKAN HARGA DARI DATABASE
@@ -211,7 +191,7 @@ public function store(Request $request)
 
                 // ✅ GUNAKAN HARGA DARI DATABASE, BUKAN DARI CLIENT
                 $qty = (int) ($lunchData['quantity'] ?? 1);
-                $unitPrice = (int) round($lunchOption->price); // HARGA DARI DB
+                $unitPrice = (int) round((float) $lunchOption->price); // HARGA DARI DB
 
                 $lunchItem = $transaction->lunches()->create([
                     'lunch_option_id' => $lunchData['lunch_option_id'],
@@ -262,8 +242,56 @@ public function store(Request $request)
             throw new \Exception("Perhitungan room price menghasilkan nilai negatif.");
         }
 
+        // ✅ PROMO CALCULATION SERVER-SIDE — via PromoService
+        $promoCode            = $validated['promo_code'] ?? null;
+        $serverDiscountAmount = 0;
+        $validatedPromo       = null;
+
+        if ($promoCode) {
+            /** @var PromoService $promoService */
+            $promoService  = app(PromoService::class);
+            $locationIdStr = (string) $validated['location_id'];
+            $roomTypeName  = $validated['room_type'];
+
+            $promoResult = $promoService->validate(
+                $promoCode,
+                $userId,
+                $serverSideSubtotal,
+                $locationIdStr,
+                $roomTypeName
+            );
+
+            if ($promoResult['valid']) {
+                $serverDiscountAmount = (int) round($promoResult['discount_amount']);
+                $validatedPromo       = $promoResult['promo'];
+
+                Log::info('Promo validated via PromoService', [
+                    'promo_code'      => $promoCode,
+                    'discount_amount' => $serverDiscountAmount,
+                    'promo_id'        => $validatedPromo->id,
+                ]);
+            } else {
+                Log::warning('Promo validation failed in store()', [
+                    'promo_code' => $promoCode,
+                    'reason'     => $promoResult['message'],
+                ]);
+                // Lanjutkan transaksi tanpa diskon — jangan batalkan booking
+                $serverDiscountAmount = 0;
+            }
+        }
+
+        
+        // Update model with the real calculated discount
+        if ($serverDiscountAmount > 0) {
+             $transaction->updateQuietly(['discount_amount' => $serverDiscountAmount]);
+        }
+
+        $netSubtotal = max(0, $serverSideSubtotal - $serverDiscountAmount);
+        $serverAdminFee = (int) round($netSubtotal * 0.10);
+        $serverDiscountAdminFee = $serverAdminFee; // Sesuai dengan frontend: auto-potong admin fee
+
         // ✅ VALIDASI FINAL AMOUNT
-        $expectedTotal = $serverSideSubtotal + $deposit;
+        $expectedTotal = $netSubtotal + $serverAdminFee - $serverDiscountAdminFee + $deposit;
         if ($expectedTotal !== $amount) {
             Log::warning('Amount mismatch, adjusting gross_amount', [
                 'expected' => $expectedTotal,
@@ -278,7 +306,7 @@ public function store(Request $request)
         \Midtrans\Config::$isProduction = config('midtrans.is_production', false);
         \Midtrans\Config::$isSanitized = true;
         \Midtrans\Config::$is3ds = true;
-        \Midtrans\Config::$overrideNotifUrl = 'https://bacf-118-99-123-11.ngrok-free.app/midtrans/notification';
+        \Midtrans\Config::$overrideNotifUrl = 'https://0dad-114-5-111-86.ngrok-free.app/midtrans/notification';
 
         // ✅ TAMBAHKAN LOG INI UNTUK DEBUG
         Log::info('🔧 NOTIFICATION URL CONFIG', [
@@ -307,7 +335,7 @@ public function store(Request $request)
                 'id'       => 'room-' . ($transaction->room_id ?? 'virtual'),
                 'price'    => (int) $roomPrice,
                 'quantity' => 1,
-                'name'     => $room_name,
+                'name'     => substr($room_name, 0, 50),
             ];
         }
 
@@ -412,6 +440,69 @@ public function store(Request $request)
             ];
         }
 
+        // ✅ ITEM 10.1: PERUSAHAAN (JIKA ADA)
+        if (!empty($transaction->company_name)) {
+            $params['item_details'][] = [
+                'id'       => 'customer-company',
+                'price'    => 0,
+                'quantity' => 1,
+                'name'     => "Perusahaan: {$transaction->company_name}",
+            ];
+        }
+
+        // ✅ ITEM 10.2: NIK (JIKA ADA)
+        if (!empty($transaction->nik)) {
+            $params['item_details'][] = [
+                'id'       => 'customer-nik',
+                'price'    => 0,
+                'quantity' => 1,
+                'name'     => "NIK: {$transaction->nik}",
+            ];
+        }
+
+        // ✅ ITEM 10.3: COFFEE BREAK (JIKA ADA)
+        if (!empty($transaction->coffee_break)) {
+            $params['item_details'][] = [
+                'id'       => 'customer-coffee-break',
+                'price'    => 0,
+                'quantity' => 1,
+                'name'     => "Coffee Break: {$transaction->coffee_break}",
+            ];
+        }
+
+        // ✅ ITEM 10.4: CATATAN (JIKA ADA)
+        if (!empty($transaction->notes)) {
+            $notesPreview = mb_substr($transaction->notes, 0, 30) . (mb_strlen($transaction->notes) > 30 ? '...' : '');
+            $params['item_details'][] = [
+                'id'       => 'customer-notes',
+                'price'    => 0,
+                'quantity' => 1,
+                'name'     => "Catatan: {$notesPreview}",
+            ];
+        }
+
+        // ✅ ITEM 10.2.1: NPWP (JIKA ADA) - TAMBAHKAN INI
+        if (!empty($transaction->npwp)) {
+            // Format NPWP agar lebih rapi (opsional)
+            $npwpFormatted = $transaction->npwp;
+            // Jika NPWP 15 digit, format jadi 99.999.999.9-999.999
+            if (preg_match('/^\d{15}$/', $transaction->npwp)) {
+                $npwpFormatted = substr($transaction->npwp, 0, 2) . '.' .
+                                substr($transaction->npwp, 2, 3) . '.' .
+                                substr($transaction->npwp, 5, 3) . '.' .
+                                substr($transaction->npwp, 8, 1) . '-' .
+                                substr($transaction->npwp, 9, 3) . '.' .
+                                substr($transaction->npwp, 12, 3);
+            }
+            
+            $params['item_details'][] = [
+                'id'       => 'customer-npwp',
+                'price'    => 0,
+                'quantity' => 1,
+                'name'     => "NPWP: {$npwpFormatted}",
+            ];
+        }
+
         // ✅ ITEM 11: LUNCH ITEMS (JIKA ADA)
         if ($transaction->lunches()->count() > 0) {
             foreach ($transaction->lunches as $index => $lunchItem) {
@@ -432,6 +523,36 @@ public function store(Request $request)
                 'price'    => (int) $deposit,
                 'quantity' => 1,
                 'name'     => 'Deposit',
+            ];
+        }
+
+        // ✅ ITEM 13: DISKON PROMO (JIKA ADA)
+        if ($serverDiscountAmount > 0) {
+            $params['item_details'][] = [
+                'id'       => 'promo-' . $promoCode,
+                'price'    => -((int) $serverDiscountAmount),
+                'quantity' => 1,
+                'name'     => 'Diskon Promo ' . $promoCode,
+            ];
+        }
+        
+        // ✅ ITEM 14: ADMIN FEE
+        if ($serverAdminFee > 0) {
+            $params['item_details'][] = [
+                'id'       => 'admin-fee',
+                'price'    => (int) $serverAdminFee,
+                'quantity' => 1,
+                'name'     => 'Admin Fee',
+            ];
+        }
+
+        // ✅ ITEM 15: DISKON ADMIN FEE (JIKA ADA)
+        if ($serverDiscountAdminFee > 0) {
+            $params['item_details'][] = [
+                'id'       => 'admin-fee-discount',
+                'price'    => -((int) $serverDiscountAdminFee),
+                'quantity' => 1,
+                'name'     => 'Promo Admin Fee Gratis',
             ];
         }
         
@@ -636,13 +757,45 @@ public function notificationHandler(Request $request)
         DB::beginTransaction();
         try {
             $transaction->save();
+
+            // ← TAMBAHAN: trigger generate contract dan addendum jika settlement
+            if ($transaction->status === 'settlement') {
+                // ── Catat pemakaian promo via PromoService (dengan lockForUpdate & idempotency) ──
+                if ($transaction->promo_code) {
+                    $promo = Promo::where('code', $transaction->promo_code)->first();
+                    if ($promo) {
+                        try {
+                            app(PromoService::class)->recordUsage(
+                                $promo,
+                                (int) $transaction->user_id,
+                                (int) $transaction->id,
+                                (string) $transaction->location_id,
+                                (float) $transaction->discount_amount,
+                                (float) $transaction->gross_amount,
+                                [
+                                    'order_id'    => $transaction->order_id,
+                                    'room_type'   => $transaction->room_type,
+                                    'payment_type'=> $transaction->payment_type,
+                                ]
+                            );
+                        } catch (\Exception $promoEx) {
+                            // Jangan batalkan transaksi karena masalah pencatatan promo
+                            Log::error('[notificationHandler] Gagal recordUsage promo', [
+                                'transaction_id' => $transaction->id,
+                                'promo_code'     => $transaction->promo_code,
+                                'error'          => $promoEx->getMessage(),
+                            ]);
+                        }
+                    }
+                }
+                
+                if (in_array($transaction->room_type, ['Virtual Office', 'Private Office'])) {
+                    $this->handleSettlementForInitialContract($transaction);
+                    $this->handleSettlementForAddendum($transaction);
+                }
+            }
+
             DB::commit();
-            
-            Log::info('Transaction updated successfully', [
-                'order_id' => $orderId,
-                'old_status' => $oldStatus,
-                'new_status' => $transaction->status
-            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to save transaction', [
@@ -664,6 +817,292 @@ public function notificationHandler(Request $request)
     }
 }
 
+/**
+ * Handle generate initial contract setelah payment settlement
+ */
+private function handleSettlementForInitialContract(Transaction $transaction): void
+{
+    try {
+        if (!in_array($transaction->room_type, ['Virtual Office', 'Private Office'])) {
+            return;
+        }
+
+        // Cek apakah transaksi ini adalah perpanjangan (Addendum)
+        // Jika ya, skip generasi initial contract karena akan dihandle oleh handleSettlementForAddendum
+        $isAddendum = \App\Models\Addendum::where('transaction_id', $transaction->id)->exists();
+        if ($isAddendum) {
+            return;
+        }
+
+        // Pastikan tidak ada contract active/renewed untuk transaksi ini yang menimpa
+        $existingContract = \App\Models\Contract::where('transaction_id', $transaction->id)->first();
+        if ($existingContract && in_array($existingContract->status, ['active', 'renewed', 'expired', 'terminated'])) {
+            Log::info('Contract already fully generated for transaction', [
+                'transaction_id' => $transaction->id
+            ]);
+            return;
+        }
+
+        // Kalau tidak ada contract date, fallback ke hari settlement
+        $contractDateStr = $transaction->contract_date ? \Carbon\Carbon::parse($transaction->contract_date)->toDateString() : now()->toDateString();
+        $contractDate = \Carbon\Carbon::parse($contractDateStr);
+
+        $invoice = $transaction->invoice;
+        if (!$invoice) {
+            Log::warning('No invoice found for transaction during initial contract generation', ['transaction_id' => $transaction->id]);
+        }
+
+        // Buat atau cari draft kontrak
+        $contract = \App\Models\Contract::firstOrCreate(
+            ['transaction_id' => $transaction->id, 'status' => 'draft'],
+            [
+                'invoice_id'    => $invoice ? $invoice->id : null,
+                'created_by'    => $transaction->user_id, // since there's no admin
+                'type'          => $transaction->room_type,
+                'contract_date' => $contractDate->toDateString(),
+            ]
+        );
+
+        // =============================================
+        // PERSIAPAN DATA UNTUK PDF
+        // =============================================
+        $startDate  = $contract->start_date ?? $contractDate->copy();
+        $bulan      = $transaction->bulan ?? 12;
+        $tahun      = $transaction->tahun ?? null;
+
+        $endDate    = $tahun
+            ? $startDate->copy()->addYears($tahun)
+            : $startDate->copy()->addMonths($bulan);
+
+        $durasiTeks = $tahun
+            ? $tahun . ' (' . $this->numberToWords($tahun) . ') tahun'
+            : $bulan . ' (' . $this->numberToWords($bulan) . ') bulan';
+
+        // =============================================
+        // KALKULASI NOMINAL SEWA (gross - deposit)
+        // =============================================
+        $deposit     = (int) ($transaction->deposit ?? 0);
+        $grossAmount = (int) $transaction->gross_amount;
+        $sewaAmount  = $grossAmount - $deposit;
+
+        $contract->save();
+        $sequence       = str_pad($contract->id, 3, '0', STR_PAD_LEFT);
+        
+        $typeCode = $transaction->room_type === 'Virtual Office' ? 'VO' : 'PO'; 
+        $contractNumber = $transaction->order_id . '/' . $typeCode . '/' . $sequence . '/Urban Office/' . $this->romanize($contractDate->month) . '/' . $contractDate->year;
+
+        // =============================================
+        // GENERATE PUBLIC TOKEN & QR CODE
+        // =============================================
+        if (!$contract->hasPublicToken()) {
+            $this->generatePublicToken($contract);
+            $contract->refresh();
+        }
+
+        $qrCodeBase64 = $this->generateQrCodeBase64($contract->public_token);
+
+        // =============================================
+        // GENERATE PDF
+        // =============================================
+        
+        // Asumsi kita menggunakan view yang sama atau serupa dengan VO
+        $viewStr = 'layouts.admin.virtual-office-pdf';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($viewStr, [
+            'contract'          => $contract,
+            'transaction'       => $transaction,
+            'invoice'           => $invoice,
+            'contractDate'      => $contractDate,
+            'startDate'         => $startDate,
+            'endDate'           => $endDate,
+            'durasiTeks'        => $durasiTeks,
+            'contractNumber'    => $contractNumber,
+            'terbilang_amount'  => $this->amountToWords($grossAmount),
+            'terbilang_deposit' => $this->amountToWords($deposit),
+            'sewa_amount'       => $sewaAmount,
+            'terbilang_sewa'    => $this->amountToWords($sewaAmount),
+            'qrCodeBase64'      => $qrCodeBase64,
+        ])->setPaper('A4', 'portrait');
+
+        // =============================================
+        // SIMPAN FILE PDF KE STORAGE
+        // =============================================
+        $filename = 'Kontrak-' . $typeCode . '-' . preg_replace('/[^A-Za-z0-9\-]/', '-', $transaction->order_id) . '-' . $contractDate->format('Ymd') . '.pdf';
+        $filePath = 'contracts/' . $filename;
+
+        \Illuminate\Support\Facades\Storage::disk('public')->put($filePath, $pdf->output());
+
+        // =============================================
+        // UPDATE RECORD CONTRACT
+        // =============================================
+        $contract->update([
+            'status'          => 'active',
+            'contract_number' => $contractNumber,
+            'contract_date'   => $contractDate->toDateString(),
+            'start_date'      => $startDate->toDateString(),
+            'end_date'        => $endDate->toDateString(),
+            'file_path'       => $filePath,
+            'created_by'      => $transaction->user_id, // No admin involvement
+        ]);
+
+        Log::info('Initial Contract PDF generated automatically on settlement.', [
+            'transaction_id'  => $transaction->id,
+            'contract_id'     => $contract->id,
+            'contract_number' => $contractNumber,
+            'file_path'       => $filePath,
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('handleSettlementForInitialContract failed', [
+            'transaction_id' => $transaction->id,
+            'error'          => $e->getMessage(),
+            'trace'          => $e->getTraceAsString(),
+        ]);
+    }
+}
+
+/**
+ * Handle generate addendum/contract setelah payment settlement
+ */
+private function handleSettlementForAddendum(Transaction $transaction): void
+{
+    try {
+        // Hanya proses untuk Virtual Office
+        if ($transaction->room_type !== 'Virtual Office') {
+            return;
+        }
+
+        // Cek apakah ada draft addendum untuk transaksi ini
+        $draftAddendum = \App\Models\Addendum::where('transaction_id', $transaction->id)
+                                             ->where('status', 'draft')
+                                             ->with([
+                                                 'contract.transaction',
+                                                 'transaction.location.city',
+                                                 'parentAddendum',
+                                                 'invoice',
+                                             ])
+                                             ->first();
+
+        if (!$draftAddendum) {
+            Log::info('No draft addendum found for transaction', [
+                'transaction_id' => $transaction->id
+            ]);
+            return;
+        }
+
+        // Generate addendum number
+        // Format: order_id/sequence/Urban Office/bulan_romawi/tahun
+        $addendumDate   = \Carbon\Carbon::parse($draftAddendum->addendum_date);
+        $romanMonth     = $this->romanize($addendumDate->month);
+        $addendumNumber = $transaction->order_id . '/'
+                        . $draftAddendum->sequence_number . '/Urban Office/'
+                        . $romanMonth . '/'
+                        . $addendumDate->year;
+
+        // =============================================
+        // GENERATE PDF ADDENDUM
+        // =============================================
+        $originalContract = $draftAddendum->contract;
+        $parentAddendum   = $draftAddendum->parentAddendum;
+
+        // =============================================
+        // GENERATE PUBLIC TOKEN & QR CODE
+        // =============================================
+        if (!$draftAddendum->public_token) {
+            $this->generatePublicToken($draftAddendum);
+            $draftAddendum->refresh();
+        }
+
+        $qrCodeBase64 = $this->generateQrCodeBase64($draftAddendum->public_token, 'addendum.public.verify');
+
+        // Set properti memory agr terbaca di Blade (PDF Generator)
+        $draftAddendum->addendum_number = $addendumNumber;
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('layouts.admin.virtual-office-addendum-pdf', [
+            'addendum'           => $draftAddendum,
+            'transaction'        => $transaction,
+            'originalContract'   => $originalContract,
+            'parentAddendum'     => $parentAddendum,
+            'terbilang_baru'     => $this->amountToWords((int) $draftAddendum->gross_amount),
+            'terbilang_original' => $this->amountToWords((int) ($originalContract->transaction->gross_amount ?? 0)),
+            'terbilang_sebelum'  => $parentAddendum
+                                    ? $this->amountToWords((int) $parentAddendum->gross_amount)
+                                    : '',
+            'qrCodeBase64'       => $qrCodeBase64,
+        ])->setPaper('A4', 'portrait');
+
+        // Simpan PDF ke storage
+        $filename = 'Addendum-' . $draftAddendum->roman_order
+                  . '-' . preg_replace('/[^A-Za-z0-9\-]/', '-', $transaction->order_id)
+                  . '-' . $addendumDate->format('Ymd')
+                  . '.pdf';
+
+        $filePath = 'addendums/' . $filename;
+
+        \Illuminate\Support\Facades\Storage::disk('public')->put($filePath, $pdf->output());
+
+        Log::info('Addendum PDF generated', [
+            'addendum_id' => $draftAddendum->id,
+            'file_path'   => $filePath,
+        ]);
+
+        // =============================================
+        // UPDATE ADDENDUM → ACTIVE
+        // =============================================
+        $draftAddendum->update([
+            'addendum_number' => $addendumNumber,
+            'file_path'       => $filePath,
+            'status'          => 'active',
+        ]);
+
+        // Update invoice → settlement
+        if ($draftAddendum->invoice) {
+            $draftAddendum->invoice->update(['status' => 'settlement']);
+        }
+
+        // Update original contract → renewed
+        if ($originalContract && $originalContract->status !== 'renewed') {
+            $originalContract->update(['status' => 'renewed']);
+        }
+
+        Log::info('Addendum activated after settlement', [
+            'transaction_id'  => $transaction->id,
+            'addendum_id'     => $draftAddendum->id,
+            'addendum_number' => $addendumNumber,
+            'addendum_order'  => $draftAddendum->addendum_order,
+            'file_path'       => $filePath,
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('handleSettlementForContract failed', [
+            'transaction_id' => $transaction->id,
+            'error'          => $e->getMessage(),
+            'trace'          => $e->getTraceAsString(),
+        ]);
+    }
+}
+
+/**
+ * Helper romanize untuk notificationHandler
+ */
+private function romanize(int $number): string
+{
+    $map = [
+        'M'  => 1000, 'CM' => 900, 'D'  => 500, 'CD' => 400,
+        'C'  => 100,  'XC' => 90,  'L'  => 50,  'XL' => 40,
+        'X'  => 10,   'IX' => 9,   'V'  => 5,   'IV' => 4,
+        'I'  => 1
+    ];
+
+    $result = '';
+    foreach ($map as $roman => $value) {
+        while ($number >= $value) {
+            $result .= $roman;
+            $number -= $value;
+        }
+    }
+    return $result;
+}
 
 public function index()
 {

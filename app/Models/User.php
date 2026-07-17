@@ -42,6 +42,18 @@ class User extends Authenticatable
         return $this->hasMany(Transaction::class, 'user_id');
     }
 
+    public function logs()
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
+    public function promos()
+    {
+        return $this->belongsToMany(Promo::class, 'promo_user')
+                    ->withPivot('is_used', 'used_at', 'is_claimed', 'claimed_at')
+                    ->withTimestamps();
+    }
+
     public function mitra()
     {
         return $this->belongsTo(Mitra::class);
@@ -124,6 +136,14 @@ class User extends Authenticatable
     public function isAdmin()
     {
         return $this->role === 'admin';
+    }
+
+    /**
+     * Cek apakah user adalah finance
+     */
+    public function isFinance()
+    {
+        return $this->role === 'finance';
     }
 
     /**
@@ -216,5 +236,54 @@ class User extends Authenticatable
             ->where('status', 'active')
             ->where('valid_until', '>=', now())
             ->whereRaw('bonus_hours_total > bonus_hours_used');
+    }
+
+    /**
+     * Get the documents uploaded by the user.
+     */
+    public function documents()
+    {
+        return $this->hasMany(Document::class, 'user_id');
+    }
+
+    /**
+     * Get the documents verified by the user (as admin).
+     */
+    public function verifiedDocuments()
+    {
+        return $this->hasMany(Document::class, 'verified_by');
+    }
+
+    // ========== SURAT MASUK RELATIONSHIPS ==========
+
+    /**
+     * Surat yang diterima oleh user (sebagai customer)
+     */
+    public function receivedSurats()
+    {
+        return $this->belongsToMany(Surat::class, 'surat_user')
+                    ->withPivot('is_read', 'read_at', 'notified_at')
+                    ->withTimestamps()
+                    ->where('status', 'published');
+    }
+
+    /**
+     * Surat yang belum dibaca oleh user
+     */
+    public function unreadSurats()
+    {
+        return $this->belongsToMany(Surat::class, 'surat_user')
+                    ->withPivot('is_read', 'read_at', 'notified_at')
+                    ->withTimestamps()
+                    ->where('status', 'published')
+                    ->wherePivot('is_read', false);
+    }
+
+    /**
+     * Hitung jumlah surat belum dibaca
+     */
+    public function unreadSuratsCount(): int
+    {
+        return $this->unreadSurats()->count();
     }
 }

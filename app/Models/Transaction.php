@@ -1,23 +1,21 @@
 <?php
+
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasLocationScope;
 
 class Transaction extends Model
 {
-    use HasFactory;
-    
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    use HasFactory, HasLocationScope;
+
     protected $fillable = [
         'user_id',
-        'city_id',           
-        'location_id',       
-        'room_id',           
-        'city',              
+        'city_id',
+        'location_id',
+        'room_id',
+        'city',
         'room_type',
         'jumlah_orang',
         'booking_date',
@@ -25,9 +23,9 @@ class Transaction extends Model
         'paket',
         'bulan',
         'tahun',
-        'minggu',            
+        'minggu',
         'jam',
-        'hari',              
+        'hari',
         'service_category_id',
         'status_pkp',
         'phone',
@@ -35,61 +33,77 @@ class Transaction extends Model
         'email',
         'order_id',
         'gross_amount',
-        'deposit',           
-        'lunch_total',       // ← TAMBAHKAN INI
+        'deposit',
+        'lunch_total',
+        'coffee_break',
+        'company_name',
+        'company_address',
+        'notes',
+        'nik',
+        'npwp',
         'payment_type',
         'status',
         'snap_token',
-        'transaction_time'
-    ];
-    
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
-    protected $casts = [
-        'user_id' => 'integer',
-        'city_id' => 'integer',
-        'location_id' => 'integer',
-        'room_id' => 'integer',
-        'jumlah_orang' => 'integer',
-        'booking_date' => 'datetime',
-        'bulan' => 'integer',
-        'tahun' => 'integer',
-        'minggu' => 'integer',  
-        'jam' => 'integer',
-        'hari' => 'integer',
-        'gross_amount' => 'decimal:2',
-        'deposit' => 'decimal:2',
-        'lunch_total' => 'decimal:2',  // ← TAMBAHKAN INI
-        'is_read' => 'boolean',
-        'transaction_time' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime'
+        'transaction_time',
+        'is_read',
+        // TAMBAHKAN FIELD INI:
+        'created_by', // untuk tracking admin yang input manual
+        'contract_date', // untuk kebutuhan pembuatan kontrak legal PDF
+        'promo_code',
+        'discount_amount',
     ];
 
-    // ✅ HANYA INI YANG DIPERLUKAN untuk All Bookings
-    protected $appends = ['duration_text', 'participants_text'];
-    
-    /**
-     * Get the user that owns the transaction.
-     */
+    protected $casts = [
+        'user_id'          => 'integer',
+        'city_id'          => 'integer',
+        'location_id'      => 'integer',
+        'room_id'          => 'integer',
+        'jumlah_orang'     => 'integer',
+        'booking_date'     => 'date',
+        'bulan'            => 'integer',
+        'tahun'            => 'integer',
+        'minggu'           => 'integer',
+        'jam'              => 'integer',
+        'hari'             => 'integer',
+        'gross_amount'     => 'decimal:2',
+        'deposit'          => 'decimal:2',
+        'lunch_total'      => 'decimal:2',
+        'is_read'          => 'boolean',
+        'transaction_time' => 'datetime',
+        'created_at'       => 'datetime',
+        'updated_at'       => 'datetime',
+        // TAMBAHKAN CAST UNTUK FIELD BARU:
+        'created_by'       => 'integer',
+        'contract_date'    => 'date',
+        'discount_amount'  => 'decimal:2',
+    ];
+
+    protected $appends = [
+        'booking_time_formatted',
+        'duration_text',
+        'participants_text',
+        'service_type_slug',
+    ];
+
+    // =========================================================
+    // RELATIONSHIPS
+    // =========================================================
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-    
+
     public function city()
     {
         return $this->belongsTo(City::class, 'city_id');
     }
-    
+
     public function location()
     {
         return $this->belongsTo(Location::class, 'location_id');
     }
-    
+
     public function room()
     {
         return $this->belongsTo(Room::class, 'room_id');
@@ -99,44 +113,72 @@ class Transaction extends Model
     {
         return $this->belongsTo(ServiceCategory::class, 'service_category_id')
             ->withDefault([
-                'name' => 'Tanpa Kategori',
-                'description' => null
+                'name'        => 'Tanpa Kategori',
+                'description' => null,
             ]);
     }
 
-    // ← TAMBAHKAN RELATIONSHIP UNTUK LUNCH
-    /**
-     * Get the lunch items for the transaction.
-     */
     public function lunches()
     {
         return $this->hasMany(TransactionLunch::class);
     }
 
-    /**
-     * Calculate total lunch amount.
-     */
-    public function calculateLunchTotal()
+    public function documents()
     {
-        return $this->lunches->sum('subtotal');
+        return $this->hasMany(Document::class, 'transaction_id');
+    }
+
+    public function contract()
+    {
+        return $this->hasOne(Contract::class, 'transaction_id');
+    }
+
+    public function verifiedDocuments()
+    {
+        return $this->hasMany(Document::class, 'transaction_id')->where('status', 'verified');
+    }
+
+    public function pendingDocuments()
+    {
+        return $this->hasMany(Document::class, 'transaction_id')->where('status', 'pending');
+    }
+
+    // =========================================================
+    // RELATIONSHIPS BARU UNTUK INVOICE
+    // =========================================================
+
+    /**
+     * Relasi ke invoice (satu transaksi punya satu invoice)
+     */
+    public function invoice()
+    {
+        return $this->hasOne(Invoice::class, 'transaction_id');
     }
 
     /**
-     * Get total amount including lunch.
+     * Relasi ke kontrak (Satu transaksi bisa memiliki riwayat/arsip kontrak)
      */
-    public function getTotalAmountAttribute()
+    public function contracts()
     {
-        return $this->gross_amount + $this->lunch_total;
+        return $this->hasMany(Contract::class, 'transaction_id');
     }
 
     /**
-     * Boot method for auto-updating lunch total.
+     * Relasi ke user yang membuat transaksi manual (admin)
      */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    // =========================================================
+    // BOOT METHOD
+    // =========================================================
+
     protected static function boot()
     {
         parent::boot();
 
-        // Auto-update lunch_total when lunches are saved/deleted
         static::saved(function ($model) {
             $lunchTotal = $model->calculateLunchTotal();
             if ($model->lunch_total != $lunchTotal) {
@@ -144,51 +186,155 @@ class Transaction extends Model
             }
         });
 
-        // Delete related lunch items when transaction is deleted
         static::deleting(function ($model) {
             $model->lunches()->delete();
+            // Opsional: hapus juga invoice terkait
+            $model->invoice()->delete();
+        });
+
+        // TAMBAHKAN: auto-set created_by jika dari admin dan belum diisi
+        static::creating(function ($model) {
+            if (auth()->check() && auth()->user()->isAdmin() && !$model->created_by) {
+                $model->created_by = auth()->id();
+            }
         });
     }
 
+    // =========================================================
+    // METHODS
+    // =========================================================
 
     /**
-     * ✅ SCOPES YANG DIPERLUKAN UNTUK FILTERING:
+     * Hitung total lunch dari relasi
      */
+    public function calculateLunchTotal()
+    {
+        return $this->lunches()->sum('subtotal');
+    }
+
+    /**
+     * Get total amount termasuk lunch
+     */
+    public function getTotalAmountAttribute()
+    {
+        return $this->gross_amount + $this->lunch_total;
+    }
+
+    /**
+     * Cek apakah transaksi ini sudah memiliki invoice
+     */
+    public function hasInvoice(): bool
+    {
+        return $this->invoice()->exists();
+    }
+
+    /**
+     * Cek apakah transaksi ini adalah transaksi manual (diinput admin)
+     */
+    public function isManual(): bool
+    {
+        // Cek dari order_id (format MANUAL-ORDER-YYYYMMDD-XXX)
+        return str_starts_with($this->order_id, 'MANUAL-ORDER');
+    }
+
+    /**
+     * Cek apakah transaksi ini dibuat oleh admin
+     */
+    public function isCreatedByAdmin(): bool
+    {
+        return !is_null($this->created_by);
+    }
+
+    public function isSettlement(): bool
+    {
+        return $this->status === 'settlement';
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === 'pending';
+    }
+
+    public function isExpire(): bool
+    {
+        return $this->status === 'expire';
+    }
+
+    /**
+     * Cek apakah dokumen Virtual Office sudah lengkap
+     */
+    public function hasCompleteDocuments(): bool
+    {
+        if ($this->room_type !== 'Virtual Office') {
+            return true;
+        }
+
+        $requiredTypes = ['ktp', 'npwp', 'akta_perusahaan', 'siup_nib'];
+        $uploadedTypes = $this->documents()
+            ->where('status', 'verified')
+            ->pluck('document_type')
+            ->toArray();
+
+        return empty(array_diff($requiredTypes, $uploadedTypes));
+    }
+
+    /**
+     * Progress upload dokumen Virtual Office
+     */
+    public function getDocumentProgressAttribute(): array
+    {
+        if ($this->room_type !== 'Virtual Office') {
+            return ['total' => 0, 'uploaded' => 0, 'verified' => 0, 'percentage' => 0];
+        }
+
+        $requiredTypes  = ['ktp', 'npwp', 'akta_perusahaan', 'siup_nib'];
+        $uploadedDocs   = $this->documents()->get()->groupBy('document_type');
+        $uploaded       = $uploadedDocs->count();
+        $verified       = $this->documents()->where('status', 'verified')->count();
+
+        return [
+            'total'      => count($requiredTypes),
+            'uploaded'   => $uploaded,
+            'verified'   => $verified,
+            'percentage' => $uploaded > 0 ? round(($uploaded / count($requiredTypes)) * 100) : 0,
+        ];
+    }
+
+    // =========================================================
+    // SCOPES
+    // =========================================================
+
     public function scopeSettlement($query)
     {
         return $query->where('status', 'settlement');
     }
-    
+
     public function scopePending($query)
     {
         return $query->where('status', 'pending');
     }
-    
+
     public function scopeExpire($query)
     {
         return $query->where('status', 'expire');
     }
-    
+
     public function scopeByServiceType($query, $serviceType)
     {
-        if ($serviceType) {
-            return $query->where('room_type', $serviceType);
-        }
-        return $query;
+        return $serviceType ? $query->where('room_type', $serviceType) : $query;
     }
-    
+
     public function scopeByDateRange($query, $startDate, $endDate)
     {
-        if ($startDate && $endDate) {
-            return $query->whereBetween('booking_date', [$startDate, $endDate]);
-        }
-        return $query;
+        return ($startDate && $endDate)
+            ? $query->whereBetween('booking_date', [$startDate, $endDate])
+            : $query;
     }
-    
+
     public function scopeSearch($query, $searchTerm)
     {
         if ($searchTerm) {
-            return $query->where(function($q) use ($searchTerm) {
+            return $query->where(function ($q) use ($searchTerm) {
                 $q->where('order_id', 'LIKE', "%{$searchTerm}%")
                   ->orWhere('nama_lengkap', 'LIKE', "%{$searchTerm}%")
                   ->orWhere('phone', 'LIKE', "%{$searchTerm}%")
@@ -199,81 +345,122 @@ class Transaction extends Model
     }
 
     /**
-     * ✅ ACCESSORS YANG DIPERLUKAN UNTUK FRONTEND:
+     * Scope untuk transaksi manual (diinput admin)
+     */
+    public function scopeManual($query)
+    {
+        return $query->where('order_id', 'like', 'MANUAL-ORDER%');
+    }
+
+    /**
+     * Scope untuk transaksi dari customer (bukan manual)
+     */
+    public function scopeFromCustomer($query)
+    {
+        return $query->where('order_id', 'not like', 'MANUAL-ORDER%');
+    }
+
+    // =========================================================
+    // ACCESSORS
+    // =========================================================
+
+    /**
+     * Format waktu booking
+     */
+    public function getBookingTimeFormattedAttribute()
+    {
+        if (!empty($this->start_time)) {
+            try {
+                return date('H:i', strtotime($this->start_time));
+            } catch (\Exception $e) {
+                return '-';
+            }
+        }
+
+        if (!empty($this->booking_time)) {
+            try {
+                return date('H:i', strtotime($this->booking_time));
+            } catch (\Exception $e) {
+                return '-';
+            }
+        }
+
+        return '-';
+    }
+
+    /**
+     * Teks durasi
      */
     public function getDurationTextAttribute()
     {
-        if ($this->jam) return $this->jam . ' Hours';
-        if ($this->hari) return $this->hari . ' Days';
-        if ($this->minggu) return $this->minggu . ' Weeks';
-        if ($this->bulan) return $this->bulan . ' Months';
-        if ($this->tahun) return $this->tahun . ' Years';
-        return 'Custom Duration';
+        if (!empty($this->jam) && $this->jam > 0)    return $this->jam . ' Jam';
+        if (!empty($this->hari) && $this->hari > 0)  return $this->hari . ' Hari';
+        if (!empty($this->minggu) && $this->minggu > 0) return $this->minggu . ' Minggu';
+        if (!empty($this->bulan) && $this->bulan > 0)   return $this->bulan . ' Bulan';
+        if (!empty($this->tahun) && $this->tahun > 0)   return $this->tahun . ' Tahun';
+        return '-';
     }
-    
+
+    /**
+     * Teks jumlah peserta
+     */
     public function getParticipantsTextAttribute()
     {
-        return $this->jumlah_orang 
-            ? $this->jumlah_orang . ' people' 
-            : 'Not specified';
+        return (!empty($this->jumlah_orang) && $this->jumlah_orang > 0)
+            ? $this->jumlah_orang . ' orang'
+            : '-';
     }
 
     public function getBookingDateOnlyAttribute()
     {
-        return $this->booking_date->format('Y-m-d'); // Untuk All Bookings
+        return $this->booking_date ? $this->booking_date->format('Y-m-d') : null;
     }
 
     public function getBookingDateTimeAttribute()
     {
-        return $this->booking_date->format('Y-m-d H:i:s'); // Untuk Room Assignment
-    }
-    
-    public function getBookingTimeFormattedAttribute()
-    {
-        if ($this->start_time && $this->jam) {
-            return $this->start_time . ' (' . $this->jam . ' hours)';
-        }
-        
-        if ($this->start_time) {
-            return $this->start_time;
-        }
-        
-        if ($this->paket === 'daily' && $this->hari) {
-            return 'Full Day (' . $this->hari . ' days)';
-        }
-        
-        return 'Flexible';
+        return $this->booking_date ? $this->booking_date->format('Y-m-d H:i:s') : null;
     }
 
     /**
-     * ✅ METHOD BUSINESS LOGIC YANG DIPERLUKAN:
+     * Nama creator (admin) untuk display
      */
-    public function isSettlement()
+    public function getCreatorNameAttribute()
     {
-        return $this->status === 'settlement';
+        return $this->creator ? $this->creator->name : 'System/Customer';
     }
-    
-    public function isPending()
+
+    /**
+     * Cek apakah transaksi sudah memiliki kontrak (contract_date sudah diisi)
+     */
+    public function getHasContractAttribute(): bool
     {
-        return $this->status === 'pending';
+        return !is_null($this->contract_date);
     }
-    
-    public function isExpire()
+
+    /**
+     * Format tanggal kontrak untuk display
+     */
+    public function getFormattedContractDateAttribute(): string
     {
-        return $this->status === 'expire';
+        return $this->contract_date
+            ? $this->contract_date->format('d M Y')
+            : 'Belum Diatur';
     }
-    
+
+    /**
+     * Slug tipe layanan
+     */
     public function getServiceTypeSlugAttribute()
     {
         $mapping = [
-            'Meeting Room' => 'meeting',
-            'Private Office' => 'private',
-            'Sharing Room' => 'sharing', 
-            'Virtual Office' => 'virtual',
-            'Coworking Space' => 'coworking',
-            'Event Space' => 'event'
+            'Meeting Room'    => 'meeting-room',
+            'Private Office'  => 'private-office',
+            'Sharing Room'    => 'sharing-room',
+            'Coworking Space' => 'coworking-space',
+            'Virtual Office'  => 'virtual-office',
+            'Event Space'     => 'event-space',
         ];
-        
-        return $mapping[$this->room_type] ?? strtolower(str_replace(' ', '_', $this->room_type));
+
+        return $mapping[$this->room_type] ?? strtolower(str_replace(' ', '-', $this->room_type));
     }
 }
