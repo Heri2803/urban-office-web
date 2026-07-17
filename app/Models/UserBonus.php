@@ -15,11 +15,17 @@ class UserBonus extends Model
         'valid_until',
         'status',
         'notes',
-        'created_by'
+        'created_by',
+        'last_claim_month',
+        'last_claim_year',
+        'months_activated'
     ];
 
     protected $casts = [
-        'valid_until' => 'date'
+        'valid_until' => 'date',
+        'last_claim_month' => 'integer',
+        'last_claim_year' => 'integer',
+        'months_activated' => 'integer'
     ];
 
     public function user()

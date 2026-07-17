@@ -129,6 +129,158 @@
                 </div>
             </template>
 
+            {{-- ========== MONTHLY BONUS OVERVIEW SECTION ========== --}}
+            <template x-if="!isLoading && monthlyOverview.length > 0">
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
+                    <div class="bg-gradient-to-r from-purple-600 to-purple-700 p-4">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <span>📅</span> Sisa Bonus Per Bulan
+                        </h2>
+                        <p class="text-purple-100 text-sm mt-1">
+                            Lihat jadwal bonus Anda untuk 12 bulan ke depan
+                        </p>
+                    </div>
+                    
+                    <div class="p-4">
+                        {{-- Summary Cards --}}
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                            <div class="bg-purple-50 rounded-lg p-3">
+                                <span class="text-xs text-purple-600">Total Bulan</span>
+                                <p class="text-xl font-bold text-purple-700" x-text="monthlyOverview.length"></p>
+                            </div>
+                            <div class="bg-green-50 rounded-lg p-3">
+                                <span class="text-xs text-green-600">Sisa Jam</span>
+                                <p class="text-xl font-bold text-green-700" x-text="monthlySummary.total_hours_remaining"></p>
+                            </div>
+                            <div class="bg-blue-50 rounded-lg p-3">
+                                <span class="text-xs text-blue-600">Bulan Aktif</span>
+                                <p class="text-xl font-bold text-blue-700" x-text="monthlySummary.total_months_remaining"></p>
+                            </div>
+                            <div class="bg-orange-50 rounded-lg p-3">
+                                <span class="text-xs text-orange-600">Akan Expired</span>
+                                <p class="text-xl font-bold text-orange-700" x-text="monthlySummary.expiring_soon.length"></p>
+                            </div>
+                        </div>
+                        
+                        {{-- Loading State --}}
+                        <template x-if="monthlyOverviewLoading">
+                            <div class="text-center py-8">
+                                <div class="inline-flex items-center gap-2 text-purple-600">
+                                    <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <span>Memuat data bulanan...</span>
+                                </div>
+                            </div>
+                        </template>
+                        
+                        {{-- Monthly Timeline --}}
+                        <template x-if="!monthlyOverviewLoading">
+                            <div class="space-y-3">
+                                <template x-for="(month, index) in monthlyOverview" :key="index">
+                                    <div class="border rounded-xl overflow-hidden transition-all duration-300"
+                                        :class="expandedMonth === index ? 'border-purple-300 shadow-md' : 'border-gray-200'">
+                                        
+                                        {{-- Month Header (Clickable) --}}
+                                        <div @click="toggleMonth(index)" 
+                                            class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition">
+                                            <div class="flex items-center gap-3 flex-1">
+                                                <span class="text-2xl" x-text="month.is_current ? '🔵' : (month.total_remaining > 0 ? '🟢' : '⚪')"></span>
+                                                <div>
+                                                    <h3 class="font-semibold text-gray-800" x-text="month.month_name"></h3>
+                                                    <p class="text-xs text-gray-500" x-text="`Kuota: ${month.total_quota} jam`"></p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex items-center gap-3">
+                                                {{-- Status Badge --}}
+                                                <span class="text-xs px-2 py-1 rounded-full whitespace-nowrap"
+                                                    :class="getMonthStatusClass(month)"
+                                                    x-text="getMonthStatusText(month)">
+                                                </span>
+                                                
+                                                {{-- Progress Circle --}}
+                                                <div class="relative w-10 h-10">
+                                                    <svg class="w-10 h-10 transform -rotate-90">
+                                                        <circle class="text-gray-200" stroke-width="3" stroke="currentColor" fill="transparent" r="16" cx="20" cy="20"/>
+                                                        <circle class="text-purple-600" stroke-width="3" stroke="currentColor" fill="transparent" r="16" cx="20" cy="20"
+                                                                :stroke-dasharray="2 * Math.PI * 16"
+                                                                :stroke-dashoffset="2 * Math.PI * 16 * (1 - month.percentage_used / 100)"/>
+                                                    </svg>
+                                                    <span class="absolute inset-0 flex items-center justify-center text-xs font-bold"
+                                                        x-text="month.percentage_used + '%'"></span>
+                                                </div>
+                                                
+                                                {{-- Expand Icon --}}
+                                                <span class="text-xl transition-transform duration-300"
+                                                    :class="expandedMonth === index ? 'rotate-180' : ''">
+                                                    ▼
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        {{-- Expanded Details --}}
+                                        <div x-show="expandedMonth === index" 
+                                            x-collapse
+                                            class="border-t border-gray-100 bg-gray-50 p-4">
+                                            
+                                            {{-- Progress Bar --}}
+                                            <div class="mb-4">
+                                                <div class="flex justify-between text-sm mb-1">
+                                                    <span class="text-gray-600">Penggunaan Bulan Ini</span>
+                                                    <span class="font-semibold" 
+                                                        :class="month.total_remaining <= 2 ? 'text-orange-600' : 'text-purple-600'"
+                                                        x-text="`${month.total_used}/${month.total_quota} jam`">
+                                                    </span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                                    <div class="h-2.5 rounded-full transition-all duration-300"
+                                                        :class="month.total_remaining <= 2 ? 'bg-orange-500' : 'bg-purple-600'"
+                                                        :style="`width: ${month.percentage_used}%`">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            {{-- Bonus Details --}}
+                                            <div class="space-y-2">
+                                                <h4 class="text-sm font-semibold text-gray-700 mb-2">Detail Bonus:</h4>
+                                                <template x-for="bonus in month.bonus_details" :key="bonus.bonus_id">
+                                                    <div class="bg-white rounded-lg p-3 flex justify-between items-center">
+                                                        <div>
+                                                            <p class="text-sm font-medium" x-text="bonus.source"></p>
+                                                            <p class="text-xs text-gray-500">
+                                                                Kuota: <span x-text="bonus.quota + ' jam'"></span>
+                                                            </p>
+                                                        </div>
+                                                        <div class="text-right">
+                                                            <p class="text-sm font-semibold" 
+                                                            :class="bonus.remaining > 0 ? 'text-green-600' : 'text-gray-400'"
+                                                            x-text="bonus.remaining + ' jam sisa'">
+                                                            </p>
+                                                            <p class="text-xs text-gray-500" x-text="`Terpakai: ${bonus.used} jam`"></p>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            {{-- Empty State jika tidak ada data --}}
+            <template x-if="!isLoading && !monthlyOverviewLoading && monthlyOverview.length === 0">
+                <div class="bg-white rounded-2xl shadow-lg p-8 mb-8 text-center">
+                    <div class="text-5xl mb-4">📅</div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">Belum Ada Data Bulanan</h3>
+                    <p class="text-gray-600">Anda belum memiliki bonus aktif untuk 12 bulan ke depan</p>
+                </div>
+            </template>
+
             {{-- Active Bonuses List --}}
             <template x-if="!isLoading && bonusData?.bonuses?.length > 0">
                 <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-8">
@@ -353,6 +505,14 @@ document.addEventListener('alpine:init', () => {
         claimsCurrentPage: 1,
         claimsLastPage: 1,
         claimsHasMorePages: false,
+        monthlyOverview: [],
+        monthlyOverviewLoading: false,
+        monthlySummary: {
+            total_hours_remaining: 0,
+            total_months_remaining: 0,
+            expiring_soon: []
+        },
+        expandedMonth: null,
 
         init() {
             console.log('✅ rewardApp initialized');
@@ -365,6 +525,56 @@ document.addEventListener('alpine:init', () => {
             // Load kedua data sekaligus
             this.loadBonusData();
             this.loadClaimHistory();
+            this.loadMonthlyOverview();
+        },
+
+        // ✅ NEW: Method untuk load monthly overview
+        async loadMonthlyOverview() {
+            try {
+                this.monthlyOverviewLoading = true;
+                const response = await fetch('/api/customer/bonus/monthly/overview', {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.monthlyOverview = result.data.overview;
+                    this.monthlySummary = result.data.summary;
+                    console.log('✅ Monthly overview loaded:', this.monthlyOverview);
+                }
+            } catch (error) {
+                console.error('❌ Failed to load monthly overview:', error);
+            } finally {
+                this.monthlyOverviewLoading = false;
+            }
+        },
+
+         // ✅ NEW: Toggle expand/collapse
+        toggleMonth(index) {
+            if (this.expandedMonth === index) {
+                this.expandedMonth = null;
+            } else {
+                this.expandedMonth = index;
+            }
+        },
+
+        // ✅ NEW: Get status badge class
+        getMonthStatusClass(month) {
+            if (month.is_current) return 'bg-blue-100 text-blue-600';
+            if (month.total_remaining === 0) return 'bg-gray-100 text-gray-600';
+            if (month.total_remaining <= 2) return 'bg-orange-100 text-orange-600';
+            return 'bg-green-100 text-green-600';
+        },
+
+        // ✅ NEW: Get status text
+        getMonthStatusText(month) {
+            if (month.is_current) return 'Bulan Ini';
+            if (month.total_remaining === 0) return 'Terpakai';
+            return `${month.total_remaining} jam tersisa`;
         },
 
         // ========== METHOD UNTUK BONUS AKTIF ==========
