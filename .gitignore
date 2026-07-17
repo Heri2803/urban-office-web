@@ -17,3 +17,22 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+
+# Scratch/debug scripts & data dumps — bukan bagian aplikasi, jangan ikut commit
+/addendums.json
+/catatan-implementasi-surat-masuk.txt
+/debug_transactions.php
+/diff_booking.txt
+/old_booking.txt
+/old_booking_utf8.txt
+/old_trx.txt
+/public/check_log.php
+/repair_addendums.php
+/repair_results.txt
+/resources/views/files.txt
+/results.txt
+/test_addendums.php
+/test_query.php
+/test_scope.php
+/test_wa.php
+/update_font.php
