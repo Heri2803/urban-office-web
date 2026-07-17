@@ -5,9 +5,6 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Promo;
 use App\Models\PromoMetric;
-use App\Models\PromoUsage;
-use App\Models\User;
-use App\Models\Transaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -16,10 +13,13 @@ class PromoMetricsSeeder extends Seeder
     public function run()
     {
         try {
-            // Clear existing metrics data untuk avoid duplicates
+            // Clear existing metrics data untuk avoid duplicates.
+            // Catatan: sengaja TIDAK menyentuh tabel promo_usages di sini —
+            // itu tabel transaksi real (dicatat oleh PromoService::recordUsage),
+            // bukan tempat data dummy. Truncate di sini pernah menghapus data
+            // usage asli dan membuatnya permanen desync dari promos.usage_count.
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
             PromoMetric::truncate();
-            PromoUsage::truncate();
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
             $promos = Promo::whereIn('status', ['ended', 'active'])->get();
@@ -49,9 +49,8 @@ class PromoMetricsSeeder extends Seeder
                 }
             }
 
-            echo "Promo metrics and usage data generated successfully!\n";
+            echo "Promo metrics generated successfully!\n";
             echo "Total metrics: " . PromoMetric::count() . "\n";
-            echo "Total usage records: " . PromoUsage::count() . "\n";
 
         } catch (\Exception $e) {
             echo "Error: " . $e->getMessage() . "\n";
@@ -98,7 +97,6 @@ class PromoMetricsSeeder extends Seeder
         
         while ($currentDate->lte($endDate)) {
             $this->createMetricData($promo, $location, $currentDate, 'during');
-            $this->createUsageData($promo, $location, $currentDate);
             $currentDate->addDay();
         }
     }
@@ -167,61 +165,6 @@ class PromoMetricsSeeder extends Seeder
         }
     }
 
-    private function createUsageData($promo, $location, $date)
-    {
-        // Skip jika tidak ada users
-        if (User::count() === 0) {
-            return;
-        }
-
-        // Ambil metric untuk hari ini
-        $metric = PromoMetric::where('promo_id', $promo->id)
-            ->where('location', $location)
-            ->whereDate('metric_date', $date)
-            ->first();
-
-        if (!$metric || $metric->promo_usage === 0) {
-            return;
-        }
-
-        // Generate usage records berdasarkan promo_usage
-        $usageCount = min($metric->promo_usage, 3); // Limit untuk avoid terlalu banyak data
-        $users = User::inRandomOrder()->limit($usageCount)->get();
-
-        foreach ($users as $user) {
-            try {
-                // Create minimal transaction record jika tidak ada
-                $transaction = Transaction::inRandomOrder()->first();
-                if (!$transaction) {
-                    // Skip jika tidak ada transaction
-                    continue;
-                }
-
-                $discountAmount = $this->calculateDiscountAmount($promo, $transaction->amount);
-                
-                PromoUsage::create([
-                    'promo_id' => $promo->id,
-                    'user_id' => $user->id,
-                    'transaction_id' => $transaction->id,
-                    'location' => $location,
-                    'discount_amount' => $discountAmount,
-                    'transaction_amount' => $transaction->amount,
-                    'metadata' => json_encode([
-                        'applied_at' => $date->format('Y-m-d H:i:s'),
-                        'original_amount' => $transaction->amount + $discountAmount,
-                        'discount_type' => $promo->discount_type,
-                        'service_type' => $promo->service_types ? (is_array($promo->service_types) ? ($promo->service_types[0] ?? 'general') : 'general') : 'general'
-                    ]),
-                    'created_at' => $date->copy()->setTime(rand(8, 20), rand(0, 59), rand(0, 59)),
-                    'updated_at' => $date->copy()->setTime(rand(8, 20), rand(0, 59), rand(0, 59)),
-                ]);
-            } catch (\Exception $e) {
-                echo "Error creating usage data: " . $e->getMessage() . "\n";
-                continue;
-            }
-        }
-    }
-
     private function getBaseValuesByPeriod($period)
     {
         // Base values untuk setiap period
@@ -247,17 +190,5 @@ class PromoMetricsSeeder extends Seeder
         ];
 
         return $bases[$period] ?? $bases['before'];
-    }
-
-    private function calculateDiscountAmount($promo, $transactionAmount)
-    {
-        if ($promo->discount_type === 'percentage' && $promo->discount_amount) {
-            return min($transactionAmount * ($promo->discount_amount / 100), $transactionAmount);
-        } elseif ($promo->discount_type === 'fixed' && $promo->discount_amount) {
-            return min($promo->discount_amount, $transactionAmount);
-        }
-        
-        // Default discount jika tidak ada setting
-        return rand(50000, 200000);
     }
 }

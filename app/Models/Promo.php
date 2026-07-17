@@ -61,6 +61,13 @@ class Promo extends Model
         return $this->hasMany(PromoUsage::class);
     }
 
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'promo_user')
+                    ->withPivot('is_used', 'used_at', 'is_claimed', 'claimed_at')
+                    ->withTimestamps();
+    }
+
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -76,71 +83,28 @@ class Promo extends Model
         return $this->belongsTo(User::class, 'approved_by');
     }
 
-    // SEMENTARA NONAKTIFKAN SEMUA SCOPE - COMMENT DULU
-    /*
-    // Scopes
-    public function scopeActive($query)
-    {
-        return $query->where('status', 'active')
-                    ->where('start_date', '<=', now())
-                    ->where('end_date', '>=', now())
-                    ->where('is_approved', true);
-    }
-
-    public function scopeUpcoming($query)
-    {
-        return $query->where('status', 'upcoming')
-                    ->where('start_date', '>', now())
-                    ->where('is_approved', true);
-    }
-
-    public function scopeEnded($query)
-    {
-        return $query->where('status', 'ended')
-                    ->orWhere(function($q) {
-                        $q->where('end_date', '<', now())
-                          ->whereIn('status', ['active', 'upcoming']);
-                    });
-    }
-
-    public function scopeForLocation($query, $locationId)
-    {
-        // Jika location adalah ID cabang (number)
-        if (is_numeric($locationId)) {
-            return $query->whereJsonContains('locations', (int)$locationId);
-        }
-        
-        return $query;
-    }
-
-    public function scopeForService($query, $service)
-    {
-        return $query->whereJsonContains('service_types', $service)
-                    ->orWhere('service_types', 'like', '%all-services%');
-    }
-
-    public function scopeBanners($query)
-    {
-        return $query->whereHas('type', function($q) {
-            $q->where('slug', 'banner');
-        });
-    }
-
-    public function scopeDiscounts($query)
-    {
-        return $query->whereHas('type', function($q) {
-            $q->where('slug', 'discount');
-        });
-    }
-    */
-
     // Accessors & Mutators
     public function getIsActiveAttribute(): bool
     {
-        return $this->status === 'active' && 
-               $this->start_date <= now() && 
-               $this->end_date >= now() &&
+        $now = now();
+
+        // Promo berlaku sepanjang hari start_date s/d end_date (bukan jam presisi),
+        // jadi bandingkan pakai awal/akhir hari — konsisten dengan BannerController::apiIndex().
+        return $this->status === 'active' &&
+               $now->gte($this->start_date->copy()->startOfDay()) &&
+               $now->lte($this->end_date->copy()->endOfDay()) &&
                $this->is_approved;
+    }
+
+    public function getImageUrlAttribute($value): ?string
+    {
+        if (!$value) return null;
+        
+        if (str_starts_with($value, 'http') || str_starts_with($value, '/storage/')) {
+            return $value;
+        }
+
+        return asset('storage/' . $value);
     }
 
     public function getDaysRemainingAttribute(): int

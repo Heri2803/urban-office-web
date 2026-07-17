@@ -8,7 +8,7 @@
                 <!-- Modal Header -->
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-xl font-semibold text-gray-900" 
-                        x-text="modals.createEdit.isEdit ? 'Edit Banner' : 'Upload New Banner'">
+                        x-text="modals.createEdit.isEdit ? 'Edit Promo' : 'Generate New Promo'">
                     </h3>
                     <button @click="closeCreateEditModal()" 
                             class="text-gray-400 hover:text-gray-600">
@@ -20,58 +20,7 @@
 
                 <!-- Form -->
                 <form @submit.prevent="submitForm()" class="space-y-4">
-                    <!-- Image Upload -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Banner Image *</label>
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors cursor-pointer"
-                             @click="document.getElementById('bannerImage').click()">
-                            <input type="file" 
-                                   id="bannerImage" 
-                                   @change="handleImageUpload($event)"
-                                   accept="image/*" 
-                                   class="hidden">
-                            
-                            <!-- Image Upload Placeholder - Changed from template x-if to x-show -->
-                            <div x-show="!form.imagePreview">
-                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                                </svg>
-                                <p class="text-sm text-gray-600 mb-1">Click to upload or drag and drop</p>
-                                <p class="text-xs text-gray-500">PNG, JPG, WebP up to 5MB</p>
-                                <p class="text-xs text-gray-500 mt-1">Recommended: 1920x600px (Hero), 800x400px (Section)</p>
-                            </div>
-                            
-                            <!-- Image Preview - Changed from template x-if to x-show -->
-                            <div x-show="form.imagePreview">
-                                <img :src="form.imagePreview || ''" alt="Preview" class="w-full h-48 object-cover rounded-lg mx-auto mb-3">
-                                <button type="button" 
-                                        @click.stop="removeImage()"
-                                        class="text-sm text-red-600 hover:text-red-700">
-                                    Remove Image
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Banner Title -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Banner Title *</label>
-                        <input type="text" 
-                               x-model="form.name"
-                               placeholder="Enter banner title" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    </div>
-
-                    <!-- Banner Description -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
-                        <textarea rows="3" 
-                                  x-model="form.description"
-                                  placeholder="Enter banner description" 
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
-                    </div>
-
-                    <!-- Promo Type Selection -->
+                    <!-- Promo Type Selection (Moved to top) -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Promo Type *</label>
                         <select x-model="form.promo_type_id" 
@@ -84,10 +33,74 @@
                         </select>
                     </div>
 
+                    <!-- Image Upload (Only for Banner) -->
+                    <div x-show="form.promo_type_id == 1" x-transition>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Banner Image *</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors cursor-pointer"
+                             @click="document.getElementById('bannerImage').click()">
+                            <input type="file" 
+                                   id="bannerImage" 
+                                   @change="handleImageUpload($event)"
+                                   accept="image/*" 
+                                   class="hidden">
+                            
+                            <!-- Image Upload Placeholder -->
+                            <div x-show="!form.imagePreview">
+                                <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                                </svg>
+                                <p class="text-sm text-gray-600 mb-1">Click to upload or drag and drop</p>
+                                <p class="text-xs text-gray-500">PNG, JPG, WebP up to 5MB</p>
+                                <p class="text-xs text-blue-500 mt-2 font-semibold">Disarankan: Rasio 16:9 atau resolusi 1920x1080 pixel agar pas di Hero Banner Dashboard.</p>
+                            </div>
+                            
+                            <!-- Image Preview -->
+                            <div x-show="form.imagePreview">
+                                <img :src="form.imagePreview || ''" alt="Preview" class="w-full h-48 object-cover rounded-lg mx-auto mb-3">
+                                <button type="button" 
+                                        @click.stop="removeImage()"
+                                        class="text-sm text-red-600 hover:text-red-700">
+                                    Remove Image
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Promo Title -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Promo Title *</label>
+                        <input type="text" 
+                               x-model="form.name"
+                               placeholder="Enter promo title" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+
+                    <!-- Promo Code -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Promo Code (Optional)</label>
+                        <input type="text" 
+                               x-model="form.code"
+                               placeholder="Leave blank to auto-generate (URBxxxx)" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+
+                    <!-- Banner Description -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Description (Optional)</label>
+                        <textarea rows="3" 
+                                  x-model="form.description"
+                                  placeholder="Enter banner description" 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                    </div>
+
+                    <!-- Removed Promo Type from here since it moved to top -->
+
                     <!-- Banner Type & Display Location -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Banner Type *</label>
+                        <div x-show="form.promo_type_id == 1">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Category <span class="text-red-500">*</span>
+                            </label>
                             <select x-model="form.promo_category_id"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 <option value="">Select Type</option>
@@ -97,9 +110,9 @@
                             </select>
                         </div>
 
-                        <!-- Display Locations - GUNAKAN CHECKBOXES -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Display Locations *</label>
+                        <!-- Add Locations - GUNAKAN CHECKBOXES -->
+                        <div x-show="form.promo_type_id != 1">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Add Locations *</label>
                             <div class="border border-gray-300 rounded-lg p-4 max-h-48 overflow-y-auto">
                                 <template x-for="location in availableLocations" :key="location.id">
                                     <label class="flex items-center space-x-3 py-2 hover:bg-gray-50 px-2 rounded">
@@ -165,9 +178,11 @@
                                 multiple
                                 :required="form.promo_type_id == 2"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            <option value="meeting-room">Meeting Room</option>
-                            <option value="co-working">Co-working Space</option>
-                            <option value="virtual-office">Virtual Office</option>
+                            
+                            <template x-for="type in roomTypes" :key="type.id">
+                                <option :value="type.name.toLowerCase().replace(/\s+/g, '-')" x-text="type.name"></option>
+                            </template>
+                            
                             <option value="all-services">All Services</option>
                         </select>
                         <p class="text-xs text-gray-500 mt-1">Hold Ctrl to select multiple services</p>
@@ -254,6 +269,75 @@
                             placeholder="1"
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <p x-show="form.promo_type_id != 2" class="text-xs text-gray-500 mt-1">Optional for banners</p>
+                        <p x-show="form.promo_type_id != 2" class="text-xs text-gray-500 mt-1">Optional for banners</p>
+                    </div>
+
+                    <!-- [NEW] TARGET CUSTOMER AIR-DROP (Khusus Voucher) -->
+                    <div x-show="form.promo_type_id == 3" class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <h4 class="text-sm font-semibold text-blue-800 mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            Target Customer (Voucher Air-Drop)
+                        </h4>
+                        
+                        <!-- Filter By Purchase History -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-blue-900 mb-2">Smart Filter by Purchase History</label>
+                            <select x-model="customerFilter" 
+                                    @change="loadTargetCustomers()"
+                                    class="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white">
+                                <option value="">All Customers</option>
+                                <template x-for="type in roomTypes" :key="type.id">
+                                    <option :value="type.name" x-text="'Customers who bought ' + type.name"></option>
+                                </template>
+                            </select>
+                        </div>
+
+                        <!-- Customer Selection -->
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-medium text-blue-900">Select Target Customers *</label>
+                                <button type="button"
+                                        @click="toggleSelectAllCustomers()"
+                                        class="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                                        x-text="isAllCustomersSelected ? 'Unselect All' : 'Select All'">
+                                </button>
+                            </div>
+
+                            <div class="relative mb-2">
+                                <input type="text"
+                                       x-model="customerSearch"
+                                       @keydown.enter.prevent
+                                       placeholder="Cari nama atau email customer..."
+                                       class="w-full pl-9 pr-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm">
+                                <svg class="w-4 h-4 text-blue-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+
+                            <div class="border border-blue-300 rounded-lg p-3 max-h-48 overflow-y-auto bg-white">
+                                <template x-if="filteredTargetCustomers.length === 0">
+                                    <p class="text-sm text-gray-500 text-center py-4"
+                                       x-text="customerSearch ? 'No customers match your search.' : 'No customers found for this filter.'"></p>
+                                </template>
+                                <template x-for="customer in filteredTargetCustomers" :key="customer.id">
+                                    <label class="flex items-center space-x-3 py-2 hover:bg-blue-50 px-2 rounded cursor-pointer border-b border-gray-100 last:border-0">
+                                        <input
+                                            type="checkbox"
+                                            :value="customer.id"
+                                            x-model="form.target_users"
+                                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                        >
+                                        <div>
+                                            <span x-text="customer.name" class="text-sm font-medium text-gray-900 block"></span>
+                                            <span x-text="customer.email" class="text-xs text-gray-500 block"></span>
+                                        </div>
+                                    </label>
+                                </template>
+                            </div>
+                            <div class="text-xs text-blue-600 mt-2 font-medium">
+                                <span x-text="form.target_users.length"></span> customer(s) selected
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Status Select - LEBIH SIMPLE -->
@@ -288,7 +372,7 @@
                                 <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                 <span x-text="modals.createEdit.isEdit ? 'Updating...' : 'Uploading...'"></span>
                             </span>
-                            <span x-show="!form.loading" x-text="modals.createEdit.isEdit ? 'Update Banner' : 'Upload Banner'"></span>
+                            <span x-show="!form.loading" x-text="modals.createEdit.isEdit ? 'Update Promo' : 'Generate Promo'"></span>
                         </button>
                     </div>
                 </form>
@@ -308,8 +392,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                 </svg>
             </div>
-            <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">Delete Banner</h3>
-            <p class="text-sm text-gray-600 text-center mb-6">Are you sure you want to delete this banner? This action cannot be undone.</p>
+            <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">Delete Promo</h3>
+            <p class="text-sm text-gray-600 text-center mb-6">Are you sure you want to delete this promo? This action cannot be undone.</p>
             
             <!-- Banner Preview in Modal -->
             <div class="bg-gray-50 rounded-lg p-4 mb-6" x-show="modals.delete.banner">
@@ -359,7 +443,7 @@
 
         <!-- Banner Preview -->
         <div class="bg-white rounded-lg overflow-hidden">
-            <img :src="modals.preview.banner?.image_url || 'https://placehold.co/1920x600/3B82F6/ffffff?text=Banner+Preview'" 
+            <img :src="modals.preview.banner ? getBannerImageUrl(modals.preview.banner) : 'https://placehold.co/1920x600/3B82F6/ffffff?text=Banner+Preview'" 
                  :alt="modals.preview.banner?.name || 'Banner Preview'" 
                  class="w-full h-auto">
         </div>

@@ -3,6 +3,11 @@
 @section('title', 'Banner Promo Management')
 
 @section('content')
+{{-- Toast Notification Container --}}
+<div id="toast-container"
+     style="position:fixed;top:1.25rem;right:1.25rem;z-index:9999;display:flex;flex-direction:column;gap:0.5rem;pointer-events:none;min-width:320px;">
+</div>
+
 <div class="container-fluid px-4 py-6" x-data="bannerManagement()" x-init="init()">
     <!-- Include Modals dari file asli -->
     @include('layouts.admin.components.banners-modals')
@@ -18,9 +23,23 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
-                Upload New Banner
+                Generate Promo
             </button>
         </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="mb-6 border-b border-gray-200">
+        <nav class="-mb-px flex space-x-12" aria-label="Tabs">
+            <template x-for="type in promoTypes" :key="type.id">
+                <button 
+                    @click="activeTab = type.id; applyFilters()"
+                    :class="activeTab === type.id ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                    class="whitespace-nowrap py-4 px-4 border-b-2 font-semibold text-base tracking-wide transition-colors"
+                    x-text="type.name">
+                </button>
+            </template>
+        </nav>
     </div>
 
     <!-- Statistics Cards -->
@@ -99,38 +118,7 @@
                     </svg>
                 </div>
             </div>
-            <!-- Filter by Type -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Banner Type</label>
-                <select x-model="filters.type" 
-                        @change="applyFilters()"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <option value="">All Types</option>
-                    
-                    <!-- GUNAKAN categories LANGSUNG, BUKAN getCategories() -->
-                    <template x-for="category in categories" :key="category.id">
-                        <option :value="category.id" x-text="category.name"></option>
-                    </template>
-                    
-                    <!-- Loading state -->
-                    <template x-if="loading">
-                        <option disabled>Loading categories...</option>
-                    </template>
-                    
-                    <!-- Empty state -->
-                    <template x-if="!loading && (!categories || categories.length === 0)">
-                        <option disabled>No categories available</option>
-                    </template>
-                </select>
-                
-                <!-- Debug info - GUNAKAN categories LANGSUNG -->
-                <div class="text-xs text-gray-500 mt-1">
-                    <span x-show="loading">Loading categories...</span>
-                    <span x-show="!loading">
-                        <span x-text="categories ? categories.length : 0"></span> categories available
-                    </span>
-                </div>
-            </div>
+            <!-- Category filter removed as Tabs handle it conceptually -->
 
             <!-- Filter by Status -->
             <div>
@@ -178,9 +166,9 @@
                      'opacity-60': banner.status === 'ended'
                  }">
                 
-                <!-- Banner Image -->
-                <div class="relative h-48 bg-gray-200">
-                    <img :src="banner.image_url ? '/storage/' + banner.image_url : '/images/placeholder.jpg'" 
+                <!-- Banner Image (Only for Banner type) -->
+                <div x-show="banner.promo_type_id == 1" class="relative h-48 bg-gray-200">
+                    <img :src="banner.image_url ? (banner.image_url.startsWith('http') ? banner.image_url : '/storage/' + banner.image_url) : '/images/placeholder.jpg'" 
                          :alt="banner.name" 
                          class="w-full h-full object-cover">
                     <div class="absolute top-3 right-3">
@@ -195,18 +183,50 @@
                         </span>
                     </div>
                     <div class="absolute top-3 left-3">
-                        <span class="px-3 py-1 bg-white text-gray-700 text-xs font-semibold rounded-full"
+                        <span class="px-3 py-1 bg-white text-gray-700 text-xs font-semibold rounded-full shadow-sm"
                               x-text="banner.category.name">
                         </span>
                     </div>
+                    <!-- Discount Badge -->
+                    <div class="absolute bottom-3 right-3" x-show="banner.discount_amount > 0">
+                        <span class="px-3 py-1 bg-blue-600 bg-opacity-90 backdrop-blur-sm text-white text-xs font-bold rounded-lg shadow"
+                              x-text="banner.discount_type === 'percentage' ? (banner.discount_amount + '% OFF') : ('Rp ' + new Intl.NumberFormat('id-ID').format(banner.discount_amount))">
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Ticket Style Header (For Discount / Voucher) -->
+                <div x-show="banner.promo_type_id != 1" class="relative p-6 bg-gradient-to-r from-blue-500 to-blue-700 text-white text-center border-b-2 border-dashed border-gray-300">
+                    <div class="absolute top-3 right-3">
+                        <span class="px-2 py-1 text-blue-700 bg-white text-xs font-bold rounded-full"
+                              x-text="banner.discount_type === 'percentage' ? (banner.discount_amount + '% OFF') : ('Rp ' + new Intl.NumberFormat('id-ID').format(banner.discount_amount))">
+                        </span>
+                    </div>
+                    <div class="absolute top-3 left-3">
+                        <span class="px-2 py-1 text-white text-xs font-semibold rounded bg-black bg-opacity-30"
+                              :class="{
+                                  'bg-green-500': banner.status === 'active',
+                                  'bg-gray-500': banner.status === 'inactive',
+                                  'bg-red-500': banner.status === 'ended',
+                                  'bg-blue-400': banner.status === 'upcoming'
+                              }"
+                              x-text="getStatusText(banner.status)">
+                        </span>
+                    </div>
+                    <h3 class="text-2xl font-bold mt-4 tracking-wider" x-text="banner.code || 'NO-CODE'"></h3>
+                    <p class="text-blue-100 text-sm mt-1" x-text="banner.category ? banner.category.name : 'Voucher'"></p>
+                    
+                    <!-- Ticket cutouts -->
+                    <div class="absolute -bottom-3 -left-3 w-6 h-6 bg-gray-100 rounded-full"></div>
+                    <div class="absolute -bottom-3 -right-3 w-6 h-6 bg-gray-100 rounded-full"></div>
                 </div>
 
                 <!-- Banner Info -->
                 <div class="p-4">
                     <h3 class="text-lg font-semibold text-gray-900 mb-2" x-text="banner.name"></h3>
                     
-                    <!-- Kode Banner -->
-                    <div class="mb-2">
+                    <!-- Kode Banner (Show only if Banner type) -->
+                    <div class="mb-2" x-show="banner.promo_type_id == 1">
                         <span class="inline-block px-2 py-1 bg-gray-100 text-gray-800 text-xs font-mono rounded border"
                               x-text="'Kode: ' + (banner.code || '-')">
                         </span>
@@ -292,6 +312,7 @@
 function bannerManagement() {
     return {
         // State
+        activeTab: 1, // Default to Banner (id 1)
         loading: false,
         banners: [],
         
@@ -299,6 +320,7 @@ function bannerManagement() {
         categories: [],
         availableLocations: [],
         promoTypes: [],
+        roomTypes: {!! isset($roomTypes) ? json_encode($roomTypes) : '[]' !!},
         
         // Filters
         filters: {
@@ -347,12 +369,8 @@ function bannerManagement() {
                 filtered = filtered.filter(banner => banner.status === this.filters.status);
             }
             
-            // PERBAIKI: Gunakan filters.type (bukan filters.category)
-            if (this.filters.type) {
-                filtered = filtered.filter(banner => 
-                    banner.promo_category_id == this.filters.type // atau banner.category_id, sesuaikan dengan struktur data
-                );
-            }
+            // Filter berdasarkan Tab yang aktif
+            filtered = filtered.filter(banner => banner.promo_type_id == this.activeTab);
             
             if (this.filters.location) {
                 filtered = filtered.filter(banner => 
@@ -380,10 +398,23 @@ function bannerManagement() {
                 banner: null
             }
         },
+        customerFilter: '',
+        customerSearch: '',
+        targetCustomersList: [],
+
+        get filteredTargetCustomers() {
+            if (!this.customerSearch) return this.targetCustomersList;
+            const term = this.customerSearch.toLowerCase();
+            return this.targetCustomersList.filter(c =>
+                (c.name && c.name.toLowerCase().includes(term)) ||
+                (c.email && c.email.toLowerCase().includes(term))
+            );
+        },
         
         // Form
         form: {
             name: '',
+            code: '',
             description: '',
             promo_type_id: null,
             promo_category_id: null,
@@ -400,6 +431,7 @@ function bannerManagement() {
             min_transaction: 0,
             usage_limit: null,
             usage_per_user: 1,
+            target_users: [],
             
             imagePreview: null,
             imageFile: null,
@@ -412,6 +444,7 @@ function bannerManagement() {
             await this.loadInitialData();
             await this.loadBanners();
             await this.loadCategories();
+            await this.loadTargetCustomers(); // Pre-load customers
         },
         
         // Load initial data (categories & locations)
@@ -459,7 +492,7 @@ function bannerManagement() {
             try {
                 console.log('📥 Loading categories...', promoTypeId ? `for type: ${promoTypeId}` : 'all categories');
                 
-                let apiUrl = '/banners/api/categories';
+                let apiUrl = '{{ route("admin.banners.categories") }}';
                 
                 // Jika ada promoTypeId, filter by type, jika tidak ambil semua
                 if (promoTypeId) {
@@ -578,6 +611,39 @@ function bannerManagement() {
             }
         },
 
+        // CRM: Load target customers based on filter
+        async loadTargetCustomers() {
+            try {
+                let url = '{{ route("admin.banners.customers") }}';
+                if (this.customerFilter) {
+                    url += '?room_type=' + encodeURIComponent(this.customerFilter);
+                }
+                const res = await fetch(url);
+                const result = await res.json();
+                if (result.success) {
+                    this.targetCustomersList = result.data;
+                }
+            } catch (error) {
+                console.error('Error loading target customers:', error);
+            }
+        },
+
+        // CRM: Computed property to check if all (currently visible/searched) customers are selected
+        get isAllCustomersSelected() {
+            return this.filteredTargetCustomers.length > 0 &&
+                   this.filteredTargetCustomers.every(c => this.form.target_users.includes(c.id));
+        },
+
+        // CRM: Toggle select all customers in the current filtered/searched list
+        toggleSelectAllCustomers() {
+            const visibleIds = this.filteredTargetCustomers.map(c => c.id);
+            if (this.isAllCustomersSelected) {
+                this.form.target_users = this.form.target_users.filter(id => !visibleIds.includes(id));
+            } else {
+                this.form.target_users = [...new Set([...this.form.target_users, ...visibleIds])];
+            }
+        },
+
         // Filter Methods
         applyFilters() {
             console.log('🔍 Applying filters:', this.filters);
@@ -609,6 +675,7 @@ function bannerManagement() {
             
             // Isi form dengan data banner
             this.form.name = banner.name;
+            this.form.code = banner.code || '';
             this.form.description = banner.description || '';
             this.form.promo_type_id = banner.promo_type_id;
             this.form.promo_category_id = banner.promo_category_id;
@@ -625,6 +692,7 @@ function bannerManagement() {
             this.form.min_transaction = banner.min_transaction || 0;
             this.form.usage_limit = banner.usage_limit;
             this.form.usage_per_user = banner.usage_per_user || 1;
+            this.form.target_users = banner.users ? banner.users.map(u => u.id) : [];
             
             // Load categories berdasarkan promo type
             this.loadCategories();
@@ -674,6 +742,7 @@ function bannerManagement() {
         resetForm() {
             this.form = {
                 name: '',
+                code: '',
                 description: '',
                 promo_type_id: null,
                 promo_category_id: null,
@@ -690,13 +759,15 @@ function bannerManagement() {
                 min_transaction: 0,
                 usage_limit: null,
                 usage_per_user: 1,
+                target_users: [],
                 
                 imagePreview: null,
                 imageFile: null,
                 loading: false
             };
+            this.customerSearch = '';
         },
-                
+
         // Di dalam submitForm(), perbaiki validation locations:
         async submitForm() {
             console.log('📤 Submitting form to backend...');
@@ -706,6 +777,7 @@ function bannerManagement() {
                 // Debug form values
                 console.log('🔍 DEBUG Form values:', {
                     name: this.form.name,
+                    code: this.form.code,
                     promo_type_id: this.form.promo_type_id,
                     promo_category_id: this.form.promo_category_id,
                     locations: this.form.locations,
@@ -732,16 +804,18 @@ function bannerManagement() {
                     return;
                 }
 
-                if (!this.form.promo_category_id) {
+                if (this.form.promo_type_id == 1 && !this.form.promo_category_id) {
                     this.showNotification('Please select a category', 'error');
                     return;
                 }
 
-                // Validasi locations
-                if (!this.form.locations || !Array.isArray(this.form.locations) || this.form.locations.length === 0) {
-                    console.log('❌ Locations validation failed:', this.form.locations);
-                    this.showNotification('Please select at least one branch location', 'error');
-                    return;
+                // Validasi locations (hanya wajib jika bukan Banner)
+                if (this.form.promo_type_id != 1) {
+                    if (!this.form.locations || !Array.isArray(this.form.locations) || this.form.locations.length === 0) {
+                        console.log('❌ Locations validation failed:', this.form.locations);
+                        this.showNotification('Please select at least one branch location', 'error');
+                        return;
+                    }
                 }
 
                 // Konversi locations menjadi string
@@ -792,12 +866,12 @@ function bannerManagement() {
                 
                 if (this.modals.createEdit.isEdit && this.editingBannerId) {
                     // Untuk update: POST dengan _method=PUT
-                    endpoint = `/banners/${this.editingBannerId}`;
+                    endpoint = `{{ url('admin/banners') }}/${this.editingBannerId}`;
                     method = 'POST';
                     console.log('✏️ Update mode - Using POST with _method=PUT');
                 } else {
                     // Untuk create: POST biasa
-                    endpoint = '/banners';
+                    endpoint = '{{ route("admin.banners.store") }}';
                     method = 'POST';
                     console.log('🆕 Create mode');
                 }
@@ -807,9 +881,14 @@ function bannerManagement() {
                 
                 // Field dasar
                 formData.append('name', this.form.name.trim());
+                if (this.form.code && this.form.code.trim() !== '') {
+                    formData.append('code', this.form.code.trim());
+                }
                 formData.append('description', this.form.description || '');
                 formData.append('promo_type_id', this.form.promo_type_id.toString());
-                formData.append('category_id', this.form.promo_category_id.toString());
+                if (this.form.promo_type_id == 1 && this.form.promo_category_id) {
+                    formData.append('category_id', this.form.promo_category_id.toString());
+                }
                 formData.append('status', this.form.status);
                 formData.append('start_date', this.form.start_date);
                 formData.append('end_date', this.form.end_date);
@@ -976,8 +1055,67 @@ function bannerManagement() {
         },
 
         showNotification(message, type = 'success') {
-            // Simple notification
-            alert(`${type.toUpperCase()}: ${message}`);
+            const container = document.getElementById('toast-container');
+            if (!container) { console.warn('Toast container not found'); return; }
+
+            // Warna & icon berdasarkan type
+            const styles = {
+                success: { bg: '#16a34a', icon: '✅', label: 'Sukses' },
+                error:   { bg: '#dc2626', icon: '❌', label: 'Error'  },
+                warning: { bg: '#d97706', icon: '⚠️', label: 'Peringatan' },
+                info:    { bg: '#2563eb', icon: 'ℹ️', label: 'Info'  },
+            };
+            const s = styles[type] ?? styles.info;
+
+            // Buat elemen toast
+            const toast = document.createElement('div');
+            toast.setAttribute('role', 'alert');
+            toast.style.cssText = [
+                'pointer-events:auto',
+                'display:flex',
+                'align-items:flex-start',
+                'gap:0.75rem',
+                'padding:0.875rem 1rem',
+                `background:${s.bg}`,
+                'color:#fff',
+                'border-radius:0.5rem',
+                'box-shadow:0 4px 12px rgba(0,0,0,0.25)',
+                'font-size:0.875rem',
+                'line-height:1.4',
+                'max-width:360px',
+                'width:100%',
+                'transform:translateX(120%)',
+                'transition:transform 0.3s ease, opacity 0.3s ease',
+                'opacity:0',
+            ].join(';');
+
+            toast.innerHTML = `
+                <span style="font-size:1.1rem;flex-shrink:0;margin-top:1px">${s.icon}</span>
+                <div style="flex:1">
+                    <p style="font-weight:600;margin:0 0 2px">${s.label}</p>
+                    <p style="margin:0;opacity:0.9">${message}</p>
+                </div>
+                <button onclick="this.parentElement.remove()"
+                        style="background:none;border:none;color:#fff;cursor:pointer;font-size:1.1rem;opacity:0.8;padding:0;line-height:1;flex-shrink:0;margin-top:1px"
+                        aria-label="Tutup">&times;</button>
+            `;
+
+            container.appendChild(toast);
+
+            // Animasi masuk
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    toast.style.transform = 'translateX(0)';
+                    toast.style.opacity   = '1';
+                });
+            });
+
+            // Auto-dismiss setelah 4 detik
+            setTimeout(() => {
+                toast.style.transform = 'translateX(120%)';
+                toast.style.opacity   = '0';
+                setTimeout(() => toast.remove(), 320);
+            }, 4000);
         },
 
         // Update handleImageUpload untuk capture file
@@ -1007,7 +1145,7 @@ function bannerManagement() {
                 const formData = new FormData();
                 formData.append('_method', 'DELETE');
                 
-                const response = await fetch(`/banners/${bannerId}`, {
+                const response = await fetch(`{{ url('admin/banners') }}/${bannerId}`, {
                     method: 'POST', // Gunakan POST dengan method spoofing
                     headers: {
                         'X-CSRF-TOKEN': csrfToken,

@@ -15,10 +15,11 @@ class StoreBannerRequest extends FormRequest
     {
         $rules = [
             'name' => 'required|string|max:255',
+            'code' => 'nullable|string|unique:promos,code|max:50',
             'description' => 'nullable|string',
             'promo_type_id' => 'required|integer|exists:promo_types,id',
-            'category_id' => 'required|integer|exists:promo_categories,id',
-            'locations' => 'required|array|min:1',
+            'category_id' => 'nullable|integer|exists:promo_categories,id',
+            'locations' => 'nullable|array',
             'locations.*' => 'integer|exists:locations,id',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
@@ -34,10 +35,22 @@ class StoreBannerRequest extends FormRequest
             'min_transaction' => 'sometimes|numeric|min:0',
             'usage_limit' => 'sometimes|integer|min:0',
             'usage_per_user' => 'sometimes|integer|min:1',
+            'target_users' => 'nullable|array',
+            'target_users.*' => 'integer|exists:users,id',
         ];
 
         // Conditional validation untuk discount type - PASTIKAN DI DALAM METHOD
         $promoType = $this->input('promo_type_id');
+        
+        // Kategori wajib jika type = 1 (Banner)
+        if ($promoType == 1) {
+            $rules['category_id'] = 'required|integer|exists:promo_categories,id';
+        } else {
+            // Locations wajib jika type != 1 (Misal: Discount atau Voucher)
+            $rules['locations'] = 'required|array|min:1';
+            $rules['locations.*'] = 'integer|exists:locations,id';
+        }
+
         if ($promoType == 2) { // Discount type
             $rules['service_types'] = 'required|array|min:1';
             $rules['discount_type'] = 'required|in:percentage,fixed';

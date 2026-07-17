@@ -1,3 +1,8 @@
+@php
+    $popup = isset($banners) && $banners->count() > 0 ? $banners->first() : null;
+@endphp
+
+@if($popup)
 <!-- Modal Overlay Promo -->
 <div id="promoModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center px-4 py-6" style="display: none;">
     <!-- Modal Container -->
@@ -10,33 +15,30 @@
         </button>
 
         <!-- Header dengan Gambar/Banner Promo -->
-        <div class="relative bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 px-6 py-12 text-center">
+        <div class="relative w-full h-48 md:h-64 bg-gray-200">
+            @if($popup->image_url)
+                <img src="{{ $popup->image_url }}" alt="{{ $popup->name }}" class="w-full h-full object-cover">
+            @else
+                <div class="w-full h-full bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 flex items-center justify-center">
+                    <h2 class="text-3xl font-bold text-white mb-2">{{ $popup->name }}</h2>
+                </div>
+            @endif
+            
             <!-- Badge "PROMO" -->
             <div class="absolute top-4 left-4">
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-yellow-400 text-orange-900 shadow-lg animate-pulse">
                     🔥 PROMO SPESIAL
                 </span>
             </div>
-
-            <!-- Icon/Ilustrasi -->
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-white rounded-full mb-4 shadow-xl">
-                <svg class="w-12 h-12 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-            </div>
-
-            <!-- Judul Promo -->
-            <h2 class="text-3xl font-bold text-white mb-2">Diskon 30%</h2>
-            <p class="text-orange-100 text-sm">Untuk Semua Layanan</p>
         </div>
 
         <!-- Content -->
         <div class="px-6 py-6">
             <!-- Deskripsi Promo -->
             <div class="text-center mb-5">
-                <h3 class="text-xl font-bold text-gray-800 mb-3">🎉 Promo Akhir Tahun!</h3>
+                <h3 class="text-xl font-bold text-gray-800 mb-3">{{ $popup->name }}</h3>
                 <p class="text-gray-600 leading-relaxed text-sm mb-4">
-                    Dapatkan diskon hingga <span class="font-bold text-orange-600">30%</span> untuk semua jenis ruangan. Promo terbatas hanya sampai akhir bulan ini!
+                    {{ $popup->description ?? 'Dapatkan penawaran menarik khusus untuk Anda. Promo terbatas!' }}
                 </p>
             </div>
 
@@ -309,3 +311,4 @@ function resetPromoModal() {
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 </style>
+@endif
