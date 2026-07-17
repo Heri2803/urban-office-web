@@ -6,8 +6,8 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Event;
-use App\Models\Transaction;
-use App\Observers\TransactionObserver;
+use App\Events\TransactionSettled;
+use App\Listeners\CreateContractOnSettlement;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -20,6 +20,10 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
+
+        TransactionSettled::class => [
+            CreateContractOnSettlement::class,
+        ],
     ];
 
     /**
@@ -27,7 +31,7 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        Transaction::observe(TransactionObserver::class);
+        
     }
 
     /**

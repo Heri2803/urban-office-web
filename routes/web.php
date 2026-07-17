@@ -23,6 +23,12 @@ use App\Http\Controllers\Booking\PaymentController;
 use App\Http\Controllers\Backend\MitraPanel\MitraAccessController;
 use App\Http\Controllers\Booking\LunchOptionController;
 use App\Http\Controllers\Booking\BonusController;
+use App\Http\Controllers\Mails\DocumentController; 
+use App\Http\Controllers\Backend\Admin\PublicContractController;
+use App\Http\Controllers\Booking\ContractController;
+use App\Http\Controllers\Booking\SuratController as CustomerSuratController;
+use App\Http\Controllers\Notification\BrowserNotificationController;
+
 
     Route::get('cities', [BookingApiController::class, 'getCities']);
     Route::get('locations', [BookingApiController::class, 'getLocations']);
@@ -31,10 +37,11 @@ use App\Http\Controllers\Booking\BonusController;
     Route::get('room-types', [BookingApiController::class, 'getRoomTypes']);
     Route::get('service-prices/{roomId}', [BookingApiController::class, 'getServicePriceByRoom']);
     Route::get('/get-service-price', [ServicePriceController::class, 'getServicePrice']);
-    Route::get('/virtual-office-packages', [ServicePriceController::class, 'getVirtualOfficePackages']);
+    Route::get('/virtual-office-packages', [ServicePriceController::class, 'getVirtualOfficePackages'])->name('virtual-office-packages');
     Route::get('/coworking-passes', [App\Http\Controllers\Booking\ServicePriceController::class, 'getCoworkingPasses']);
     // Event Space Prices
     Route::get('/event-space-prices', [App\Http\Controllers\Booking\ServicePriceController::class, 'getEventSpacePrices']);
+    Route::post('/promo/check', [BookingApiController::class, 'checkPromo'])->name('promo.check');
 
 Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
 Route::post('/midtrans/callback', [TransactionController::class, 'callback'])->name('midtrans.callback');
@@ -46,6 +53,7 @@ Route::get('/profile-status', [ProfileController::class, 'showDashboard'])->name
 Route::post('/dashboard/mitra', [MitraController::class, 'store'])->name('dashboard.mitra');
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle']);
 Route::get('auth/callback', [GoogleController::class, 'handleGoogleCallback']);
+Route::get('/policy-modal/{type}', [App\Http\Controllers\PolicyModalController::class, 'show'])->name('policy.modal');
 Route::get('/midtrans/return', [PaymentController::class, 'handleReturn'])->name('midtrans.return');
 
 Route::prefix('payment')->name('payment.')->group(function () {
@@ -63,9 +71,22 @@ Route::prefix('api')->name('api.')->middleware('auth')->group(function () {
         Route::get('/', [BonusController::class, 'index']); 
         Route::get('/{id}', [BonusController::class, 'show']);
         Route::get('/usage-history/all', [BonusController::class, 'usageHistory']);
+        Route::get('/monthly/overview', [BonusController::class, 'monthlyOverview'])
+            ->name('monthly.overview');
     });
     Route::get('/customer/bonus-claims/history', [BonusController::class, 'claimHistory'])
         ->name('customer.bonus-claims.history');
+
+    Route::prefix('browser-notifications')->name('browser-notifications.')->group(function () {
+        Route::get('/pending', [BrowserNotificationController::class, 'getPendingNotifications']);
+    });
+
+    // ✅ TAMBAHAN: Database Notification API
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/unread-count', [BrowserNotificationController::class, 'unreadCount']);
+        Route::post('/{notificationId}/mark-read', [BrowserNotificationController::class, 'markAsRead']);
+        Route::post('/mark-all-read', [BrowserNotificationController::class, 'markAllAsRead']);
+    });
 });
 
 // Root route - redirect berdasarkan status login
@@ -127,9 +148,11 @@ Route::get('/transaction/{id}', [TransactionController::class, 'show'])
 Route::get('/check-mitra-status', [MitraAccessController::class, 'checkStatus'])
     ->name('check.mitra.status')
     ->middleware('auth');
-
 Route::get('/lunch-options', [LunchOptionController::class, 'getByLocation']);
 Route::get('/lunch-options/location/{locationId}', [LunchOptionController::class, 'getByLocation']);
+
+// Public Deals & Promos Route
+Route::get('/deals', [\App\Http\Controllers\Promo\CustomerPromoController::class, 'deals'])->name('deals');
 
 // Dashboard Routes (DILINDUNGI AUTH GUARD) - Semua route dashboard wajib login
 Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(function () {
@@ -144,6 +167,10 @@ Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(functi
 
     Route::get('/mails', [MailController::class, 'mailContent'])->name('mails');
 
+    // Customer Promo Routes (Private)
+    Route::get('/my-vouchers', [\App\Http\Controllers\Promo\CustomerPromoController::class, 'myVouchers'])->name('my-vouchers');
+    Route::post('/promo/claim', [\App\Http\Controllers\Promo\CustomerPromoController::class, 'claim'])->name('promo.claim');
+
     Route::prefix('mails')->name('mails.')->group(function () {
         Route::get('/transaction/{transaction}/messages', 
             [\App\Http\Controllers\Mails\CustomerMessageController::class, 'getTransactionMessages'])
@@ -156,9 +183,47 @@ Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(functi
         Route::post('/transaction/{transaction}/mark-read', 
             [\App\Http\Controllers\Mails\CustomerMessageController::class, 'markAsRead'])
             ->name('transaction.mark-read');
+
+        // DOCUMENTS ROUTES (Virtual Office)
+        Route::prefix('documents')->name('documents.')->group(function () {
+            // Get all documents for a transaction
+            Route::get('/transaction/{transaction}', 
+                [\App\Http\Controllers\Mails\DocumentController::class, 'index'])
+                ->name('index');
+            
+            // Check document status for a transaction
+            Route::get('/status/{transaction}', 
+                [\App\Http\Controllers\Mails\DocumentController::class, 'status'])
+                ->name('status');
+            
+            // Upload new document
+            Route::post('/upload', 
+                [\App\Http\Controllers\Mails\DocumentController::class, 'store'])
+                ->name('upload');
+
+            Route::put('/{document}', 
+                [\App\Http\Controllers\Mails\DocumentController::class, 'update'])
+                ->name('update');
+            
+            Route::patch('/{document}', 
+                [\App\Http\Controllers\Mails\DocumentController::class, 'update'])
+                ->name('update.patch');
+            
+            // Delete document (only pending)
+            Route::delete('/{document}', 
+                [\App\Http\Controllers\Mails\DocumentController::class, 'destroy'])
+                ->name('destroy');
+            
+            // Verify document (admin only - butuh middleware admin)
+            Route::post('/{document}/verify', 
+                [\App\Http\Controllers\Mails\DocumentController::class, 'verify'])
+                ->name('verify')
+                ->middleware('admin'); // Pastikan middleware admin ada
+        });
     });
 
     Route::get('/invoice', [InvoiceController::class, 'index'])->name('invoice');
+    Route::get('/invoice/search', [InvoiceController::class, 'searchByNumber'])->name('invoice.search');
 
     Route::get('/reward', function () {
         $user = Auth::user();
@@ -183,12 +248,29 @@ Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(functi
     })->name('reward');
 
     Route::get('/bookingform', function () {
-        $user = App\Http\Controllers\AuthController::getUser();
-        return view('layouts.dashboard.bookingform', compact('user'));
+        $user = auth()->user();
+        if ($user) {
+            $user->load(['promos' => function ($q) {
+                $q->wherePivot('is_used', false)
+                  ->where('status', 'active')
+                  ->where('end_date', '>=', now())
+                  ->with('type');
+            }]);
+        }
+        
+        $publicPromos = App\Models\Promo::where('promo_type_id', 1)
+            ->where('status', 'active')
+            ->where('is_approved', true)
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->with('type')
+            ->get();
+            
+        return view('layouts.dashboard.bookingform', compact('user', 'publicPromos'));
     })->name('booking');
 
     Route::get('/bookinginvoice', function () {
-        $user = App\Http\Controllers\AuthController::getUser();
+        $user = auth()->user();
         return view('layouts.dashboard.bookinginvoice', compact('user'));
     })->name('bookinginvoice');
 
@@ -215,13 +297,40 @@ Route::prefix('dashboard')->name('dashboard.')->middleware('auth')->group(functi
         return view('layouts.dashboard.profile', compact('user'));
     })->name('profile');
 
+    Route::prefix('my-surats')->name('surats.')->group(function () {
+        Route::get('/', [CustomerSuratController::class, 'index'])->name('index');
+        Route::get('/{surat}', [CustomerSuratController::class, 'show'])->name('show');
+        Route::get('/{surat}/download', [CustomerSuratController::class, 'download'])->name('download');
+        Route::post('/{surat}/mark-read', [CustomerSuratController::class, 'markAsRead'])->name('mark-read');
+    });
+
 });
 
 Route::middleware(['auth'])->group(function() {
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
 });
 
+Route::middleware(['auth'])->prefix('customer')->group(function () {
+    Route::get('/contracts', [ContractController::class, 'index'])->name('customer.contracts.index');
+    Route::get('/contracts/{contract}/download', [ContractController::class, 'download'])->name('customer.contracts.download');
+    Route::get('/contracts/{contract}/renew', [ContractController::class, 'renewForm'])->name('customer.contracts.renew.form');
+    Route::post('/contracts/{contractId}/renew', [ContractController::class, 'renewProcess'])->name('customer.contracts.renew.process');
+    
+    // Download Addendum Route
+    Route::get('/addendums/{addendum}/download', [ContractController::class, 'downloadAddendum'])->name('customer.addendums.download');
+    
+    // Renew Addendum Route
+    Route::get('/addendums/{addendum}/renew', [ContractController::class, 'renewAddendumForm'])->name('customer.addendums.renew.form');
+    Route::post('/addendums/{addendumId}/renew', [ContractController::class, 'renewAddendumProcess'])->name('customer.addendums.renew.process');
+});
 
+Route::middleware('throttle:30,1')
+    ->get('/contract/verify/{token}', [PublicContractController::class, 'show'])
+    ->name('contract.public.verify');
+
+Route::middleware('throttle:30,1')
+    ->get('/addendum/verify/{token}', [PublicContractController::class, 'showAddendum'])
+    ->name('addendum.public.verify');
 
 // Route untuk clear session manual (untuk development)
 Route::get('/clear-session', function () {

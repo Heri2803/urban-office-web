@@ -12,14 +12,33 @@
             <!-- Hero Section -->
             <div id="hero-section" 
                 class="relative rounded-lg mx-2 sm:mx-4 md:mx-6 lg:mx-8 mt-6 overflow-hidden transition-all duration-800 ease-out opacity-0 translate-y-6">
-                <!-- Background Slider Wrapper -->
                 <div class="absolute inset-0">
-                    <div class="absolute inset-0 bg-cover bg-center hero-slide opacity-100 transition-opacity duration-1000"
-                        style="background-image: url('{{ asset('assets/banner.jpg') }}')"></div>
-                    <div class="absolute inset-0 bg-cover bg-center hero-slide opacity-0 transition-opacity duration-1000"
-                        style="background-image: url('https://images.unsplash.com/photo-1556761175-b413da4baf72?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')"></div>
-                    <div class="absolute inset-0 bg-cover bg-center hero-slide opacity-0 transition-opacity duration-1000"
-                        style="background-image: url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1926&q=80')"></div>
+                    @php
+                        $hasHeroBanners = isset($heroBanners) && $heroBanners->count() > 0;
+                        $totalHeroBanners = $hasHeroBanners ? $heroBanners->count() : 0;
+                        $slideIndex = 0;
+                    @endphp
+                    
+                    @if($hasHeroBanners)
+                        @foreach($heroBanners as $banner)
+                            <div class="absolute inset-0 bg-cover bg-center hero-slide transition-opacity duration-1000 {{ $slideIndex === 0 ? 'opacity-100' : 'opacity-0' }}"
+                                style="background-image: url('{{ $banner->image_url }}')">
+                            </div>
+                            @php $slideIndex++; @endphp
+                        @endforeach
+                    @endif
+
+                    {{-- Selalu tambahkan static fallback agar ada animasi slide jika dynamic banner kurang dari 2 --}}
+                    @if($totalHeroBanners < 2)
+                        <div class="absolute inset-0 bg-cover bg-center hero-slide transition-opacity duration-1000 {{ $slideIndex === 0 ? 'opacity-100' : 'opacity-0' }}"
+                            style="background-image: url('{{ asset('assets/banner.jpg') }}')"></div>
+                        @php $slideIndex++; @endphp
+                        
+                        @if($totalHeroBanners === 0)
+                            <div class="absolute inset-0 bg-cover bg-center hero-slide transition-opacity duration-1000 opacity-0"
+                                style="background-image: url('https://images.unsplash.com/photo-1556761175-b413da4baf72?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')"></div>
+                        @endif
+                    @endif
                 </div>
                 <!-- Content -->
                 <div class="relative rounded-lg mx-1 sm:mx-4 md:mx-6 lg:mx-8 mt-6 overflow-hidden h-48 sm:h-56 md:h-72 lg:h-96 xl:h-[28rem] 2xl:h-[32rem]">
@@ -158,6 +177,38 @@
                                 </a>
                             </div>
             
+                            <!-- My Contract -->
+                            <div class="snap-start">
+                                <a href="{{ route('customer.contracts.index') }}" class="block">
+                                    <div class="service-card-container rounded-lg p-2 md:p-3 lg:p-5 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group flex flex-col items-center justify-center hover:scale-105" style="background-color: #FF9D23;">
+                                        <div style="background-color: rgba(193, 70, 0, 0.4);" class="w-8 h-8 md:w-10 md:h-10 lg:w-14 lg:h-14 rounded-lg flex items-center justify-center mb-1.5 md:mb-2 lg:mb-3 group-hover:opacity-80 transition-all flex-shrink-0">
+                                            <svg class="w-4 h-4 md:w-5 md:h-5 lg:w-7 lg:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            </svg>
+                                        </div>
+                                        <h3 class="font-semibold text-xs md:text-sm lg:text-base text-white text-center leading-tight px-1">
+                                            Kontrak
+                                        </h3>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!-- Deals & Voucher -->
+                            <div class="snap-start">
+                                <a href="{{ route('deals') }}" class="block">
+                                    <div class="service-card-container rounded-lg p-2 md:p-3 lg:p-5 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group flex flex-col items-center justify-center hover:scale-105" style="background-color: #FF9D23;">
+                                        <div style="background-color: rgba(193, 70, 0, 0.4);" class="w-8 h-8 md:w-10 md:h-10 lg:w-14 lg:h-14 rounded-lg flex items-center justify-center mb-1.5 md:mb-2 lg:mb-3 group-hover:opacity-80 transition-all flex-shrink-0">
+                                            <svg class="w-4 h-4 md:w-5 md:h-5 lg:w-7 lg:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>
+                                            </svg>
+                                        </div>
+                                        <h3 class="font-semibold text-xs md:text-sm lg:text-base text-white text-center leading-tight px-1">
+                                            Voucher
+                                        </h3>
+                                    </div>
+                                </a>
+                            </div>
+                            
                             <!-- Reward -->
                             <div class="snap-start">
                                 <a href="{{ route('dashboard.reward') }}" class="block">
@@ -491,6 +542,26 @@
                 </div>
             </div>
 
+            <!-- Promo Section Banner -->
+            @if(isset($sectionBanners) && $sectionBanners->count() > 0)
+                <div class="w-full pt-2 md:pt-4 pb-2">
+                    <div class="max-w-full mx-auto px-4">
+                        <h2 class="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-4 md:mb-6">
+                            Promo Terbatas
+                        </h2>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 lg:gap-4">
+                            @foreach($sectionBanners as $banner)
+                                <div class="w-full bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md group cursor-pointer transition-all duration-300 hover:scale-[1.02]">
+                                    <div class="relative w-full overflow-hidden" style="padding-bottom: 56.25%;">
+                                        <img src="{{ $banner->image_url }}" alt="{{ $banner->name }}" class="absolute inset-0 w-full h-full object-cover">
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <!-- Latest Information -->
             <div class="w-full pt-2 md:pt-4 pb-8">
                 <div class="max-w-full mx-auto px-4">
@@ -520,12 +591,16 @@
                     <!-- Next Button - Right Side (Outside Container) -->
                     <button id="info-next-btn" class="group absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 inline-flex items-center justify-center w-10 h-10 md:w-11 md:h-11 bg-orange-500 hover:bg-orange-600 hover:scale-110 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 ease-out">
                         <svg class="w-5 h-5 md:w-6 md:h-6 transition-transform duration-300 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                         </svg>
                     </button>
                 </div>
             </div>
-    </div>
+        </div>
+
+    @if(isset($popupBanners) && $popupBanners->count() > 0)
+        @include('layouts.components.promo-modal', ['banners' => $popupBanners])
+    @endif
 
     <script>
         // Animation timers
@@ -1533,3 +1608,8 @@
         }
     }
 </style>
+
+@if(isset($popupBanners) && $popupBanners->count() > 0)
+    @include('layouts.components.promo-modal', ['banners' => $popupBanners])
+@endif
+@endsection

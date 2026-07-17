@@ -42,6 +42,15 @@ return [
     'mode' => env('XENDIT_MODE', 'test'),
 ],
 
+    'balesotomatis' => [
+        'api_key'   => env('BALESOTOMATIS_API_KEY'),
+        'number_id' => env('BALESOTOMATIS_NUMBER_ID'),
+    ],
 
+    'midtrans' => [
+        'server_key'    => env('MIDTRANS_SERVER_KEY'),
+        'client_key'    => env('MIDTRANS_CLIENT_KEY'),
+        'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
+    ],
 
 ];

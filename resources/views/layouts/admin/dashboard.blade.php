@@ -6,23 +6,80 @@
 <div x-data="dashboardData()" x-init="init()" class="space-y-6">
     
     {{-- Header Section --}}
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-            <p class="text-sm text-gray-600 mt-1">Welcome back, <span class="font-semibold">Admin Budi</span> - Cabang Surabaya</p>
+            <p class="text-sm text-gray-600 mt-1">Welcome back, <span class="font-semibold">{{ auth()->user()->name ?? 'Admin' }}</span> - Cabang {{ auth()->user()->location->name ?? 'Pusat' }}</p>
         </div>
-        <div class="flex items-center gap-3">
-            <button @click="refreshData()" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+
+            {{-- Revenue Filter Group --}}
+            <div class="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2 py-1.5 shadow-sm">
+                {{-- Label kecil --}}
+                <span class="text-xs text-gray-400 font-medium hidden sm:inline">Revenue:</span>
+
+                {{-- Dropdown tipe filter --}}
+                <div class="relative">
+                    <select x-model="revenueFilter"
+                            @change="setDefaultRevenueValue()"
+                            class="text-xs border-0 bg-transparent text-gray-600 focus:outline-none appearance-none cursor-pointer pr-5 pl-0.5 font-medium">
+                        <option value="today">Hari Ini</option>
+                        <option value="date">Tanggal</option>
+                        <option value="month">Bulan</option>
+                        <option value="year">Tahun</option>
+                    </select>
+                    <svg class="w-3 h-3 text-gray-400 absolute right-0.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+
+                {{-- Separator --}}
+                <span class="text-gray-200 text-sm">|</span>
+
+                {{-- Input: Tanggal --}}
+                <input x-show="revenueFilter === 'date'"
+                       type="date" x-model="revenueValue"
+                       class="text-xs border-0 bg-transparent text-gray-600 focus:outline-none w-28">
+
+                {{-- Input: Bulan --}}
+                <input x-show="revenueFilter === 'month'"
+                       type="month" x-model="revenueValue"
+                       class="text-xs border-0 bg-transparent text-gray-600 focus:outline-none w-24">
+
+                {{-- Input: Tahun --}}
+                <select x-show="revenueFilter === 'year'"
+                        x-model="revenueValue"
+                        class="text-xs border-0 bg-transparent text-gray-600 focus:outline-none appearance-none cursor-pointer pr-1">
+                    <template x-for="y in [2026,2025,2024,2023]" :key="y">
+                        <option :value="y" x-text="y"></option>
+                    </template>
+                </select>
+
+                {{-- Tombol Apply --}}
+                <button @click="applyRevenueFilter()"
+                        :disabled="revenueLoading"
+                        class="inline-flex items-center justify-center gap-1 bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white text-xs font-semibold px-2.5 py-1 rounded-md transition-all duration-200">
+                    <template x-if="!revenueLoading">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </template>
+                    <template x-if="revenueLoading">
+                        <svg class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                        </svg>
+                    </template>
+                    <span class="hidden sm:inline">Apply</span>
+                </button>
+            </div>
+
+            {{-- Refresh Button --}}
+            <button @click="refreshData()" class="px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition flex items-center gap-2 text-sm shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                 </svg>
-                <span class="text-sm">Refresh</span>
+                <span>Refresh</span>
             </button>
-            <!-- <a href="{{ route('admin.booking.walk-in-booking') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                </svg>
-                <span class="text-sm">Walk-in Booking</span>
-            </a> -->
         </div>
     </div>
 
@@ -31,9 +88,9 @@
         {{-- Card 1: Total Booking Hari Ini --}}
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-gray-600 mb-1">Total Booking Hari Ini</p>
-                    <h3 class="text-3xl font-bold text-gray-800" x-text="stats.totalBookingToday">0</h3>
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-600 mb-1 truncate" x-text="revenueLabel.replace('Revenue', 'Total Booking')">Total Booking Hari Ini</p>
+                    <h3 class="text-xl font-bold text-gray-800" x-text="stats.bookingFiltered ?? stats.totalBookingToday">0</h3>
                     <p class="text-xs text-green-600 mt-2 flex items-center gap-1">
                         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"></path>
@@ -49,20 +106,20 @@
             </div>
         </div>
 
-        {{-- Card 2: Revenue Hari Ini --}}
+        {{-- Card 2: Revenue --}}
         <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-gray-600 mb-1">Revenue Hari Ini</p>
-                    <h3 class="text-3xl font-bold text-gray-800" x-text="formatCurrency(stats.revenueToday)">Rp 0</h3>
-                    <p class="text-xs text-green-600 mt-2 flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <div class="min-w-0">
+                    <p class="text-sm text-gray-500 mb-1 truncate" x-text="revenueLabel">Revenue Hari Ini</p>
+                    <h3 class="text-xl font-bold text-gray-800" x-text="formatCurrency(stats.revenueFiltered ?? stats.revenueToday)">Rp 0</h3>
+                    <p class="text-xs text-emerald-600 mt-2 flex items-center gap-1">
+                        <svg class="w-3 h-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"></path>
                         </svg>
-                        <span>+8% dari kemarin</span>
+                        <span x-text="revenueFilter === 'today' ? 'Transaksi settlement' : 'Total settlement periode ini'">Transaksi settlement</span>
                     </p>
                 </div>
-                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
                     <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
@@ -75,7 +132,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600 mb-1">Pending Konfirmasi</p>
-                    <h3 class="text-3xl font-bold text-gray-800" x-text="stats.pendingConfirmation">0</h3>
+                    <h3 class="text-xl font-bold text-gray-800" x-text="stats.pendingConfirmation">0</h3>
                     <p class="text-xs text-orange-600 mt-2 flex items-center gap-1">
                         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
@@ -96,7 +153,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600 mb-1">Ruangan Terisi</p>
-                    <h3 class="text-3xl font-bold text-gray-800">
+                    <h3 class="text-xl font-bold text-gray-800">
                         <span x-text="stats.roomsOccupied">0</span><span class="text-lg text-gray-500">/</span><span class="text-lg text-gray-500" x-text="stats.totalRooms">0</span>
                     </h3>
                     <p class="text-xs text-gray-600 mt-2" x-text="stats.occupancyRate + '% Occupancy Rate'">0% Occupancy Rate</p>
@@ -542,13 +599,23 @@ function dashboardData() {
     return {
         // Stats Data
         stats: {
-            totalBookingToday: 0,
-            revenueToday: 0,
+            totalBookingToday:  0,
+            revenueToday:       0,
+            revenueFiltered:    0,   // ← nilai sesuai filter aktif
+            revenueLabel:       'Revenue Hari Ini',
+            revenueFilter:      'today',
+            bookingFiltered:    0,
             pendingConfirmation: 0,
-            roomsOccupied: 0,
-            totalRooms: 0,
-            occupancyRate: 0
+            roomsOccupied:      0,
+            totalRooms:         0,
+            occupancyRate:      0
         },
+
+        // Revenue Filter
+        revenueFilter:  'today',
+        revenueValue:   '',
+        revenueLabel:   'Revenue Hari Ini',
+        revenueLoading: false,
 
         // Chart Data
         chartMetric: 'revenue',
@@ -823,23 +890,58 @@ function dashboardData() {
         // ==========================================
         async fetchDashboardStats() {
             try {
-                console.log('📊 Fetching dashboard stats...');
-                const response = await fetch(`/admin/dashboard/stats?location_id=${this.currentLocationId}`);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                
+                const params = new URLSearchParams({
+                    location_id:    this.currentLocationId,
+                    revenue_filter: this.revenueFilter,
+                    revenue_value:  this.revenueValue || '',
+                });
+
+                console.log('📊 Fetching dashboard stats...', Object.fromEntries(params));
+                const response = await fetch(`/admin/dashboard/stats?${params}`);
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
                 const result = await response.json();
-                
+
                 if (result.success && result.data) {
-                    this.stats = result.data;
+                    this.stats        = result.data;
+                    this.revenueLabel = result.data.revenueLabel ?? 'Revenue Hari Ini';
                     console.log('✅ Stats loaded:', this.stats);
                 } else {
                     console.warn('⚠️ Invalid stats response');
                 }
             } catch (error) {
                 console.error('❌ Failed to fetch stats:', error);
+            }
+        },
+
+        // Terapkan filter revenue (dipanggil dari tombol Apply)
+        async applyRevenueFilter() {
+            if (this.revenueLoading) return;
+            this.revenueLoading = true;
+            try {
+                await this.fetchDashboardStats();
+            } finally {
+                this.revenueLoading = false;
+            }
+        },
+
+        // Set nilai default input saat tipe filter berubah
+        setDefaultRevenueValue() {
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            switch (this.revenueFilter) {
+                case 'date':
+                    this.revenueValue = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+                    break;
+                case 'month':
+                    this.revenueValue = `${now.getFullYear()}-${pad(now.getMonth()+1)}`;
+                    break;
+                case 'year':
+                    this.revenueValue = now.getFullYear().toString();
+                    break;
+                default:
+                    this.revenueValue = '';
             }
         },
 
