@@ -140,9 +140,20 @@ class AuthController extends Controller
             
             \Log::info('Sample unread transactions:', $sampleUnread->toArray());
             
+            // Ambil Banner berdasarkan kategori (Promo Type 1)
+            $activeBannersQuery = \App\Models\Promo::where('promo_type_id', 1)
+                ->where('status', 'active')
+                ->where('end_date', '>=', now())
+                ->orderBy('priority', 'asc')
+                ->get();
+                
+            $heroBanners = $activeBannersQuery->where('promo_category_id', 1)->values();
+            $sectionBanners = $activeBannersQuery->where('promo_category_id', 2)->values();
+            $popupBanners = $activeBannersQuery->where('promo_category_id', 3)->values();
+            
             $user = AuthController::getUser();
             
-            return view('layouts.dashboard.home', compact('user', 'unreadTransactions'));
+            return view('layouts.dashboard.home', compact('user', 'unreadTransactions', 'heroBanners', 'sectionBanners', 'popupBanners'));
         }
 
 }

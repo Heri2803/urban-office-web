@@ -21,17 +21,17 @@ class EnsureAdmin
             return redirect()->route('login');
         }
         
-        // 2. Cek role admin SAJA (bukan superadmin)
+        // 2. Cek role admin atau finance
         $user = Auth::user();
         
-        if ($user->role !== 'admin') { // ❌ HANYA 'admin' yang boleh
+        if (!in_array($user->role, ['admin', 'finance'])) { // ❌ HANYA 'admin' atau 'finance' yang boleh
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Forbidden. Admin access required'
+                    'message' => 'Forbidden. Admin or Finance access required'
                 ], 403);
             }
-            abort(403, 'Forbidden. Admin access required');
+            abort(403, 'Forbidden. Admin or Finance access required');
         }
         
         return $next($request);

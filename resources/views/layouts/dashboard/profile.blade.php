@@ -183,6 +183,227 @@
             </div>
         </div>
 
+        {{-- ===== INVOICE SEARCH SECTION ===== --}}
+        <div class="px-4 sm:px-6 lg:px-8 pt-6 pb-2 animate-fade-in-up">
+            <div class="max-w-5xl mx-auto">
+                <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-5 sm:p-7">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg sm:text-xl font-bold text-gray-800">Cek Status Invoice</h2>
+                            <p class="text-xs sm:text-sm text-gray-500">Masukkan nomor invoice untuk melihat detail transaksi</p>
+                        </div>
+                    </div>
+
+                    {{-- Search Input + Button --}}
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <div class="flex-1 relative">
+                            <input
+                                id="invoiceSearchInput"
+                                type="text"
+                                placeholder="Contoh: ORDER-XXXXXX/VO/20240315/660/2026"
+                                class="w-full pl-4 pr-10 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition"
+                                onkeydown="if(event.key==='Enter') searchInvoice()"
+                            />
+                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <button
+                            id="invoiceSearchBtn"
+                            onclick="searchInvoice()"
+                            class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 hover:scale-105 shadow-md flex items-center justify-center gap-2 sm:w-auto w-full"
+                        >
+                            <svg id="searchBtnIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            <svg id="searchBtnSpinner" class="w-4 h-4 animate-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                            </svg>
+                            <span id="searchBtnText">Cari Invoice</span>
+                        </button>
+                    </div>
+
+                    {{-- Error / info message --}}
+                    <div id="invoiceSearchError" class="hidden mt-3 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M12 3a9 9 0 110 18A9 9 0 0112 3z"/>
+                        </svg>
+                        <span id="invoiceSearchErrorText"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ===== MY SURATS SECTION ===== --}}
+        <div class="px-4 sm:px-6 lg:px-8 pt-2 pb-6 animate-fade-in-up">
+            <div class="max-w-5xl mx-auto">
+                <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-5 sm:p-7">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-lg sm:text-xl font-bold text-gray-800">Kotak Surat Saya</h2>
+                                <p class="text-xs sm:text-sm text-gray-500">Lihat dan lacak surat fisik yang diterima oleh Urban Office</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+                            @auth
+                                @php $unreadSurats = auth()->user()->unreadSuratsCount(); @endphp
+                                @if($unreadSurats > 0)
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">
+                                        <span class="w-2 h-2 bg-red-500 rounded-full animate-ping"></span> {{ $unreadSurats }} Baru
+                                    </span>
+                                @endif
+                            @endauth
+                            <a href="{{ route('dashboard.surats.index') }}"
+                               class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 hover:scale-105 shadow-md flex items-center justify-center gap-2 sm:w-auto w-full"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+                                </svg>
+                                Buka Kotak Surat
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- ===== INVOICE RESULT MODAL ===== --}}
+        <div id="invoiceResultModal"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in hidden"
+            onclick="closeInvoiceModal()">
+            <div
+                class="bg-white rounded-2xl shadow-2xl m-4 w-full max-w-lg animate-slide-in-up overflow-hidden"
+                onclick="event.stopPropagation()"
+            >
+                {{-- Modal Header --}}
+                <div class="bg-gradient-to-r from-orange-500 to-orange-400 px-6 py-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-white font-bold text-lg">Detail Invoice</h3>
+                    </div>
+                    <button onclick="closeInvoiceModal()" class="text-white/70 hover:text-white transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                {{-- Modal Body --}}
+                <div class="p-5 sm:p-6 max-h-[70vh] overflow-y-auto">
+
+                    {{-- Invoice Summary --}}
+                    <div class="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs text-gray-500 mb-1">Nomor Invoice</p>
+                                <p id="modal_invoice_number" class="text-sm font-bold text-gray-800 break-all"></p>
+                            </div>
+                            <span id="modal_status_badge" class="flex-shrink-0 text-xs font-semibold px-3 py-1 rounded-full"></span>
+                        </div>
+                        <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <p class="text-xs text-gray-500">Tanggal Invoice</p>
+                                <p id="modal_formatted_date" class="font-medium text-gray-800"></p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Total</p>
+                                <p id="modal_formatted_total" class="font-semibold text-orange-600"></p>
+                            </div>
+                            <div class="col-span-2">
+                                <p class="text-xs text-gray-500">Dibuat Oleh</p>
+                                <p id="modal_created_by" class="font-medium text-gray-800"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Divider --}}
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="flex-1 h-px bg-gray-200"></div>
+                        <span class="text-xs text-gray-400 font-medium uppercase tracking-wide">Detail Transaksi</span>
+                        <div class="flex-1 h-px bg-gray-200"></div>
+                    </div>
+
+                    {{-- Transaction Details Grid --}}
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <p class="text-xs text-gray-500 mb-1">👤 Nama Lengkap</p>
+                                <p id="modal_nama_lengkap" class="text-sm font-medium text-gray-800"></p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <p class="text-xs text-gray-500 mb-1">🏢 Perusahaan</p>
+                                <p id="modal_company_name" class="text-sm font-medium text-gray-800"></p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <p class="text-xs text-gray-500 mb-1">📧 Email</p>
+                                <p id="modal_email" class="text-sm font-medium text-gray-800 break-all"></p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <p class="text-xs text-gray-500 mb-1">📱 Telepon</p>
+                                <p id="modal_phone" class="text-sm font-medium text-gray-800"></p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <p class="text-xs text-gray-500 mb-1">🏠 Tipe Ruangan</p>
+                                <p id="modal_room_type" class="text-sm font-medium text-gray-800"></p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <p class="text-xs text-gray-500 mb-1">📍 Lokasi</p>
+                                <p id="modal_location_name" class="text-sm font-medium text-gray-800"></p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <p class="text-xs text-gray-500 mb-1">📅 Tanggal Booking</p>
+                                <p id="modal_booking_date" class="text-sm font-medium text-gray-800"></p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <p class="text-xs text-gray-500 mb-1">⏱️ Durasi</p>
+                                <p id="modal_duration_text" class="text-sm font-medium text-gray-800"></p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <p class="text-xs text-gray-500 mb-1">👥 Peserta</p>
+                                <p id="modal_participants_text" class="text-sm font-medium text-gray-800"></p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <p class="text-xs text-gray-500 mb-1">📦 Paket</p>
+                                <p id="modal_paket" class="text-sm font-medium text-gray-800"></p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3 col-span-1 sm:col-span-2">
+                                <p class="text-xs text-gray-500 mb-1">🔖 Order ID</p>
+                                <p id="modal_order_id" class="text-sm font-medium text-gray-800 break-all"></p>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Modal Footer --}}
+                <div class="px-5 sm:px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end">
+                    <button onclick="closeInvoiceModal()" class="px-5 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-xl transition-all duration-300">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+
         {{-- FAQ Section --}}
         <div class="p-4 sm:p-6 lg:p-8 animate-fade-in-up">
             <div class="max-w-5xl mx-auto">
@@ -438,10 +659,108 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Close popup when pressing Escape key
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && showUserPopup) {
-            toggleUserPopup();
+        if (e.key === 'Escape') {
+            if (showUserPopup) toggleUserPopup();
+            closeInvoiceModal();
         }
     });
+
+    // ========== INVOICE SEARCH ==========
+    window.searchInvoice = function() {
+        const input   = document.getElementById('invoiceSearchInput');
+        const errBox  = document.getElementById('invoiceSearchError');
+        const errText = document.getElementById('invoiceSearchErrorText');
+        const btnText = document.getElementById('searchBtnText');
+        const btnIcon = document.getElementById('searchBtnIcon');
+        const spinner = document.getElementById('searchBtnSpinner');
+        const btn     = document.getElementById('invoiceSearchBtn');
+
+        const invoiceNumber = input.value.trim();
+        if (!invoiceNumber) {
+            showSearchError('Nomor invoice tidak boleh kosong.');
+            return;
+        }
+
+        // --- Loading state ---
+        errBox.classList.add('hidden');
+        btnText.textContent = 'Mencari...';
+        btnIcon.classList.add('hidden');
+        spinner.classList.remove('hidden');
+        btn.disabled = true;
+
+        fetch(`{{ route('dashboard.invoice.search') }}?invoice_number=${encodeURIComponent(invoiceNumber)}`, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(json => {
+            if (json.found) {
+                populateInvoiceModal(json.data);
+                openInvoiceModal();
+            } else {
+                showSearchError(json.message || 'Invoice tidak ditemukan.');
+            }
+        })
+        .catch(() => {
+            showSearchError('Terjadi kesalahan. Silakan coba lagi.');
+        })
+        .finally(() => {
+            btnText.textContent = 'Cari Invoice';
+            btnIcon.classList.remove('hidden');
+            spinner.classList.add('hidden');
+            btn.disabled = false;
+        });
+    };
+
+    function showSearchError(msg) {
+        const errBox  = document.getElementById('invoiceSearchError');
+        const errText = document.getElementById('invoiceSearchErrorText');
+        errText.textContent = msg;
+        errBox.classList.remove('hidden');
+    }
+
+    function populateInvoiceModal(d) {
+        document.getElementById('modal_invoice_number').textContent  = d.invoice_number;
+        document.getElementById('modal_formatted_date').textContent  = d.formatted_date;
+        document.getElementById('modal_formatted_total').textContent = d.formatted_total;
+        document.getElementById('modal_created_by').textContent      = d.created_by_name;
+        document.getElementById('modal_nama_lengkap').textContent    = d.nama_lengkap;
+        document.getElementById('modal_company_name').textContent    = d.company_name;
+        document.getElementById('modal_email').textContent           = d.email;
+        document.getElementById('modal_phone').textContent           = d.phone;
+        document.getElementById('modal_room_type').textContent       = d.room_type;
+        document.getElementById('modal_location_name').textContent   = d.location_name;
+        document.getElementById('modal_booking_date').textContent    = d.booking_date;
+        document.getElementById('modal_duration_text').textContent   = d.duration_text;
+        document.getElementById('modal_participants_text').textContent = d.participants_text;
+        document.getElementById('modal_paket').textContent           = d.paket;
+        document.getElementById('modal_order_id').textContent        = d.order_id;
+
+        // Status badge
+        const badge = document.getElementById('modal_status_badge');
+        const statusMap = {
+            'settlement': { label: '✅ Lunas',   cls: 'bg-green-100 text-green-700' },
+            'pending'   : { label: '⏳ Pending', cls: 'bg-yellow-100 text-yellow-700' },
+            'expired'   : { label: '❌ Expired', cls: 'bg-red-100 text-red-700' },
+            'expire'    : { label: '❌ Expired', cls: 'bg-red-100 text-red-700' },
+        };
+        const s = statusMap[d.status] || { label: d.status, cls: 'bg-gray-100 text-gray-700' };
+        badge.textContent  = s.label;
+        badge.className    = `flex-shrink-0 text-xs font-semibold px-3 py-1 rounded-full ${s.cls}`;
+    }
+
+    window.openInvoiceModal = function() {
+        const modal = document.getElementById('invoiceResultModal');
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeInvoiceModal = function() {
+        const modal = document.getElementById('invoiceResultModal');
+        if (!modal.classList.contains('hidden')) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+    };
 });
 </script>
 @endsection

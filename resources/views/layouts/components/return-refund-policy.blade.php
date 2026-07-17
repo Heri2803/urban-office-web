@@ -1,5 +1,5 @@
 <!-- File: resources/views/components/return-refund-policy.blade.php -->
-<div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+<div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] max-h-[90dvh] overflow-hidden">
     <!-- Header -->
     <div class="sticky top-0 bg-white border-b px-8 py-6">
         <div class="flex items-center justify-between">
@@ -17,7 +17,7 @@
     </div>
     
     <!-- Content -->
-    <div class="p-8 overflow-y-auto max-h-[calc(90vh-120px)]">
+    <div class="p-8 overflow-y-auto max-h-[calc(90vh-120px)] max-h-[calc(90dvh-120px)]">
         <div class="prose prose-lg max-w-none">
             
             <!-- Introduction -->

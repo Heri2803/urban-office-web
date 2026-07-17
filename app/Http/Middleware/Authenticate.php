@@ -17,8 +17,8 @@ class Authenticate extends Middleware
         if ($request->has('order_id') || $request->has('transaction_status')) {
             return null; // Jangan redirect ke login
         }
-        
-        return route('login');
+
+        return route('beforelogin');
     }
 }
 
