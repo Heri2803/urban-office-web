@@ -13,7 +13,7 @@
                 'status' => 'Virtual Office'
             ])
         </div>
-
+ 
         {{-- Main Content Container --}}
         <div class="flex flex-col lg:flex-row gap-6">
             
@@ -82,6 +82,31 @@
                                         <span x-text="roomType"></span>
                                     </button>
                                 </template>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {{-- Tanggal Booking --}}
+                            <div x-show="needsBookingDate()">
+                                <label class="block text-sm font-semibold text-gray-800 mb-2">
+                                    Tanggal Mulai <span class="text-red-500">*</span>
+                                </label>
+                                <input type="date" 
+                                    x-model="bookingDate" 
+                                    :min="getTodayDate()"
+                                    @change="loadAvailableRooms()" 
+                                    class="form-input border-2 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 rounded-lg p-3 w-full text-gray-800 font-medium transition-all duration-200 hover:border-gray-400">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-800 mb-2">
+                                    Waktu Mulai Akses <span class="text-red-500">*</span>
+                                </label>
+                                <input type="time"
+                                    x-model="startTime"
+                                    @change="loadAvailableRooms()" 
+                                    class="form-input border-2 border-gray-300 focus:border-orange-500 focus:ring 
+                                            focus:ring-orange-200 rounded-lg p-3 w-full text-gray-800 font-medium
+                                            placeholder-gray-500 transition-all duration-200 hover:border-gray-400">
                             </div>
                         </div>
 
@@ -363,29 +388,6 @@
                                        :placeholder="getQuantityPlaceholder()"
                                        class="form-input border-2 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 rounded-lg p-3 w-full text-gray-800 font-medium placeholder-gray-500 transition-all duration-200 hover:border-gray-400">
                             </div>
-                            
-                            {{-- Tanggal Booking --}}
-                            <div x-show="needsBookingDate()">
-                                <label class="block text-sm font-semibold text-gray-800 mb-2">
-                                    Tanggal Mulai <span class="text-red-500">*</span>
-                                </label>
-                                <input type="date" 
-                                    x-model="bookingDate" 
-                                    :min="getTodayDate()"
-                                    @change="loadAvailableRooms()" 
-                                    class="form-input border-2 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 rounded-lg p-3 w-full text-gray-800 font-medium transition-all duration-200 hover:border-gray-400">
-                            </div>
-                            <div class="mt-4">
-                                <label class="block text-sm font-semibold text-gray-800 mb-2">
-                                    Waktu Mulai Akses <span class="text-red-500">*</span>
-                                </label>
-                                <input type="time"
-                                    x-model="startTime"
-                                    @change="loadAvailableRooms()" 
-                                    class="form-input border-2 border-gray-300 focus:border-orange-500 focus:ring 
-                                            focus:ring-orange-200 rounded-lg p-3 w-full text-gray-800 font-medium
-                                            placeholder-gray-500 transition-all duration-200 hover:border-gray-400">
-                            </div>
                         </div>
 
                         <div x-show="['Meeting Room', 'Event Space', 'Private Office', 'Coworking Space'].includes(selectedRoomType)" x-transition class="bg-orange-50 border border-orange-200 rounded-xl p-4 md:p-6">
@@ -510,6 +512,112 @@
                             </div>
                         </div>
 
+                        {{-- NIK, NPWP, dan Nama Perusahaan --}}
+                        <div x-show="['Virtual Office', 'Private Office'].includes(selectedRoomType)" x-transition class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-800 mb-2">
+                                    Tanggal Mulai Kontrak <span class="text-red-500">*</span>
+                                </label>
+                                <input type="date" x-model="contractDate" :min="getTodayDate()"
+                                    class="form-input border-2 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 rounded-lg p-3 w-full text-gray-800 font-medium placeholder-gray-500 transition-all duration-200 hover:border-gray-400">
+                                <p class="text-xs text-gray-500 mt-1">Tanggal Kontrak Mulai Active</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-800 mb-2">
+                                    NIK (Opsional)
+                                </label>
+                                <input type="text" x-model="nik" placeholder="KTP / NIK"
+                                    class="form-input border-2 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 rounded-lg p-3 w-full text-gray-800 font-medium placeholder-gray-500 transition-all duration-200 hover:border-gray-400">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-800 mb-2">
+                                    NPWP Perusahaan (Opsional)
+                                </label>
+                                <input type="text" x-model="npwp" placeholder="NPWP Perusahaan"
+                                    class="form-input border-2 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 rounded-lg p-3 w-full text-gray-800 font-medium placeholder-gray-500 transition-all duration-200 hover:border-gray-400">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-800 mb-2">
+                                    Nama Perusahaan (Opsional)
+                                </label>
+                                <input type="text" x-model="companyName" placeholder="Nama Perusahaan (jika ada)"
+                                    class="form-input border-2 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 rounded-lg p-3 w-full text-gray-800 font-medium placeholder-gray-500 transition-all duration-200 hover:border-gray-400">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-semibold text-gray-800 mb-2">
+                                    Alamat Perusahaan <span class="text-red-500">*</span>
+                                </label>
+                                <textarea x-model="companyAddress" 
+                                        rows="3" 
+                                        placeholder="Masukkan alamat lengkap perusahaan..."
+                                        class="form-input border-2 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 rounded-lg p-3 w-full text-gray-800 font-medium placeholder-gray-500 transition-all duration-200 hover:border-gray-400">
+                                </textarea>
+                            </div>
+                        </div>
+
+                        {{-- Catatan Tambahan --}}
+                        <div class="mt-4">
+                            <label class="block text-sm font-semibold text-gray-800 mb-2">
+                                Catatan Tambahan (Opsional)
+                            </label>
+                            <textarea x-model="notes" rows="3" placeholder="Tulis catatan atau request khusus Anda di sini..."
+                                class="form-input border-2 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 rounded-lg p-3 w-full text-gray-800 font-medium placeholder-gray-500 transition-all duration-200 hover:border-gray-400"></textarea>
+                        </div>
+
+                        {{-- Promo Code Section --}}
+                        <div class="mt-6 p-4 bg-white border-2 border-gray-200 rounded-xl shadow-sm">
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-sm font-bold text-gray-800 flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                    </svg>
+                                    Gunakan Kode Promo
+                                </label>
+                                @auth
+                                <button type="button" @click="showPromoModal = true" class="text-sm text-blue-600 hover:text-blue-800 font-semibold flex items-center bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-full transition-colors">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
+                                    Lihat Kupon Saya
+                                </button>
+                                @endauth
+                            </div>
+                            
+                            <div class="flex gap-2 relative">
+                                <input type="text" x-model="promoCode" placeholder="Masukkan kode promo"
+                                    :disabled="appliedPromo || isApplyingPromo"
+                                    class="form-input flex-1 border-2 border-gray-300 focus:border-orange-500 focus:ring focus:ring-orange-200 rounded-lg p-3 text-gray-800 font-medium uppercase placeholder-gray-400 transition-all duration-200 hover:border-gray-400 disabled:bg-gray-100 disabled:text-gray-500">
+                                
+                                <template x-if="!appliedPromo">
+                                    <button type="button" @click="applyPromoCode()"
+                                        :disabled="isApplyingPromo"
+                                        class="bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center disabled:opacity-50">
+                                        <span x-show="!isApplyingPromo">Gunakan</span>
+                                        <span x-show="isApplyingPromo" class="flex items-center">
+                                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Tunggu...
+                                        </span>
+                                    </button>
+                                </template>
+
+                                <template x-if="appliedPromo">
+                                    <button type="button" @click="removePromoCode()"
+                                        class="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                                        Hapus
+                                    </button>
+                                </template>
+                            </div>
+                            
+                            <!-- Promo Message -->
+                            <div x-show="promoMessage" x-transition class="mt-2 text-sm flex items-center" 
+                                 :class="promoError ? 'text-red-500' : 'text-green-600'">
+                                <svg x-show="!promoError" class="w-4 h-4 mr-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                <svg x-show="promoError" class="w-4 h-4 mr-1 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span x-text="promoMessage"></span>
+                            </div>
+                        </div>
+
                         {{-- Checkout Summary (Hidden until checkout clicked) --}}
                         <div x-show="showSummary" x-transition class="bg-gradient-to-br from-orange-50 to-orange-100 border-2 border-orange-300 rounded-xl p-6 space-y-4">
                             <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
@@ -565,13 +673,23 @@
                                     </div>
                                 </div>
                                 
-                                <div class="flex justify-between text-orange-600">
+                                <template x-if="summary.promoDiscount > 0">
+                                    <div class="flex justify-between text-green-600 font-semibold items-center">
+                                        <span class="flex items-center">
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                                            Diskon Promo (<span x-text="appliedPromo?.code"></span>):
+                                        </span>
+                                        <span x-text="'- ' + formatCurrency(summary.promoDiscount)"></span>
+                                    </div>
+                                </template>
+                                
+                                <div class="flex justify-between text-orange-600" x-show="summary.adminFee > 0">
                                     <span>Admin Fee (10%):</span>
                                     <span class="font-semibold" x-text="formatCurrency(summary.adminFee)"></span>
                                 </div>
-                                <div class="flex justify-between text-red-600">
-                                    <span>Potongan (10%):</span>
-                                    <span class="font-semibold" x-text="formatCurrency(summary.adminFee)"></span>
+                                <div class="flex justify-between text-red-600" x-show="summary.discountAdminFee > 0">
+                                    <span>Potongan Admin (10%):</span>
+                                    <span class="font-semibold" x-text="'- ' + formatCurrency(summary.discountAdminFee)"></span>
                                 </div>
                                 <div x-show="summary.deposit > 0" class="flex justify-between text-blue-600">
                                     <span>Deposit:</span>
@@ -629,6 +747,106 @@
                                 Pastikan data yang Anda masukkan sudah benar sebelum melakukan checkout
                             </p>
                         </div>
+                        {{-- Modal Kupon Saya & Promo Banner --}}
+                        <div x-show="showPromoModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+                            <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+                                <div x-show="showPromoModal" x-transition.opacity class="fixed inset-0 transition-opacity bg-gray-900 bg-opacity-75 backdrop-blur-sm" @click="showPromoModal = false"></div>
+
+                                <div x-show="showPromoModal" 
+                                     x-transition:enter="ease-out duration-300" 
+                                     x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                                     x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" 
+                                     x-transition:leave="ease-in duration-200" 
+                                     x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
+                                     x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" 
+                                     class="relative inline-block w-full max-w-2xl p-6 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-2xl">
+                                    
+                                    <div class="flex justify-between items-center mb-6">
+                                        <h3 class="text-2xl font-bold text-gray-900">Kupon & Promo Saya</h3>
+                                        <button type="button" @click="showPromoModal = false" class="text-gray-400 hover:text-gray-500 hover:bg-gray-100 p-2 rounded-full transition-colors">
+                                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                        </button>
+                                    </div>
+
+                                    <div class="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
+                                        
+                                        <!-- Banner Promos (Public) -->
+                                        <template x-if="publicPromos && publicPromos.length > 0">
+                                            <div class="mb-4">
+                                                <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Promo Menarik (Spesial)</h4>
+                                                <div class="space-y-3">
+                                                    <template x-for="promo in publicPromos" :key="promo.id">
+                                                        <div class="border border-green-200 bg-green-50 rounded-xl p-4 flex flex-col sm:flex-row gap-4 justify-between items-center hover:border-green-300 transition-colors group">
+                                                            <div class="flex-1">
+                                                                <div class="flex items-center gap-2 mb-1">
+                                                                    <span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">Promo Eksklusif</span>
+                                                                    <span class="text-xs text-gray-500 font-mono" x-text="promo.code"></span>
+                                                                </div>
+                                                                <h4 class="font-bold text-gray-900 text-lg" x-text="promo.name"></h4>
+                                                                <p class="text-sm text-gray-600 line-clamp-1" x-text="promo.description"></p>
+                                                                <p class="text-xs text-gray-500 mt-1">
+                                                                    Berlaku untuk: <span class="font-medium text-gray-700" x-text="formatServiceTypes(promo.service_types)"></span>
+                                                                    <span class="mx-1">&middot;</span>
+                                                                    Exp: <span class="font-medium text-gray-700" x-text="formatExpiry(promo.end_date)"></span>
+                                                                </p>
+                                                            </div>
+                                                            <div class="flex flex-col gap-1 items-end shrink-0 w-full sm:w-auto">
+                                                                <p x-show="summary.subtotal < promo.min_transaction" class="text-xs text-red-500 font-medium">Min. Trx: Rp <span x-text="formatPrice(promo.min_transaction)"></span></p>
+                                                                <button type="button" @click="promoCode = promo.code; showPromoModal = false; applyPromoCode()" 
+                                                                        :disabled="summary.subtotal < promo.min_transaction"
+                                                                        :class="summary.subtotal < promo.min_transaction ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'"
+                                                                        class="text-white font-semibold py-2 px-6 rounded-lg transition-colors w-full sm:w-auto">
+                                                                    Gunakan
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        <!-- User Vouchers -->
+                                        <div>
+                                            <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2" x-show="publicPromos && publicPromos.length > 0">Kupon Tersimpan</h4>
+                                            <template x-if="userVouchers.length === 0">
+                                                <div class="text-center py-6 border-2 border-dashed border-gray-200 rounded-xl">
+                                                    <svg class="w-12 h-12 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
+                                                    <p class="text-gray-500 font-medium text-sm">Anda belum memiliki kupon tersimpan.</p>
+                                                    <a href="{{ route('deals') }}" class="text-blue-600 hover:underline mt-1 text-sm inline-block">Cari Kupon Disini</a>
+                                                </div>
+                                            </template>
+                                            <template x-for="voucher in userVouchers" :key="voucher.id">
+                                                <div class="border border-gray-200 rounded-xl p-4 flex flex-col sm:flex-row gap-4 justify-between items-center hover:border-blue-300 hover:bg-blue-50 transition-colors group mb-3">
+                                                    <div class="flex-1">
+                                                        <div class="flex items-center gap-2 mb-1">
+                                                            <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded" x-text="voucher.promo_type_id == 3 ? 'Voucher Khusus' : 'Diskon'"></span>
+                                                            <span class="text-xs text-gray-500 font-mono" x-text="voucher.code"></span>
+                                                        </div>
+                                                        <h4 class="font-bold text-gray-900 text-lg" x-text="voucher.name"></h4>
+                                                        <p class="text-sm text-gray-600 line-clamp-1" x-text="voucher.description"></p>
+                                                        <p class="text-xs text-gray-500 mt-1">
+                                                            Berlaku untuk: <span class="font-medium text-gray-700" x-text="formatServiceTypes(voucher.service_types)"></span>
+                                                            <span class="mx-1">&middot;</span>
+                                                            Exp: <span class="font-medium text-gray-700" x-text="formatExpiry(voucher.end_date)"></span>
+                                                        </p>
+                                                    </div>
+                                                    <div class="flex flex-col gap-1 items-end shrink-0 w-full sm:w-auto">
+                                                        <p x-show="summary.subtotal < voucher.min_transaction" class="text-xs text-red-500 font-medium">Min. Trx: Rp <span x-text="formatPrice(voucher.min_transaction)"></span></p>
+                                                        <button type="button" @click="promoCode = voucher.code; showPromoModal = false; applyPromoCode()" 
+                                                                :disabled="summary.subtotal < voucher.min_transaction"
+                                                                :class="summary.subtotal < voucher.min_transaction ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'"
+                                                                class="text-white font-semibold py-2 px-6 rounded-lg transition-colors w-full sm:w-auto">
+                                                            Gunakan
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -656,11 +874,17 @@ function enhancedBookingForm() {
         quantity: '',
         numPeople: '',
         bookingDate: '',
+        contractDate: '',
         startTime: '',
         namaLengkap: '',
         email: '',
         phone: '',
         statusPkp: '',
+        nik: '',
+        npwp: '',
+        companyName: '',
+        companyAddress: '',
+        notes: '',
         
         // Room Type Specific
         privateOfficeDuration: '',
@@ -695,12 +919,24 @@ function enhancedBookingForm() {
         // UI States
         showSummary: false,
         isSubmitting: false,
+        isApplyingPromo: false,
         capacityWarning: '',
+
+        // Promo States
+        promoCode: '',
+        appliedPromo: null,
+        promoDiscount: 0,
+        promoMessage: '',
+        promoError: false,
+        showPromoModal: false,
+        userVouchers: @json($user ? $user->promos : []),
+        publicPromos: @json($publicPromos ?? []),
         
         // Summary
         summary: {
             subtotal: 0,
             adminFee: 0,
+            discountAdminFee: 0,
             deposit: 0,
             total: 0,
             details: ''
@@ -1211,6 +1447,7 @@ function enhancedBookingForm() {
         resetRoomSpecificFields() {
             this.selectedRoom = '';
             this.quantity = '';
+            this.contractDate = '';
             this.privateOfficeDuration = '';
             this.virtualOfficePackage = '';
             this.virtualOfficeDuration = ''; 
@@ -1261,15 +1498,42 @@ function enhancedBookingForm() {
                 // ✅ TOTAL SUBTOTAL = Room Subtotal + Lunch Subtotal
                 const totalSubtotal = roomSubtotal + lunchSubtotal;
         
-                const adminFee = totalSubtotal * 0.10;
+                // ✅ PROMO CALCULATION
+                let currentPromoDiscount = 0;
+                if (this.appliedPromo) {
+                    if (totalSubtotal < this.appliedPromo.min_transaction) {
+                         // Reset promo jika subtotal tidak memenuhi
+                         this.promoMessage = 'Minimal transaksi untuk promo tidak terpenuhi ('+this.formatPrice(this.appliedPromo.min_transaction)+')';
+                         this.promoError = true;
+                         this.appliedPromo = null;
+                         this.promoCode = '';
+                    } else {
+                         if (this.appliedPromo.discount_type === 'percentage') {
+                             currentPromoDiscount = (this.appliedPromo.discount_value / 100) * totalSubtotal;
+                         } else {
+                             currentPromoDiscount = this.appliedPromo.discount_value;
+                         }
+                         if (currentPromoDiscount > totalSubtotal) {
+                             currentPromoDiscount = totalSubtotal;
+                         }
+                    }
+                }
+                this.promoDiscount = currentPromoDiscount;
+        
+                const netSubtotal = Math.max(0, totalSubtotal - currentPromoDiscount);
+                const adminFee = Math.round(netSubtotal * 0.10); // usually admin fee applied on net amount
+                const discountAdminFee = adminFee; // Default potongan untuk admin fee
                 const deposit = this.calculateDeposit(totalSubtotal);
-                const total = totalSubtotal + deposit;
+                const total = netSubtotal + adminFee - discountAdminFee + deposit;
         
                 this.summary = {
                     roomSubtotal,        // ✅ Subtotal untuk layanan saja
                     lunchTotal: lunchSubtotal, // ✅ Subtotal untuk lunch saja  
                     subtotal: totalSubtotal,// ✅ Total subtotal (room + lunch)
+                    promoDiscount: currentPromoDiscount, // ✅ Diskon Promo
+                    netSubtotal, // ✅ Subtotal setelah diskon
                     adminFee,
+                    discountAdminFee, // ✅ Potongan admin fee
                     deposit,
                     total,
                     details
@@ -1307,6 +1571,23 @@ function enhancedBookingForm() {
         // 🆕 Helper: Format harga ke Rupiah
         formatPrice(price) {
             return new Intl.NumberFormat('id-ID').format(price);
+        },
+
+        // 🆕 Helper: Format daftar service_types promo jadi label yang enak dibaca
+        formatServiceTypes(serviceTypes) {
+            if (!serviceTypes || serviceTypes.length === 0 || serviceTypes.includes('all-services')) {
+                return 'Semua Layanan';
+            }
+            return serviceTypes
+                .map(slug => slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '))
+                .join(', ');
+        },
+
+        // 🆕 Helper: Format tanggal expired promo/voucher
+        formatExpiry(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
         },
 
         // ✅ CALCULATE LUNCH TOTAL
@@ -1363,6 +1644,90 @@ function enhancedBookingForm() {
         
             return subtotal;
         },
+
+        // ✅ PROMO JAVASCRIPT FUNCTIONS
+        async applyPromoCode() {
+            if (!this.promoCode) {
+                this.promoError = true;
+                this.promoMessage = 'Masukkan kode promo terlebih dahulu';
+                return;
+            }
+
+            if (!this.selectedRoomType || !this.location) {
+                this.promoError = true;
+                this.promoMessage = 'Silakan pilih lokasi dan jenis layanan terlebih dahulu';
+                return;
+            }
+
+            // Hitung subtotal sementara untuk validasi
+            await this.calculatePrice();
+            
+            this.isApplyingPromo = true;
+            this.promoMessage = '';
+            
+            try {
+                // Determine token 
+                let token = '';
+                const metaTag = document.querySelector('meta[name="csrf-token"]');
+                if (metaTag) {
+                    token = metaTag.getAttribute('content');
+                } else {
+                    // Fallback using direct variable if meta tag missing
+                    // token = '{{ csrf_token() }}'; We can't interpolate here since it's JS file?
+                    // Actually this is a blade file, so we could use a JS global or let's just hope meta exist.
+                    console.warn('CSRF token meta not found');
+                }
+
+                const response = await fetch('/promo/check', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    },
+                    body: JSON.stringify({
+                        promo_code: this.promoCode,
+                        location_id: this.location,
+                        room_type: this.selectedRoomType,
+                        subtotal: this.summary.subtotal
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    this.appliedPromo = {
+                        code: data.data.promo_code,
+                        name: data.data.promo_name,
+                        discount_type: data.data.discount_type,
+                        discount_value: data.data.discount_value,
+                        min_transaction: data.data.min_transaction
+                    };
+                    this.promoError = false;
+                    this.promoMessage = data.message;
+                    await this.calculatePrice(); // Recalculate with promo
+                } else {
+                    this.removePromoCode();
+                    this.promoError = true;
+                    this.promoMessage = data.message || 'Kode promo tidak valid';
+                }
+            } catch (error) {
+                this.promoError = true;
+                this.promoMessage = 'Gagal memvalidasi promo. Silakan coba lagi.';
+                console.error('Promo error:', error);
+            } finally {
+                this.isApplyingPromo = false;
+            }
+        },
+
+        removePromoCode() {
+            this.promoCode = '';
+            this.appliedPromo = null;
+            this.promoDiscount = 0;
+            this.promoMessage = '';
+            this.promoError = false;
+            this.calculatePrice();
+        },
+
         // ✅ Get details Virtual Office (updated)
         getVirtualOfficeDetails() {
             if (!this.virtualOfficePackage) return '';
@@ -2265,6 +2630,13 @@ function enhancedBookingForm() {
         console.log('Lunch Quantity:', this.lunchQuantity);
         console.log('Lunch Total:', this.lunchTotal);
         
+        let selectedCoffeeBreak = null;
+        if (this.selectedRoomType === 'Meeting Room') {
+            selectedCoffeeBreak = this.meetingCoffeeBreak || null;
+        } else if (this.selectedRoomType === 'Event Space') {
+            selectedCoffeeBreak = this.eventCoffeeBreak || null;
+        }
+
         const data = {
             city_id: this.city || null,
             location_id: this.location || null,
@@ -2272,7 +2644,14 @@ function enhancedBookingForm() {
             nama_lengkap: this.namaLengkap || '',
             email: this.email || '',
             phone: this.phone || '',
+            nik: this.nik || null,
+            npwp: this.npwp || null,
+            company_name: this.companyName || null,
+            company_address: this.companyAddress || null,
+            notes: this.notes || null,
+            coffee_break: selectedCoffeeBreak,
             booking_date: this.bookingDate || null,
+            contract_date: this.contractDate || null,
             start_time: this.startTime || null,
             
             // ✅ CRITICAL: Kirim breakdown yang benar
@@ -2281,6 +2660,10 @@ function enhancedBookingForm() {
             deposit: Math.round(this.summary?.deposit || 0),
             total_amount: Math.round(this.summary?.total || 0),     // Subtotal + Deposit
             lunch_total: Math.round(this.lunchTotal || 0),          // Lunch saja
+            
+            // ✅ PROMO DATA
+            promo_code: this.appliedPromo ? this.appliedPromo.code : null,
+            discount_amount: Math.round(this.promoDiscount || 0),
         };
         
         // Add room_id if selected
@@ -2497,13 +2880,25 @@ function enhancedBookingForm() {
             console.log('Deposit:', this.summary?.deposit);
             console.log('Grand Total:', this.summary?.total);
             
-            const expectedTotal = Math.round((this.summary?.subtotal || 0) + (this.summary?.deposit || 0));
+            const expectedTotal = Math.round(
+                (this.summary?.subtotal || 0) 
+                - (this.summary?.promoDiscount || 0)
+                + (this.summary?.adminFee || 0)
+                - (this.summary?.discountAdminFee || 0)
+                + (this.summary?.deposit || 0)
+            );
             const actualTotal = Math.round(this.summary?.total || 0);
             
             if (expectedTotal !== actualTotal) {
                 console.error('❌ MISMATCH DETECTED!');
                 console.error('Expected:', expectedTotal);
                 console.error('Actual:', actualTotal);
+                console.error('Breakdown:', {
+                    subtotal: this.summary?.subtotal,
+                    promoDiscount: this.summary?.promoDiscount,
+                    adminFee: this.summary?.adminFee,
+                    deposit: this.summary?.deposit
+                });
                 alert('Terjadi kesalahan perhitungan harga. Silakan refresh halaman.');
                 throw new Error('Price calculation mismatch');
             }
@@ -2608,6 +3003,10 @@ function enhancedBookingForm() {
                             return false;
                         }
                     }
+                    if (!this.companyAddress?.trim()) {
+                        alert('Alamat perusahaan wajib diisi!');
+                        return false;
+                    }
                     break;
                     
                 case 'Private Office':
@@ -2627,6 +3026,10 @@ function enhancedBookingForm() {
                     if (this.capacityWarning) {
                         const confirm = window.confirm('Jumlah orang melebihi kapasitas ruangan. Lanjutkan?');
                         if (!confirm) return false;
+                    }
+                    if (!this.companyAddress?.trim()) {
+                        alert('Alamat perusahaan wajib diisi!');
+                        return false;
                     }
                     break;
                     

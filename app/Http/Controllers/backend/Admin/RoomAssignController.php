@@ -20,18 +20,36 @@ class RoomAssignController extends Controller
     public function getRoomsWithStatus(Request $request)
     {
         try {
-            $rooms = Room::with(['transactions' => function($query) {
-                $query->where('status', 'settlement')
-                    ->where(function($q) {
+            $targetDate = $request->input('target_date');
+            $targetTime = $request->input('target_time');
+            
+            $targetNow = Carbon::now();
+            if ($targetDate) {
+                if ($targetTime) {
+                    $targetNow = Carbon::parse($targetDate . ' ' . $targetTime);
+                } else {
+                    $targetNow = Carbon::parse($targetDate)->startOfDay();
+                }
+            }
+
+            $rooms = Room::with(['transactions' => function($query) use ($targetNow, $targetDate) {
+                $query->where('status', 'settlement');
+                
+                if ($targetDate) {
+                    $query->whereDate('booking_date', '>=', $targetNow->copy()->subDays(14)->toDateString());
+                } else {
+                    $query->where(function($q) {
                         $now = Carbon::now();
                         $q->whereDate('booking_date', '>=', $now->copy()->subDays(2)->toDateString());
-                    })
-                    ->orderBy('booking_date', 'asc')
-                    ->orderBy('start_time', 'asc');
+                    });
+                }
+                
+                $query->orderBy('booking_date', 'asc')
+                      ->orderBy('start_time', 'asc');
             }, 'roomType', 'location'])->get();
 
-            $formattedRooms = $rooms->map(function($room) {
-                return $this->formatRoomData($room);
+            $formattedRooms = $rooms->map(function($room) use ($targetNow) {
+                return $this->formatRoomData($room, $targetNow);
             });
 
             $uniqueRoomTypes = $rooms->pluck('roomType')
@@ -144,9 +162,27 @@ class RoomAssignController extends Controller
         return $icons[$roomTypeName] ?? '🏢';
     }
 
-    private function formatRoomData($room)
+    private function formatRoomData($room, $targetNow = null)
     {
-        $activeTransaction = $room->transactions->first();
+        $targetNow = $targetNow ?? Carbon::now();
+        
+        // Find a transaction that is either currently occupied OR booked for later TODAY
+        $activeTransaction = $room->transactions->first(function($transaction) use ($targetNow) {
+            $startDateTime = Carbon::parse($transaction->booking_date_only . ' ' . $transaction->start_time);
+            $endDateTime = $this->calculateBookingEndTime($transaction);
+            
+            // 1. Transaction is currently occupied
+            if ($targetNow->between($startDateTime, $endDateTime)) {
+                return true;
+            }
+            
+            // 2. Transaction is booked for the same day and hasn't started yet
+            if ($targetNow->isSameDay($startDateTime) && $targetNow->lt($startDateTime)) {
+                return true;
+            }
+            
+            return false;
+        });
         
         $roomData = [
             'id' => $room->id,
@@ -171,7 +207,7 @@ class RoomAssignController extends Controller
 
         // ✅ Jika ada transaction, hitung status real-time
         if ($activeTransaction) {
-            $calculatedStatus = $this->calculateStatus($activeTransaction);
+            $calculatedStatus = $this->calculateStatus($activeTransaction, $targetNow);
             
             // ✅ Override status dengan calculated status
             $roomData['status'] = $calculatedStatus;
@@ -181,7 +217,7 @@ class RoomAssignController extends Controller
                 $roomData['booking'] = $this->formatBookingData($activeTransaction);
                 
                 // ✅ Hitung remaining time
-                $remainingData = $this->calculateRemainingTime($activeTransaction);
+                $remainingData = $this->calculateRemainingTime($activeTransaction, $targetNow);
                 $roomData['remainingTime'] = $remainingData['formatted'];
                 $roomData['remainingMinutes'] = $remainingData['minutes'];
             }
@@ -218,10 +254,10 @@ class RoomAssignController extends Controller
         ];
     }
 
-    private function calculateStatus($transaction)
+    private function calculateStatus($transaction, $targetNow = null)
     {
-        $now = Carbon::now();
-        $startDateTime = $startDateTime = Carbon::parse($transaction->booking_date_only . ' ' . $transaction->start_time);;
+        $now = $targetNow ?? Carbon::now();
+        $startDateTime = Carbon::parse($transaction->booking_date_only . ' ' . $transaction->start_time);
         $endDateTime = $this->calculateBookingEndTime($transaction);
 
         if ($now->lt($startDateTime)) {
@@ -235,7 +271,7 @@ class RoomAssignController extends Controller
 
     private function calculateBookingEndTime($transaction)
     {
-        $startDateTime = $startDateTime = Carbon::parse($transaction->booking_date_only . ' ' . $transaction->start_time);;
+        $startDateTime = Carbon::parse($transaction->booking_date_only . ' ' . $transaction->start_time);
         
         // Hitung total menit dari semua durasi
         $totalMinutes = 
@@ -248,10 +284,10 @@ class RoomAssignController extends Controller
         return $startDateTime->copy()->addMinutes($totalMinutes);
     }
 
-        private function calculateRemainingTime($transaction)
+    private function calculateRemainingTime($transaction, $targetNow = null)
     {
-        $now = Carbon::now();
-        $startDateTime = $startDateTime = Carbon::parse($transaction->booking_date_only . ' ' . $transaction->start_time);;
+        $now = $targetNow ?? Carbon::now();
+        $startDateTime = Carbon::parse($transaction->booking_date_only . ' ' . $transaction->start_time);
         $endDateTime = $this->calculateBookingEndTime($transaction);
 
         // ✅ Untuk status "booked" (belum dimulai), hitung waktu sampai mulai

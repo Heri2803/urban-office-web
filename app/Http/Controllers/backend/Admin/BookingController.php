@@ -12,6 +12,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\BookingsExport;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Carbon\Carbon; 
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\File;
 
 class BookingController extends Controller
 {
@@ -88,7 +90,7 @@ class BookingController extends Controller
                     'customerName' => $transaction->nama_lengkap,
                     'customerPhone' => $transaction->phone,
                     'customerEmail' => $transaction->email,
-                    'customerCompany' => '-', // Default value
+                    'customerCompanyName' => $transaction->company_name ?? '-', // Default value
                     'service' => $transaction->room_type,
                     'serviceType' => $transaction->service_type_slug, // ✅ Accessor dari model
                     'package' => $transaction->paket ?? 'Standard',
@@ -174,7 +176,7 @@ class BookingController extends Controller
         ];
     }
     
-    private function formatBookingTime($transaction): string
+    public function formatBookingTime($transaction): string
     {
         if ($transaction->start_time && $transaction->jam) {
             return $transaction->start_time . ' (' . $transaction->jam . ' hours)';
@@ -187,7 +189,7 @@ class BookingController extends Controller
         return 'Flexible';
     }
     
-     private function getDuration($transaction): string
+    public function getDuration($transaction): string
     {
         if ($transaction->jam) return $transaction->jam . ' Hours';
         if ($transaction->hari) return $transaction->hari . ' Days';
@@ -236,9 +238,9 @@ class BookingController extends Controller
     }
 
     /**
-     * ✅ API untuk export Excel
+     * ✅ API untuk export PDF
      */
-     public function exportExcel(Request $request)
+    public function exportPdf(Request $request)
     {
         try {
             $query = Transaction::with(['location', 'lunches.lunchOption']);
@@ -273,80 +275,52 @@ class BookingController extends Controller
                 });
             }
             
-            $bookings = $query->orderBy('created_at', 'desc')->get();
-            
-            $fileName = 'bookings-' . date('Y-m-d') . '.csv';
-            
-            $headers = [
-                'Content-Type' => 'text/csv; charset=utf-8',
-                'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
-            ];
+            $query->orderBy('created_at', 'desc');
 
-            $callback = function() use ($bookings) {
-                $file = fopen('php://output', 'w');
-                
-                // ✅ FIX: Add UTF-8 BOM untuk Excel compatibility
-                fwrite($file, "\xEF\xBB\xBF");
-                
-                // ✅ FIX: Gunakan semicolon (;) sebagai delimiter untuk Excel Indonesia
-                $delimiter = ";";
-                
-                // Headers
-                fputcsv($file, [
-                    'Booking ID',
-                    'Transaction Date', 
-                    'Booking Date',
-                    'Booking Time',
-                    'Customer Name',
-                    'Phone',
-                    'Email',
-                    'Service Type',
-                    'Package',
-                    'Duration',
-                    'Participants',
-                    'Payment Status',
-                    'Base Price',
-                    'Lunch Total', 
-                    'Total Amount',
-                    'Location',
-                    'Payment Type'
-                ], $delimiter); // ✅ TAMBAHKAN DELIMITER
+            // Limit filter
+            $limit = $request->input('limit');
+            if ($limit && in_array((int)$limit, [50, 100, 200, 500])) {
+                $query->limit((int)$limit);
+            }
 
-                // Data rows
-                foreach ($bookings as $transaction) {
-                    fputcsv($file, [
-                        $transaction->order_id,
-                        $transaction->transaction_time 
-                            ? $transaction->transaction_time->format('d M Y, H:i')
-                            : $transaction->created_at->format('d M Y, H:i'),
-                        $transaction->booking_date 
-                            ? $transaction->booking_date->format('d M Y')
-                            : 'Not set',
-                        $this->formatBookingTime($transaction),
-                        $transaction->nama_lengkap,
-                        $transaction->phone,
-                        $transaction->email,
-                        $transaction->room_type,
-                        $transaction->paket ?? 'Standard',
-                        $this->getDuration($transaction),
-                        $transaction->jumlah_orang ? $transaction->jumlah_orang . ' people' : 'Not specified',
-                        ucfirst($transaction->status),
-                        // ✅ FIX: Hapus comma formatting untuk angka (Excel akan handle sendiri)
-                        $transaction->gross_amount,
-                        $transaction->lunch_total,
-                        $transaction->gross_amount + $transaction->lunch_total,
-                        $transaction->location ? $transaction->location->name : 'Not assigned',
-                        $transaction->payment_type ?? 'Not specified'
-                    ], $delimiter); // ✅ TAMBAHKAN DELIMITER
+            $bookings = $query->get();
+
+            // Get logo
+            $logoPath = 'D:\\laragon\\www\\webappurban\\web-app-urbanoffice\\public\\assets\\urban office new logo.jpeg';
+            if (!File::exists($logoPath)) {
+                $logoPath = public_path('assets/urban office new logo.jpeg');
+            }
+            $logoBase64 = null;
+            if (File::exists($logoPath)) {
+                try {
+                    $logoData = File::get($logoPath);
+                    $logoBase64 = 'data:image/jpeg;base64,' . base64_encode($logoData);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to load logo in Booking export PDF: ' . $e->getMessage());
                 }
+            }
 
-                fclose($file);
-            };
+            // Generate PDF
+            $pdf = Pdf::loadView('layouts.admin.exports.bookings-pdf', [
+                'bookings' => $bookings,
+                'logoBase64' => $logoBase64,
+                'filters' => [
+                    'status' => $request->status,
+                    'service' => $request->service,
+                    'date' => $request->date,
+                    'date_from' => $request->date_from,
+                    'date_to' => $request->date_to,
+                    'search' => $request->search,
+                    'limit' => $request->limit,
+                ],
+                'controller' => $this,
+            ])->setPaper('A4', 'landscape');
 
-            return response()->stream($callback, 200, $headers);
+            $filename = 'bookings-export-' . date('Y-m-d') . '.pdf';
+            return $pdf->download($filename);
             
         } catch (\Exception $e) {
-            \Log::error('Export failed: ' . $e->getMessage());
+            \Log::error('Export PDF failed: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Export failed: ' . $e->getMessage()
@@ -354,8 +328,10 @@ class BookingController extends Controller
         }
     }
 
-    // Tambahkan method ini di BookingController Anda
-    // Di BookingController.php - update getDashboardStats method
+    // =========================================================
+    // GET /admin/dashboard/stats
+    // Supports: location_id, revenue_filter, revenue_value
+    // =========================================================
     public function getDashboardStats(Request $request): JsonResponse
     {
         try {
@@ -374,12 +350,80 @@ class BookingController extends Controller
                 ->count();
             \Log::info('Total booking today: ' . $totalBookingToday);
 
-            // 2. Revenue Hari Ini
+            // 2. Revenue Hari Ini (legacy — selalu hari ini, tidak dipengaruhi filter)
             $revenueToday = Transaction::whereDate('booking_date', $today)
                 ->where('status', 'settlement')
                 ->where('location_id', $locationId)
                 ->sum('gross_amount');
             \Log::info('Revenue today: ' . $revenueToday);
+
+            // =========================================================
+            // 2b. Revenue dengan Filter Dinamis (today/date/month/year)
+            // =========================================================
+            $revenueFilter = $request->input('revenue_filter', 'today');
+            $revenueValue  = $request->input('revenue_value', '');
+
+            $revenueQuery = Transaction::where('status', 'settlement')
+                ->where('location_id', $locationId);
+
+            switch ($revenueFilter) {
+                case 'date':
+                    $parsedDate = ($revenueValue ?: $today);
+                    $revenueQuery->whereDate('booking_date', $parsedDate);
+                    $revenueLabel = 'Revenue ' . Carbon::parse($parsedDate)->translatedFormat('d M Y');
+                    break;
+
+                case 'month':
+                    // Format input: YYYY-MM
+                    if ($revenueValue && str_contains($revenueValue, '-')) {
+                        [$year, $month] = explode('-', $revenueValue);
+                    } else {
+                        $year  = now()->year;
+                        $month = now()->month;
+                    }
+                    $revenueQuery->whereYear('booking_date', $year)
+                                 ->whereMonth('booking_date', $month);
+                    $revenueLabel = 'Revenue ' . Carbon::createFromDate($year, $month, 1)->translatedFormat('F Y');
+                    break;
+
+                case 'year':
+                    $filteredYear = $revenueValue ?: now()->year;
+                    $revenueQuery->whereYear('booking_date', $filteredYear);
+                    $revenueLabel = 'Revenue Tahun ' . $filteredYear;
+                    break;
+
+                default: // 'today'
+                    $revenueQuery->whereDate('booking_date', $today);
+                    $revenueLabel = 'Revenue Hari Ini';
+                    break;
+            }
+
+            $revenueFiltered = (int) $revenueQuery->sum('gross_amount');
+            \Log::info("Revenue [{$revenueFilter}|{$revenueValue}]: {$revenueFiltered} | Label: {$revenueLabel}");
+
+            // =========================================================
+            // 2c. Total Booking sesuai periode filter (semua status)
+            // =========================================================
+            $bookingQuery = Transaction::where('location_id', $locationId);
+
+            switch ($revenueFilter) {
+                case 'date':
+                    $bookingQuery->whereDate('booking_date', $parsedDate);
+                    break;
+                case 'month':
+                    $bookingQuery->whereYear('booking_date', $year)
+                                 ->whereMonth('booking_date', $month);
+                    break;
+                case 'year':
+                    $bookingQuery->whereYear('booking_date', $filteredYear);
+                    break;
+                default: // 'today'
+                    $bookingQuery->whereDate('booking_date', $today);
+                    break;
+            }
+
+            $bookingFiltered = (int) $bookingQuery->count();
+            \Log::info("Booking count [{$revenueFilter}]: {$bookingFiltered}");
 
             // 3. Pending Konfirmasi
             $pendingConfirmation = Transaction::whereDate('booking_date', $today)
@@ -424,13 +468,17 @@ class BookingController extends Controller
             \Log::info('Occupancy rate: ' . $occupancyRate);
 
             $responseData = [
-                'totalBookingToday' => $totalBookingToday,
-                'revenueToday' => (int)$revenueToday,
+                'totalBookingToday'   => $totalBookingToday,
+                'revenueToday'        => (int) $revenueToday,
+                'revenueFiltered'     => $revenueFiltered,
+                'revenueLabel'        => $revenueLabel,
+                'revenueFilter'       => $revenueFilter,
+                'bookingFiltered'     => $bookingFiltered,   // ← total booking sesuai periode
                 'pendingConfirmation' => $pendingConfirmation,
-                'roomsOccupied' => $occupiedRooms,
-                'totalRooms' => $totalRooms,
-                'occupancyRate' => $occupancyRate,
-                'locationId' => $locationId
+                'roomsOccupied'       => $occupiedRooms,
+                'totalRooms'          => $totalRooms,
+                'occupancyRate'       => $occupancyRate,
+                'locationId'          => $locationId,
             ];
 
             \Log::info('Dashboard stats response: ', $responseData);
@@ -445,19 +493,22 @@ class BookingController extends Controller
             \Log::error('CRITICAL ERROR in getDashboardStats: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
 
-            // Return fallback data berdasarkan data sample rooms Anda
             return response()->json([
                 'success' => true,
-                'data' => [
-                    'totalBookingToday' => 0,
-                    'revenueToday' => 0,
+                'data'    => [
+                    'totalBookingToday'   => 0,
+                    'revenueToday'        => 0,
+                    'revenueFiltered'     => 0,
+                    'revenueLabel'        => 'Revenue Hari Ini',
+                    'revenueFilter'       => 'today',
+                    'bookingFiltered'     => 0,
                     'pendingConfirmation' => 0,
-                    'roomsOccupied' => 0,
-                    'totalRooms' => 12, // ✅ Sesuai data sample rooms available
-                    'occupancyRate' => 0,
-                    'locationId' => $request->input('location_id', 1)
+                    'roomsOccupied'       => 0,
+                    'totalRooms'          => 12,
+                    'occupancyRate'       => 0,
+                    'locationId'          => $request->input('location_id', 1),
                 ],
-                'message' => 'Using fallback data'
+                'message' => 'Using fallback data',
             ]);
         }
     }

@@ -11,7 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class GenerateMonthlyTaxReports extends Command
+class GenerateMonthlyTaxReport extends Command
 {
     protected $signature = 'tax:generate-monthly {month?} {year?} {--all-months}';
     protected $description = 'Generate monthly tax reports with REAL data from transactions';

@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use App\Models\Promo;
 
 
 class BookingApiController extends Controller
@@ -772,7 +773,6 @@ private function calculateEndTime($transaction, $timezone = 'Asia/Jakarta')
         }
     }
     
-     // ✅ Ambil data service_prices berdasarkan room_id
     public function getServicePriceByRoom($roomId)
     {
         $servicePrice = ServicePrice::with(['room', 'roomType'])
@@ -792,11 +792,86 @@ private function calculateEndTime($transaction, $timezone = 'Asia/Jakarta')
             'base_price' => $servicePrice->base_price,
             'coffee_break_option' => $servicePrice->coffee_break_option,
             'coffee_break_price' => $servicePrice->coffee_break_price,
-            'deposit' => $servicePrice->deposit,
-            'created_at' => $servicePrice->created_at,
-            'updated_at' => $servicePrice->updated_at,
+            'deposit'             => $servicePrice->deposit,
+            'created_at'          => $servicePrice->created_at,
+            'updated_at'          => $servicePrice->updated_at,
         ]);
+    }
+
+    /**
+     * Check and validate promo code
+     * Dilindungi oleh PromoService — logika validasi sama dengan saat booking
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function checkPromo(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'promo_code'  => 'required|string',
+                'location_id' => 'required|integer',
+                'room_type'   => 'required|string',
+                'subtotal'    => 'required|numeric'
+            ]);
+
+            $promoCode  = $request->promo_code;
+            $locationId = (string) $request->location_id;
+            $roomType   = $request->room_type;
+            $subtotal   = (float) $request->subtotal;
+
+            // Ambil user_id jika user sudah login (untuk cek usage_per_user)
+            /** @var \App\Models\User|null $user */
+            $user   = auth()->user();
+            $userId = $user?->id;
+
+            /** @var \App\Services\PromoService $promoService */
+            $promoService = app(\App\Services\PromoService::class);
+
+            $result = $promoService->validate($promoCode, $userId, $subtotal, $locationId, $roomType);
+
+            if (!$result['valid']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['message'],
+                ], 400);
+            }
+
+            /** @var \App\Models\Promo $promo */
+            $promo          = $result['promo'];
+            $discountAmount = $result['discount_amount'];
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Promo berhasil digunakan!',
+                'data'    => [
+                    'promo_code'     => $promo->code,
+                    'promo_name'     => $promo->name,
+                    'discount_type'  => $promo->discount_type,
+                    'discount_value' => $promo->discount_amount,
+                    'discount_amount'=> $discountAmount,
+                    'min_transaction'=> $promo->min_transaction,
+                ]
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak valid.',
+                'errors'  => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error checking promo: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengecek promo.',
+                'error'   => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
     }
     
 
-}
+}

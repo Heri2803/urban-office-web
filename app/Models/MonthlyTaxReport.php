@@ -6,10 +6,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
+use App\Traits\HasLocationScope;
 
 class MonthlyTaxReport extends Model
 {
-    use HasFactory;
+    use HasFactory, HasLocationScope;
 
     protected $fillable = [
         'location_id', 'period', 'total_revenue', 'tax_amount', 'status', 

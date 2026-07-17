@@ -165,8 +165,17 @@
                             </div>
                         </div>
                         
+                        {{-- Empty State --}}
+                        <div x-show="filteredCoworkingBookings.length === 0" class="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300">
+                            <div class="text-5xl mb-4">📑</div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Belum Ada Transaksi</h3>
+                            <p class="text-gray-500">
+                                Belum ada transaksi untuk Coworking Space di cabang ini.
+                            </p>
+                        </div>
+
                         <!-- Grid Cards untuk semua status -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div x-show="filteredCoworkingBookings.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             <template x-for="booking in paginatedCoworking" :key="booking.id">
                                 <!-- Booking Card - DINAMIS BERDASARKAN STATUS -->
                                 <div class="bg-gradient-to-br rounded-xl p-5 hover:shadow-lg transition-all duration-300 h-full"
@@ -352,8 +361,17 @@
                             </div>
                         </div>
                         
+                        {{-- Empty State --}}
+                        <div x-show="filteredEventSpaceBookings.length === 0" class="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-300">
+                            <div class="text-5xl mb-4">📑</div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Belum Ada Transaksi</h3>
+                            <p class="text-gray-500">
+                                Belum ada transaksi untuk Event Space di cabang ini.
+                            </p>
+                        </div>
+
                         <!-- Grid Cards untuk semua status -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div x-show="filteredEventSpaceBookings.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             <template x-for="booking in paginatedEventSpace" :key="booking.id">
                                 <!-- Booking Card - DINAMIS BERDASARKAN STATUS -->
                                 <div class="bg-gradient-to-br rounded-xl p-5 hover:shadow-lg transition-all duration-300 h-full"

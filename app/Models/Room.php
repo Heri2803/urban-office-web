@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasLocationScope;
 
 class Room extends Model
 {
-    use HasFactory;
+    use HasFactory, HasLocationScope;
 
     protected $fillable = [
         'room_number',

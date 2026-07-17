@@ -363,6 +363,7 @@
                         </div>
 
                         <!-- Location ID -->
+                        @if(auth()->user()->role === 'superadmin' || empty(auth()->user()->location_id))
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Location ID *</label>
                             <input type="number" x-model="roomForm.location_id" 
@@ -370,6 +371,9 @@
                                 placeholder="Location ID" required min="1">
                             <p class="text-xs text-gray-500 mt-1">Default: 1 (sesuaikan dengan kebutuhan)</p>
                         </div>
+                        @else
+                        <input type="hidden" x-model="roomForm.location_id">
+                        @endif
 
                         <!-- Notes -->
                         <div class="md:col-span-2">
@@ -588,6 +592,7 @@ function roomManagement() {
             floor: '',
             capacity: '',
             size_m2: '',
+            location_id: {{ auth()->user()->location_id ?? 1 }},
         },
 
         maintenanceForm: {
@@ -692,8 +697,8 @@ function roomManagement() {
                 status: 'available',
                 notes: '',
                 floor: '',
-                capacity: '',
                 size_m2: '',
+                location_id: {{ auth()->user()->location_id ?? 1 }},
             };
             console.log('🔄 Opening add modal for service:', this.roomForm.service);
             this.showRoomModal = true;

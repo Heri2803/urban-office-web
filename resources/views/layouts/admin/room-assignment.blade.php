@@ -117,6 +117,31 @@
         </div>
     </div>
 
+    {{-- Filter Section --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 mb-6">
+        <div class="flex flex-col md:flex-row md:items-end gap-4">
+            <div class="flex-1">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Target Date</label>
+                <input type="date" x-model="filterDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+            </div>
+            <div class="flex-1">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Target Time (Optional)</label>
+                <input type="time" x-model="filterTime" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm">
+            </div>
+            <div class="flex gap-2 w-full md:w-auto">
+                <button @click="applyTimeFilter()" class="flex-1 md:flex-none px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm font-medium">
+                    🔍 Apply Filter
+                </button>
+                <button @click="resetTimeFilter()" x-show="isFilterActive" class="flex-1 md:flex-none px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm font-medium">
+                    ✖ Reset
+                </button>
+            </div>
+        </div>
+        <p x-show="isFilterActive" class="mt-3 text-sm text-indigo-600 font-medium bg-indigo-50 px-3 py-2 rounded-md inline-block border border-indigo-200">
+            ⚠️ You are viewing room statuses for <span x-text="formatFilterDisplay()"></span>. Real-time countdown is paused.
+        </p>
+    </div>
+
     {{-- Service Tabs --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200">
         {{-- Tab Headers --}}
@@ -163,6 +188,23 @@
 
         {{-- Tab Content --}}
         <div class="p-4 md:p-6">
+            {{-- Global Empty State --}}
+            <div x-show="!isLoading && services.length === 0" class="text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="text-6xl mb-4">🏢</div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Belum Ada Ruangan</h3>
+                <p class="text-gray-600 max-w-md mx-auto">
+                    Belum ada data ruangan apapun yang terdaftar untuk cabang Anda. Silakan tambahkan ruangan terlebih dahulu melalui menu Room Management.
+                </p>
+                <div class="mt-6">
+                    <a href="{{ route('admin.room-management') }}" class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Ke Room Management
+                    </a>
+                </div>
+            </div>
+
             <template x-for="service in services" :key="service.id">
                 <div x-show="activeTab === service.id" x-transition>
                     
@@ -209,7 +251,17 @@
                                 class="w-6 h-6 md:w-7 md:h-7 object-contain">
                             Select Room Number
                         </h3>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+
+                        {{-- Empty State for Room List --}}
+                        <div x-show="getRoomsByService(service.id).length === 0" class="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 mb-6">
+                            <div class="text-5xl mb-4">🚪</div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Belum Ada Ruangan</h3>
+                            <p class="text-gray-500">
+                                Tidak ada ruangan yang tersedia untuk tipe layanan ini di cabang Anda.
+                            </p>
+                        </div>
+
+                        <div x-show="getRoomsByService(service.id).length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                             <template x-for="room in getRoomsByService(service.id)" :key="room.id">
                                 <button
                                     @click="selectRoom(room)"
@@ -294,90 +346,187 @@
                                 >
                                     <option value="">-- Choose Customer --</option>
                                     <template x-for="customer in getSettlementCustomers(service.id)" :key="customer.orderId">
-                                        <option :value="customer.orderId" :data-bonus-id="customer.bonus_id">
+                                        <option 
+                                            :value="customer.orderId" 
+                                            :data-bonus-id="customer.bonus_id"
+                                            :disabled="!customer.can_claim"
+                                            :class="!customer.can_claim ? 'text-gray-400' : 'text-gray-900'"
+                                        >
                                             <span x-text="customer.name"></span> - 
-                                            <span x-text="customer.duration"></span>
-                                            <span x-show="isBonusClaim" x-text="` (${customer.remaining_hours}h)`" class="text-purple-600"></span>
+                                            
+                                            <!-- Tampilkan status yang jelas -->
+                                            <span x-show="customer.can_claim" class="text-purple-600">
+                                                <span x-text="customer.remaining_hours"></span>h available this month
+                                                <span x-show="customer.months_remaining > 0" class="text-gray-500">
+                                                    (Month <span x-text="customer.months_used + 1"></span>/12)
+                                                </span>
+                                            </span>
+                                            
+                                            <span x-show="!customer.can_claim" class="text-gray-500">
+                                                ⏳ Fully used - next quota in 
+                                                <span x-text="getDaysUntilNextMonth()"></span> days
+                                                (Month <span x-text="customer.months_used + 1"></span>/12)
+                                            </span>
                                         </option>
                                     </template>
                                 </select>
                                 
-                                {{-- Customer Details with Bonus Info --}}
+                               {{-- Customer Details with Bonus Info --}}
                                 <template x-if="selectedCustomer && isBonusClaim">
                                     <div class="mt-3 p-4 bg-purple-50 rounded-lg border border-purple-200">
                                         <template x-for="customer in getSettlementCustomers(service.id)" :key="customer.orderId">
                                             <div x-show="customer.orderId === selectedCustomer">
-                                                <div class="flex items-center gap-3 mb-3">
+                                                
+                                                {{-- Header --}}
+                                                <div class="flex items-center gap-3 mb-4">
                                                     <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
                                                         <span class="text-purple-600 font-bold">🎁</span>
                                                     </div>
-                                                    <div>
-                                                        <h4 class="font-semibold text-gray-800" x-text="customer.name"></h4>
+                                                    <div class="flex-1">
+                                                        <div class="flex items-center justify-between">
+                                                            <h4 class="font-semibold text-gray-800" x-text="customer.name"></h4>
+                                                            <span class="text-xs px-2 py-1 rounded-full font-medium"
+                                                                :class="customer.can_claim ? 'bg-purple-200 text-purple-800' : 'bg-gray-200 text-gray-600'"
+                                                                x-text="`Month ${customer.months_used + 1}/${customer.months_used + customer.months_remaining}`">
+                                                            </span>
+                                                        </div>
                                                         <p class="text-xs text-gray-500" x-text="customer.email"></p>
                                                     </div>
                                                 </div>
                                                 
-                                                {{-- Bonus Progress --}}
-                                                <div class="mb-3">
-                                                    <div class="flex justify-between text-xs mb-1">
-                                                        <span class="text-gray-600">Bonus Hours</span>
-                                                        <span class="font-bold text-purple-600" x-text="`${customer.remaining_hours}h / ${customer.total_hours || customer.remaining_hours}h`"></span>
-                                                    </div>
-                                                    <div class="w-full bg-gray-200 rounded-full h-2">
-                                                        <div class="bg-purple-600 h-2 rounded-full" 
-                                                            :style="`width: ${(customer.remaining_hours / (customer.total_hours || customer.remaining_hours)) * 100}%`">
+                                                {{-- Progress Cards --}}
+                                                <div class="grid grid-cols-2 gap-3 mb-4">
+                                                    {{-- This Month Card --}}
+                                                    <div class="bg-white rounded-lg p-3" 
+                                                        :class="customer.can_claim ? 'border-l-4 border-purple-500' : 'opacity-75'">
+                                                        <p class="text-xs text-gray-500 mb-1">This Month</p>
+                                                        <p class="text-lg font-bold" 
+                                                        :class="customer.can_claim ? 'text-purple-700' : 'text-gray-500'"
+                                                        x-text="`${customer.used_this_month}/4h`"></p>
+                                                        <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                                                            <div class="h-1.5 rounded-full" 
+                                                                :class="customer.can_claim ? 'bg-purple-600' : 'bg-gray-400'"
+                                                                :style="`width: ${(customer.used_this_month / 4) * 100}%`">
+                                                            </div>
                                                         </div>
+                                                        <p class="text-xs mt-1" 
+                                                        :class="customer.can_claim ? 'text-purple-600' : 'text-gray-500'"
+                                                        x-text="customer.can_claim ? `${customer.remaining_hours}h remaining` : 'Fully used'">
+                                                        </p>
                                                     </div>
-                                                    <p class="text-xs text-gray-500 mt-1">
-                                                        Valid until: <span x-text="customer.valid_until"></span>
-                                                    </p>
+                                                    
+                                                    {{-- Overall Progress Card --}}
+                                                    <div class="bg-white rounded-lg p-3">
+                                                        <p class="text-xs text-gray-500 mb-1">Overall</p>
+                                                        <p class="text-lg font-bold text-gray-700" 
+                                                        x-text="`${customer.months_used}/${customer.months_used + customer.months_remaining}m`"></p>
+                                                        <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                                                            <div class="bg-blue-600 h-1.5 rounded-full" 
+                                                                :style="`width: ${(customer.months_used / (customer.months_used + customer.months_remaining)) * 100}%`">
+                                                            </div>
+                                                        </div>
+                                                        <p class="text-xs text-blue-600 mt-1" 
+                                                        x-text="`${customer.months_remaining} months left`">
+                                                        </p>
+                                                    </div>
                                                 </div>
                                                 
-                                                {{-- Quick Actions dengan Active State --}}
-                                                <div class="flex gap-2">
-                                                    <button 
-                                                        @click="claimForm.duration = Math.min(1, customer.remaining_hours)"
-                                                        :class="[
-                                                            'text-xs px-2 py-1 rounded transition',
-                                                            claimForm.duration === 1 
-                                                                ? 'bg-purple-600 text-white shadow-md' 
-                                                                : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                                                        ]"
-                                                    >
-                                                        1 hour
-                                                        <span x-show="claimForm.duration === 1" class="ml-1">✓</span>
-                                                    </button>
-                                                    
-                                                    <button 
-                                                        @click="claimForm.duration = Math.min(2, customer.remaining_hours)"
-                                                        :class="[
-                                                            'text-xs px-2 py-1 rounded transition',
-                                                            claimForm.duration === 2 
-                                                                ? 'bg-purple-600 text-white shadow-md' 
-                                                                : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                                                        ]"
-                                                    >
-                                                        2 hours
-                                                        <span x-show="claimForm.duration === 2" class="ml-1">✓</span>
-                                                    </button>
-                                                    
-                                                    <button 
-                                                        @click="claimForm.duration = Math.min(4, customer.remaining_hours)"
-                                                        :class="[
-                                                            'text-xs px-2 py-1 rounded transition',
-                                                            claimForm.duration === 4 
-                                                                ? 'bg-purple-600 text-white shadow-md' 
-                                                                : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
-                                                        ]"
-                                                    >
-                                                        4 hours
-                                                        <span x-show="claimForm.duration === 4" class="ml-1">✓</span>
-                                                    </button>
+                                                {{-- Month Timeline Visualization --}}
+                                                <div class="mb-4">
+                                                    <p class="text-xs font-medium text-gray-600 mb-2">Bonus Timeline (12 Months)</p>
+                                                    <div class="flex items-center gap-1">
+                                                        <template x-for="i in 12" :key="i">
+                                                            <div class="flex-1 h-2 rounded-full transition-all duration-300"
+                                                                :class="[
+                                                                    i <= customer.months_used ? 'bg-purple-600' : 
+                                                                    (i === customer.months_used + 1 && customer.used_this_month > 0) ? 'bg-purple-300' :
+                                                                    'bg-gray-200'
+                                                                ]"
+                                                                :title="`Month ${i}: ${i <= customer.months_used ? 'Used' : (i === customer.months_used + 1 ? customer.used_this_month + '/4h used' : 'Available')}`">
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                                        <span>Month 1</span>
+                                                        <span>Month 6</span>
+                                                        <span>Month 12</span>
+                                                    </div>
                                                 </div>
-
-                                                {{-- Tampilkan durasi yang dipilih --}}
-                                                <div x-show="claimForm.duration" class="mt-2 text-sm text-purple-700">
-                                                    ✅ Selected: <span class="font-bold" x-text="claimForm.duration"></span> hour(s)
+                                                
+                                                {{-- Action Buttons --}}
+                                                <div class="space-y-3">
+                                                    <label class="block text-xs font-medium text-gray-600">
+                                                        <span x-show="customer.can_claim">Select duration:</span>
+                                                        <span x-show="!customer.can_claim" class="text-gray-500">⏳ No hours remaining this month</span>
+                                                    </label>
+                                                    
+                                                    <div x-show="customer.can_claim" class="flex gap-2">
+                                                        {{-- 1 hour button --}}
+                                                        <button 
+                                                            x-show="1 <= customer.remaining_hours"
+                                                            @click="claimForm.duration = 1"
+                                                            :class="[
+                                                                'flex-1 text-xs px-2 py-2 rounded transition',
+                                                                claimForm.duration === 1 
+                                                                    ? 'bg-purple-600 text-white shadow-md' 
+                                                                    : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                                                            ]"
+                                                        >
+                                                            1h
+                                                        </button>
+                                                        
+                                                        {{-- 2 hours button --}}
+                                                        <button 
+                                                            x-show="2 <= customer.remaining_hours"
+                                                            @click="claimForm.duration = 2"
+                                                            :class="[
+                                                                'flex-1 text-xs px-2 py-2 rounded transition',
+                                                                claimForm.duration === 2 
+                                                                    ? 'bg-purple-600 text-white shadow-md' 
+                                                                    : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                                                            ]"
+                                                        >
+                                                            2h
+                                                        </button>
+                                                        
+                                                        {{-- 4 hours button --}}
+                                                        <button 
+                                                            x-show="4 <= customer.remaining_hours"
+                                                            @click="claimForm.duration = 4"
+                                                            :class="[
+                                                                'flex-1 text-xs px-2 py-2 rounded transition',
+                                                                claimForm.duration === 4 
+                                                                    ? 'bg-purple-600 text-white shadow-md' 
+                                                                    : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                                                            ]"
+                                                        >
+                                                            4h
+                                                        </button>
+                                                    </div>
+                                                    
+                                                    {{-- Next month info --}}
+                                                    <div x-show="!customer.can_claim" 
+                                                        class="text-sm text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                                        <p class="text-blue-700">
+                                                            ✅ Already used 4/4 hours this month
+                                                        </p>
+                                                        <p class="text-xs text-blue-600 mt-1">
+                                                            Next quota available in <span x-text="getDaysUntilNextMonth()"></span> days
+                                                        </p>
+                                                    </div>
+                                                    
+                                                    {{-- Selected Duration Display --}}
+                                                    <div x-show="claimForm.duration && customer.can_claim" 
+                                                        class="mt-2 p-3 bg-purple-100 rounded-lg">
+                                                        <div class="flex justify-between items-center">
+                                                            <span class="text-sm text-purple-800">
+                                                                ✅ Selected: <span class="font-bold" x-text="claimForm.duration"></span>h
+                                                            </span>
+                                                            <span class="text-xs text-purple-600">
+                                                                Remaining: <span class="font-bold" x-text="customer.remaining_hours - claimForm.duration"></span>h
+                                                            </span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </template>
@@ -660,6 +809,11 @@ function roomAssignment() {
         activeTab: 'meeting-room',
         isBonusClaim: false, 
         
+        // Filter State
+        filterDate: '',
+        filterTime: '',
+        isFilterActive: false,
+        
         // Selection State
         selectedRoom: null,
         selectedCustomer: null,
@@ -696,6 +850,13 @@ function roomAssignment() {
         refreshInterval: null,
         countdownInterval: null,
         dataSyncInterval: null,
+
+        currentPeriod: {
+            month: null,
+            year: null,
+            month_name: null
+        },
+        selectedCustomerInfo: null,
 
         async init() {
             if (this._initialized) return;
@@ -739,21 +900,63 @@ function roomAssignment() {
         },
 
         setupSecondBySecondUpdates() {
+            if (this.countdownInterval) clearInterval(this.countdownInterval);
             this.countdownInterval = setInterval(() => {
                 this.updateAllRoomStatusesRealTime();
             }, 1000);
         },
 
         setupDataSync() {
+            if (this.dataSyncInterval) clearInterval(this.dataSyncInterval);
             this.dataSyncInterval = setInterval(async () => {
                 await this.syncNewBookings();
             }, 30000);
         },
 
+        applyTimeFilter() {
+            if (!this.filterDate) {
+                alert('Please select at least a date');
+                return;
+            }
+            this.isFilterActive = true;
+            this.loadInitialData();
+            
+            // Pause auto-refresh intervals because we are viewing static historical/future data
+            if (this.countdownInterval) clearInterval(this.countdownInterval);
+            if (this.dataSyncInterval) clearInterval(this.dataSyncInterval);
+        },
+
+        resetTimeFilter() {
+            this.filterDate = '';
+            this.filterTime = '';
+            this.isFilterActive = false;
+            this.loadInitialData();
+            
+            // Resume intervals
+            this.setupSecondBySecondUpdates();
+            this.setupDataSync();
+        },
+
+        formatFilterDisplay() {
+            if (!this.filterDate) return '';
+            const d = new Date(this.filterDate);
+            const dateStr = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            return this.filterTime ? `${dateStr} at ${this.filterTime}` : dateStr;
+        },
+
         async loadInitialData() {
             try {
                 this.isLoading = true;
-                const response = await fetch('/admin/booking/room-assignment/api/rooms-status?t=' + Date.now());
+                
+                let url = '/admin/booking/room-assignment/api/rooms-status?t=' + Date.now();
+                if (this.isFilterActive && this.filterDate) {
+                    url += `&target_date=${this.filterDate}`;
+                    if (this.filterTime) {
+                        url += `&target_time=${this.filterTime}`;
+                    }
+                }
+                
+                const response = await fetch(url);
                 const data = await response.json();
                 
                 if (data.success) {
@@ -773,7 +976,17 @@ function roomAssignment() {
         },
 
         updateAllRoomStatusesRealTime() {
-            const now = new Date();
+            let now = new Date();
+            
+            // Jika filter aktif, gunakan target date & time sebagai "now"
+            if (this.isFilterActive && this.filterDate) {
+                if (this.filterTime) {
+                    now = new Date(`${this.filterDate}T${this.filterTime}:00`);
+                } else {
+                    now = new Date(`${this.filterDate}T00:00:00`);
+                }
+            }
+            
             let hasChanges = false;
             
             this.rooms.forEach(room => {
@@ -791,13 +1004,6 @@ function roomAssignment() {
                         hasChanges = true;
                     }
                     
-                    if (newStatus === 'available' && room.booking) {
-                        console.log(`🔄 Auto-cleaning expired booking: Room ${room.number}`);
-                        room.booking = null;
-                        room.remainingTime = null;
-                        room.remainingMinutes = null;
-                        hasChanges = true;
-                    }
                 } else if (room.status !== 'available' && room.status !== 'maintenance') {
                     room.status = 'available';
                     room.remainingTime = null;
@@ -970,7 +1176,17 @@ function roomAssignment() {
                 this.claimForm.booking_date = new Date().toISOString().split('T')[0];
                 this.claimForm.start_time = new Date().toTimeString().slice(0, 5);
                 
-                console.log('✅ Claim form updated:', this.claimForm);
+                // ✅ Simpan info monthly untuk ditampilkan di UI
+                this.selectedCustomerInfo = {
+                    name: customer.name,
+                    remaining_hours: customer.remaining_hours,
+                    used_this_month: customer.used_this_month,
+                    months_used: customer.months_used,
+                    months_remaining: customer.months_remaining,
+                    valid_until: customer.valid_until
+                };
+                
+                console.log('✅ Customer selected:', this.selectedCustomerInfo);
             }
         },
 
@@ -996,19 +1212,60 @@ function roomAssignment() {
                 const data = await response.json();
                 
                 if (data.success) {
-                    this.showSuccess('🎁 Bonus claimed successfully!');
                     
-                    // Reset form
+                    // ✅ 1. UPDATE ROOM DARI RESPONSE (PRIORITAS 1)
+                    if (data.data.room_update) {
+                        const update = data.data.room_update;
+                        console.log('🔄 Updating room with data:', update);
+                        
+                        const roomIndex = this.rooms.findIndex(r => r.id === update.id);
+                        
+                        if (roomIndex !== -1) {
+                            const startDateTime = new Date(update.booking.startDateTime);
+                            const endDateTime = new Date(startDateTime.getTime() + (update.booking.duration * 60 * 60 * 1000));
+                            
+                            // Update room dengan booking data
+                            this.rooms[roomIndex] = {
+                                ...this.rooms[roomIndex],
+                                status: 'occupied', // Set manual ke occupied
+                                booking: {
+                                    orderId: update.booking.orderId,
+                                    customerName: update.booking.customerName,
+                                    startDateTime: startDateTime,
+                                    endDateTime: endDateTime,
+                                    duration: update.booking.duration,
+                                    startTime: startDateTime.toTimeString().slice(0, 5),
+                                    endTime: endDateTime.toTimeString().slice(0, 5)
+                                }
+                            };
+                            
+                            // Trigger reactivity
+                            this.rooms = [...this.rooms];
+                            
+                            console.log(`✅ Room ${update.number} updated to OCCUPIED`, {
+                                start: startDateTime.toLocaleString(),
+                                end: endDateTime.toLocaleString(),
+                                status: 'occupied'
+                            });
+                        }
+                    }
+                    
+                    // ✅ 2. Tampilkan success message
+                    let successMessage = '🎁 Bonus claimed successfully!';
+                    if (data.data.monthly_info) {
+                        const info = data.data.monthly_info;
+                        successMessage = `🎁 Claimed ${data.data.hours_used}h - ${info.used_this_month}/4h used this month`;
+                    }
+                    this.showSuccess(successMessage);
+                    
+                    // ✅ 3. Reset form
                     this.resetBonusClaim();
                     
-                    // Refresh ALL data
-                    this.isLoading = true;
-                    await Promise.all([
-                        this.loadInitialData(),
-                        this.loadCustomersWithBonus()
-                    ]);
+                    // ✅ 4. Refresh ONLY customer list (jangan refresh rooms)
+                    await this.loadCustomersWithBonus();
                     
-                    console.log('✅ All data refreshed after claim');
+                    // ✅ 5. OPTIONAL: Sync rooms di background (tanpa nunggu)
+                    this.syncNewBookings().catch(err => console.warn('Background sync warning:', err));
                     
                 } else {
                     throw new Error(data.message || 'Failed to claim bonus');
@@ -1020,6 +1277,27 @@ function roomAssignment() {
             } finally {
                 this.isLoading = false;
             }
+        },
+
+        // ✅ TAMBAHKAN: Helper untuk format monthly info di UI
+        getMonthlyStatusText(customer) {
+            if (!customer) return '';
+            
+            const percentage = (customer.used_this_month / customer.total_hours_this_month) * 100;
+            
+            return {
+                text: `${customer.used_this_month}/${customer.total_hours_this_month}h used this month • Month ${customer.months_used + 1}/${customer.months_used + customer.months_remaining}`,
+                percentage: percentage,
+                isLow: customer.remaining_hours <= 1,
+                isFull: customer.remaining_hours === 0
+            };
+        },
+
+        // ✅ TAMBAHKAN: Format remaining hours dengan visual indicator
+        formatRemainingWithIndicator(hours) {
+            if (hours <= 0) return '❌ No hours left';
+            if (hours <= 1) return `⚠️ Only ${hours}h left this month`;
+            return `✅ ${hours}h available this month`;
         },
 
         // ✅ TAMBAHKAN: Reset bonus claim form
@@ -1036,44 +1314,43 @@ function roomAssignment() {
             };
             this.selectedRoom = null;
             this.selectedCustomer = null;
+            this.selectedCustomerInfo = null;
             console.log('🧹 Bonus claim form reset');
+        },
+
+        getDaysUntilNextMonth() {
+            const now = new Date();
+            const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            const diffTime = nextMonth - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
         },
 
         // Untuk customer dropdown (jika masih digunakan)
         getSettlementCustomers(serviceId) {
-            console.log('🔍 getSettlementCustomers:', {
-                mode: this.isBonusClaim ? '🎁 BONUS' : '🏠 ROOM',
-                serviceId: serviceId,
-                bonusCount: this.customersWithBonus?.length || 0,
-                regularCount: this.customers?.length || 0
-            });
-            
-            // BONUS MODE
             if (this.isBonusClaim) {
                 const mapped = this.customersWithBonus?.map(c => ({
                     orderId: `BONUS-${c.bonus_id}`,
                     name: c.name,
                     email: c.email,
                     phone: c.phone || '-',
-                    duration: `${c.remaining_hours}h available`,
+                    duration: c.can_claim 
+                        ? `${c.remaining_hours}h available this month` 
+                        : `Fully used (next month: ${c.months_remaining} months left)`,
                     user_id: c.user_id,
                     bonus_id: c.bonus_id,
                     remaining_hours: c.remaining_hours,
-                    total_hours: c.total_hours,
-                    valid_until: c.valid_until
+                    total_hours_this_month: c.total_hours_this_month,
+                    used_this_month: c.used_this_month,
+                    months_used: c.months_used,
+                    months_remaining: c.months_remaining,
+                    valid_until: c.valid_until,
+                    can_claim: c.can_claim // Flag dari backend
                 })) || [];
                 
-                console.log('✅ Returning bonus customers:', mapped.length);
                 return mapped;
             }
-            
-            // ROOM ASSIGNMENT MODE
-            const filtered = this.customers.filter(customer => 
-                customer.service_category_id === this.getServiceIdFromTab(serviceId)
-            );
-            
-            console.log('✅ Returning regular customers:', filtered.length);
-            return filtered;
+            return [];
         },
 
         getServiceIdFromTab(serviceTabId) {
@@ -1101,7 +1378,7 @@ function roomAssignment() {
         // Load customers with bonus - reuse existing pattern
         async loadCustomersWithBonus() {
             try {
-                this.isLoadingBonus = true; // ✅ Simple flag
+                this.isLoadingBonus = true;
                 const response = await fetch('/admin/bonus/customers-with-active-bonus');
                 
                 if (!response.ok) {
@@ -1111,14 +1388,22 @@ function roomAssignment() {
                 const data = await response.json();
                 
                 if (data.success) {
+                    // ✅ SIMPAN juga current_period untuk informasi
+                    this.currentPeriod = data.current_period;
+                    
+                    // ✅ Data dari response sudah sesuai dengan struktur baru
                     this.customersWithBonus = data.data || [];
-                    console.log(`✅ Loaded ${this.customersWithBonus.length} bonus customers`);
+                    
+                    console.log(`✅ Loaded ${this.customersWithBonus.length} bonus customers`, {
+                        period: this.currentPeriod,
+                        customers: this.customersWithBonus
+                    });
                 } else {
                     throw new Error(data.message || 'Unknown error');
                 }
             } catch (error) {
                 console.error('❌ Bonus load failed:', error);
-                this.customersWithBonus = []; // ✅ Fallback to empty array
+                this.customersWithBonus = [];
                 this.showError('Could not load bonus customers');
             } finally {
                 this.isLoadingBonus = false;

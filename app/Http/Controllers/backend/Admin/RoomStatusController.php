@@ -18,8 +18,7 @@ class RoomStatusController extends Controller
         try {
             Log::info('🔄 Fetching ALL rooms from rooms table');
 
-            $allRooms = DB::table('rooms')
-                ->select(
+            $allRooms = Room::select(
                     'id',
                     'room_number as number',
                     'room_type_id', 

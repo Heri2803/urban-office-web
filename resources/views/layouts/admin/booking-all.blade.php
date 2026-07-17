@@ -12,14 +12,44 @@
             <p class="text-sm text-gray-600 mt-1">Manage and track all booking transactions</p>
         </div>
         <div class="flex items-center gap-2 sm:gap-3">
-            <button x-on:click="exportExcel()" 
-                    class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition flex items-center justify-center gap-2 text-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                <span class="hidden sm:inline">Export Excel</span>
-                <span class="sm:hidden">Export</span>
-            </button>   
+            <div class="relative flex-1 sm:flex-none" x-data="{ open: false }">
+                <button @click="open = !open" @click.away="open = false"
+                        class="w-full px-3 sm:px-4 py-2 bg-red-500/10 text-red-600 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition flex items-center justify-center gap-2 text-sm font-semibold">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span class="hidden sm:inline">Export PDF</span>
+                    <span class="sm:hidden">Export</span>
+                    <svg class="w-3.5 h-3.5 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>   
+                <div x-show="open" 
+                     x-transition:enter="transition ease-out duration-100"
+                     x-transition:enter-start="transform opacity-0 scale-95"
+                     x-transition:enter-end="transform opacity-100 scale-100"
+                     x-transition:leave="transition ease-in duration-75"
+                     x-transition:leave-start="transform opacity-100 scale-100"
+                     x-transition:leave-end="transform opacity-0 scale-95"
+                     class="absolute right-0 mt-2 w-56 rounded-lg bg-white border border-gray-200 shadow-lg z-[9999] overflow-hidden"
+                     style="display: none;">
+                    <div class="py-1">
+                        <button @click="exportPdf(''); open = false" class="w-full text-left px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-100 border-b border-gray-100 flex items-center">
+                            <i class="fas fa-file-alt mr-2 text-gray-400"></i> Export Semua Data
+                        </button>
+                        <button @click="exportPdf('50'); open = false" class="w-full text-left px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-100 flex items-center">
+                            <i class="fas fa-list-ol mr-2 text-gray-400"></i> Export 50 Data Terbaru
+                        </button>
+                        <button @click="exportPdf('100'); open = false" class="w-full text-left px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-100 flex items-center">
+                            <i class="fas fa-list-ol mr-2 text-gray-400"></i> Export 100 Data Terbaru
+                        </button>
+                        <button @click="exportPdf('200'); open = false" class="w-full text-left px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-100 flex items-center">
+                            <i class="fas fa-list-ol mr-2 text-gray-400"></i> Export 200 Data Terbaru
+                        </button>
+                        <button @click="exportPdf('500'); open = false" class="w-full text-left px-4 py-2.5 text-xs text-gray-700 hover:bg-gray-100 flex items-center">
+                            <i class="fas fa-list-ol mr-2 text-gray-400"></i> Export 500 Data Terbaru
+                        </button>
+                    </div>
+                </div>
+            </div>   
             <a href="{{ route('admin.booking.walk-in-booking') }}" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 text-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
@@ -127,6 +157,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2">Booking Date</label>
                 <input type="date" x-model="filters.date" @change="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
+
 
             {{-- Date Range From --}}
             <div>
@@ -258,7 +289,16 @@
             </div>
         </div>
 
-
+        {{-- Empty State untuk Bookings --}}
+        <div x-show="!loading && bookings.length === 0" class="p-12 text-center">
+            <div class="max-w-md mx-auto">
+                <div class="text-6xl mb-4">📅</div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Belum ada transaksi</h3>
+                <p class="text-gray-600">
+                    Belum ada data pemesanan yang masuk untuk cabang ini.
+                </p>
+            </div>
+        </div>
         {{-- ================================================= --}}
         {{-- 2. PAGINATION (Berada di luar grid)                --}}
         {{-- ================================================= --}}
@@ -373,7 +413,7 @@
                             </div>
                             <div>
                                 <p class="text-xs text-gray-600">Company</p>
-                                <p class="text-sm font-medium text-gray-800" x-text="selectedBooking?.customerCompany || '-'"></p>
+                                <p class="text-sm font-medium text-gray-800" x-text="selectedBooking?.customerCompanyName || '-'"></p>
                             </div>
                         </div>
                     </div>
@@ -495,7 +535,8 @@ function bookingAllData() {
             dateFrom: '',
             dateTo: '',
             search: '',
-            searchQuery: '' // Untuk debounced search
+            searchQuery: '', // Untuk debounced search
+            limit: ''
         },
 
         // Pagination
@@ -609,7 +650,8 @@ function bookingAllData() {
                 dateFrom: '',
                 dateTo: '',
                 search: '',
-                searchQuery: ''
+                searchQuery: '',
+                limit: ''
             };
             this.currentPage = 1;
             await this.loadBookings();
@@ -646,8 +688,8 @@ function bookingAllData() {
             this.showDetailModal = true;
         },
 
-        // Di Alpine.js - PERBAIKI METHOD exportExcel
-       async exportExcel() {
+        // Di Alpine.js - PERBAIKI METHOD exportPdf
+       async exportPdf(limit = '') {
             try {
                 if (this.totalItems === 0) {
                     this.showNotification('No data to export', 'error');
@@ -665,13 +707,17 @@ function bookingAllData() {
                 if (this.filters.dateFrom) params.append('date_from', this.filters.dateFrom);
                 if (this.filters.dateTo) params.append('date_to', this.filters.dateTo);
                 if (this.filters.searchQuery) params.append('search', this.filters.searchQuery);
+                if (limit) params.append('limit', limit);
+                
+                // Add cache-buster to prevent browser caching GET responses
+                params.append('_t', Date.now());
                 
                 console.log('Exporting with params:', params.toString());
                 
                 this.showNotification('Preparing export file...', 'info');
                 
                 // Panggil API export
-                const response = await fetch(`/booking/all/api/export?${params.toString()}`);
+                const response = await fetch(`/admin/booking/all/api/export-pdf?${params.toString()}`);
                 
                 if (response.ok) {
                     const blob = await response.blob();
@@ -682,14 +728,14 @@ function bookingAllData() {
                         throw new Error(JSON.parse(errorData).message || 'Export failed');
                     }
                     
-                    // Download CSV file
+                    // Download PDF file
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
                     
                     // Get filename from header atau default
                     const contentDisposition = response.headers.get('content-disposition');
-                    let filename = `bookings-${new Date().toISOString().split('T')[0]}.csv`;
+                    let filename = `bookings-${new Date().toISOString().split('T')[0]}.pdf`;
                     
                     if (contentDisposition) {
                         const filenameMatch = contentDisposition.match(/filename="(.+)"/);
@@ -704,7 +750,7 @@ function bookingAllData() {
                     document.body.removeChild(a);
                     window.URL.revokeObjectURL(url);
                     
-                    this.showNotification(`Successfully exported ${this.totalItems} bookings to CSV`, 'success');
+                    this.showNotification(`Successfully exported bookings to PDF`, 'success');
                     
                 } else {
                     // Handle HTTP errors
@@ -767,13 +813,13 @@ function bookingAllData() {
 
         // ✅ METHOD BARU: Reset export button
         resetExportButton() {
-            const buttons = this.$root.querySelectorAll('button[ x-on\\:click="exportExcel()"]');
+            const buttons = this.$root.querySelectorAll('button[ x-on\\:click="exportPdf()"]');
             buttons.forEach(button => {
                 button.innerHTML = `
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                     </svg>
-                    <span class="hidden sm:inline">Export Excel</span>
+                    <span class="hidden sm:inline">Export PDF</span>
                     <span class="sm:hidden">Export</span>
                 `;
                 button.disabled = false;
