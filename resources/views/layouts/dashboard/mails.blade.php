@@ -7,6 +7,29 @@ data-client-key="{{ config('midtrans.client_key') }}"></script>
 
 <script>
 document.addEventListener('alpine:init', () => {
+    Alpine.store('documentModal', {
+        isOpen: false,
+        transactionId: null,
+        
+        open(transactionId) {
+            console.log('🔓 open() called with:', transactionId); // Debug
+            this.transactionId = transactionId;
+            this.isOpen = true;
+            console.log('✅ Store state:', { isOpen: this.isOpen, transactionId: this.transactionId });
+        },
+        
+        close() {
+            console.log('🔒 close() called');
+            this.isOpen = false;
+            this.transactionId = null;
+        },
+        
+        reset() {
+            this.isOpen = false;
+            this.transactionId = null;
+        }
+    });
+
     // Fix: Add sidebar data
     Alpine.data('sidebar', () => ({
         isOpen: false,
@@ -28,6 +51,7 @@ document.addEventListener('alpine:init', () => {
         // 🆕 Separate stores for UI state
         messagesStore: {}, // { transactionId: [messages] }
         uiState: {}, // { transactionId: { showMessages, isLoadingMessages, isSending, etc } }
+        documentStatus: {},
         
         isLoading: false,
         pollingInterval: null,
@@ -303,6 +327,34 @@ document.addEventListener('alpine:init', () => {
             }
         },
 
+        // ✅ TAMBAH INI: Load status dokumen
+        async loadDocumentStatus(transactionId) {
+            try {
+                const response = await fetch(`/dashboard/mails/documents/status/${transactionId}`);
+                const data = await response.json();
+                if (data.success) {
+                    this.documentStatus[transactionId] = data.documents;
+                }
+            } catch (error) {
+                console.error('Error loading document status:', error);
+            }
+        },
+        
+        // ✅ TAMBAH INI: Helper functions
+        getDocumentStatus(transactionId, type) {
+            return this.documentStatus[transactionId]?.[type]?.status || 'missing';
+        },
+        
+        getDocumentLabel(type) {
+            const labels = { ktp: 'KTP', npwp: 'NPWP', akta_perusahaan: 'Akta', siup_nib: 'SIUP/NIB' };
+            return labels[type] || type;
+        },
+        
+        getUploadedCount(transactionId) {
+            const docs = this.documentStatus[transactionId] || {};
+            return Object.values(docs).filter(d => d.exists).length;
+        },
+
         // 🔧 FIXED: Handle attachment
         handleAttachmentChange(transactionId, event) {
             const file = event.target.files[0];
@@ -516,6 +568,16 @@ document.addEventListener('alpine:init', () => {
             this.$watch('filterDate', () => { this.currentPage = 1; });
 
             this.initPolling();
+
+            // Load document status untuk Virtual Office
+            this.allTransactions
+                .filter(t => t.room_type === 'Virtual Office')
+                .forEach(t => this.loadDocumentStatus(t.id));
+            
+            // Listen for document updates
+            window.addEventListener('document-updated', (e) => {
+                this.loadDocumentStatus(e.detail.transactionId);
+            });
         },
 
         // Initialize polling
@@ -899,6 +961,50 @@ function openSnap(token) {
                         </template>
                     </div>
                     <!-- END MESSAGING SECTION -->
+
+                    <!-- ✅ TAMBAH INI: Virtual Office Document Section -->
+                    <template x-if="transaction.room_type === 'Virtual Office'">
+                        <div class="border-t border-gray-200 px-4 md:px-6 py-4 bg-blue-50">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium text-gray-700 flex items-center text-sm">
+                                        <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        Dokumen Virtual Office
+                                    </h4>
+                                    <p class="text-xs text-gray-500 mt-1" x-text="getUploadedCount(transaction.id) + '/4 dokumen terupload'"></p>
+                                </div>
+                                
+                                <!-- BUTTON TRIGGER -->
+                                <button @click="$dispatch('open-document-upload', { transactionId: transaction.id })"
+                                        class="inline-flex items-center px-3 py-1.5 bg-orange-600 text-white text-sm rounded-lg hover:bg-orange-700">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                    </svg>
+                                    Kelola Dokumen
+                                </button>
+                            </div>
+                            
+                            <!-- Status Indicators -->
+                            <div class="mt-2 flex flex-wrap gap-1">
+                                <template x-for="type in ['ktp', 'npwp', 'akta_perusahaan', 'siup_nib']" :key="type">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs"
+                                        :class="{
+                                            'bg-green-100 text-green-700': getDocumentStatus(transaction.id, type) === 'verified',
+                                            'bg-yellow-100 text-yellow-700': getDocumentStatus(transaction.id, type) === 'pending',
+                                            'bg-gray-100 text-gray-600': getDocumentStatus(transaction.id, type) === 'missing'
+                                        }">
+                                        <span x-text="getDocumentLabel(type)"></span>
+                                        <svg x-show="getDocumentStatus(transaction.id, type) === 'verified'" 
+                                            class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </span>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
             
                 </div>
             </template>
@@ -1046,7 +1152,52 @@ document.getElementById('paymentNotification')?.addEventListener('click', functi
         closeNotification();
     }
 });
+
 </script>
 @endif
 
+{{-- ✅ TAMBAH INI: Include Modal --}}
+@include('layouts.components.document-upload-modal')
+
+{{-- ✅ TAMBAH INI: Event Listener --}}
+{{-- Event Listener yang lebih aman --}}
+<script>
+document.addEventListener('open-document-upload', (event) => {
+    console.log('📦 Event received:', event.detail); // Debug
+    
+    // Tunggu Alpine siap
+    if (typeof Alpine === 'undefined') {
+        console.error('❌ Alpine not loaded yet');
+        return;
+    }
+    
+    // Tunggu store siap dengan retry mechanism
+    function openModalWithRetry(transactionId, retryCount = 0) {
+        const store = Alpine.store('documentModal');
+        
+        if (store) {
+            console.log('✅ Store found, opening modal...');
+            // Force reset store state
+            store.isOpen = false;
+            store.transactionId = null;
+            
+            // Small delay to ensure reset
+            setTimeout(() => {
+                store.open(transactionId);
+            }, 50);
+        } else {
+            if (retryCount < 10) { // Retry 10x maksimal
+                console.log(`⏳ Store not ready, retry ${retryCount + 1}...`);
+                setTimeout(() => {
+                    openModalWithRetry(transactionId, retryCount + 1);
+                }, 100);
+            } else {
+                console.error('❌ Store not available after retries');
+            }
+        }
+    }
+    
+    openModalWithRetry(event.detail.transactionId);
+});
+</script>
 @endsection
