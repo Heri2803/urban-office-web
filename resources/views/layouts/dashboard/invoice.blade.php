@@ -147,11 +147,25 @@ document.addEventListener('alpine:init', () => {
                                 </div>
 
                                 <div class="flex-1 min-w-0">
-                                    <h4 class="font-medium text-gray-800 text-xs md:text-sm lg:text-base mb-1 truncate"
-                                        x-text="transaction.order_id + '. Invoice ' + transaction.room_type + ' - ' + transaction.nama_lengkap">
-                                    </h4>
-                                    <p class="text-xs text-gray-500" x-text="new Date(transaction.created_at).toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'})">
+                                    <div class="flex flex-col md:flex-row md:items-center justify-between mb-1">
+                                        <h4 class="font-medium text-gray-800 text-xs md:text-sm lg:text-base mr-2 truncate"
+                                            x-text="transaction.order_id + '. Invoice ' + transaction.room_type + ' - ' + transaction.nama_lengkap">
+                                        </h4>
+                                        <div class="mt-1 md:mt-0 flex-shrink-0">
+                                            <template x-if="transaction.status === 'settlement'">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] md:text-xs font-medium bg-green-100 text-green-800">Lunas</span>
+                                            </template>
+                                            <template x-if="transaction.status === 'pending'">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] md:text-xs font-medium bg-yellow-100 text-yellow-800">Pending</span>
+                                            </template>
+                                            <template x-if="transaction.status === 'expire' || transaction.status === 'expired'">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] md:text-xs font-medium bg-red-100 text-red-800">Kadaluarsa</span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mb-1" x-text="new Date(transaction.created_at).toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'})">
                                     </p>
+                                    <p class="font-semibold text-gray-900 text-sm md:text-base" x-text="'Rp ' + new Intl.NumberFormat('id-ID').format(transaction.total_amount || transaction.gross_amount)"></p>
                                 </div>
                             </div>
 

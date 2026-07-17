@@ -4,429 +4,668 @@
     <meta charset="utf-8">
     <title>Invoice {{ $transaction->order_id }}</title>
     <style>
-        @media print {
-            body { 
-                margin: 0;
-                padding: 0;
-            }
-            .print-container {
-                page-break-after: avoid;
-            }
+        @page {
+            margin: 0;
+            padding: 0;
+            size: A4 portrait;
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 11px;
-            line-height: 1.4;
-        }
-        
-        .print-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        /* Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 15px;
-            padding-bottom: 12px;
-            border-bottom: 3px solid #ff6b35;
-        }
-        
-        .logo-section {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .logo {
-            width: 45px;
-            height: 45px;
-        }
-        
-        .company-info {
-            font-size: 10px;
-            color: #666;
-            line-height: 1.5;
-        }
-        
-        .company-name {
-            font-weight: bold;
-            color: #333;
-            font-size: 13px;
-            margin-bottom: 2px;
-        }
-        
-        .invoice-title-section {
-            text-align: right;
-        }
-        
-        .invoice-title {
-            font-size: 28px;
-            font-weight: 300;
-            color: #ff6b35;
-            margin-bottom: 3px;
-        }
-        
-        .invoice-meta {
-            font-size: 10px;
-            color: #666;
+            font-size: 12px;
             line-height: 1.6;
+            background: transparent;
+            margin: 0;
+            padding: 0;
         }
-        
-        /* Info Table */
-        .info-table {
+
+        /* ===== BACKGROUND FIXED (muncul di semua halaman) ===== */
+        .background-fixed {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 210mm;
+            height: 297mm;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .background-fixed img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 1;
+        }
+
+        .print-container {
+            max-width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: transparent;
+            position: relative;
+            padding: 0;
+        }
+
+        /* ===== CONTENT WRAPPER ===== */
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+            padding: 180px 50px 150px 50px;
+        }
+
+        /* ===== INFO SECTION ===== */
+        .info-section-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
+            margin-bottom: 20px;
         }
-        
-        .info-table thead th {
-            background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
-            color: white;
-            padding: 8px 10px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 11px;
-            border-right: 1px solid rgba(255,255,255,0.3);
-        }
-        
-        .info-table thead th:last-child {
-            border-right: none;
-        }
-        
-        .info-table tbody td {
-            padding: 10px;
+
+        .info-section-table td {
             vertical-align: top;
-            border-right: 1px solid #e5e5e5;
-            border-bottom: 1px solid #e5e5e5;
+            padding: 0;
         }
-        
-        .info-table tbody td:last-child {
-            border-right: none;
+
+        .buyer-info {
+            width: 55%;
         }
-        
-        .info-item {
+
+        .invoice-details {
+            width: 40%;
+            text-align: right;
+        }
+
+        .info-row {
             margin-bottom: 8px;
+            font-size: 13px;
         }
-        
-        .info-item:last-child {
-            margin-bottom: 0;
-        }
-        
+
         .info-label {
-            font-size: 9px;
-            color: #888;
-            margin-bottom: 2px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-        
-        .info-value {
-            font-size: 11px;
+            min-width: 120px;
+            font-weight: bold;
             color: #333;
-            font-weight: 600;
+            flex-shrink: 0;
         }
-        
-        /* Status Badges */
+
+        .info-value {
+            font-weight: normal;
+            color: #333;
+        }
+
+        /* ===== SERVICE TITLE ===== */
+        .service-title {
+            background: #ff6b35;
+            color: white;
+            padding: 12px 20px;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 0;
+            border-radius: 8px 8px 0 0;
+        }
+
+        /* ===== DETAILS TABLE ===== */
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #ddd;
+            margin-bottom: 25px;
+            page-break-inside: auto;
+        }
+
+        .details-table tr {
+            border-bottom: 1px solid #ddd;
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        .details-table tr:last-child {
+            border-bottom: none;
+        }
+
+        .details-table td {
+            padding: 12px 20px;
+            font-size: 13px;
+        }
+
+        .details-table td:first-child {
+            width: 45%;
+            color: #333;
+            font-weight: normal;
+            background: #f9f9f9;
+        }
+
+        .details-table td:last-child {
+            width: 55%;
+            color: #333;
+            font-weight: normal;
+        }
+
+        /* Lunch rows */
+        .details-table tr.lunch-header td {
+            background: #e8f5e9 !important;
+            color: #2e7d32 !important;
+            font-weight: bold;
+            font-size: 13px;
+            text-align: center;
+            padding: 10px 20px;
+        }
+
+        .details-table tr.lunch-detail td {
+            background: #f9f9f9;
+            padding: 8px 20px;
+            font-size: 12.5px;
+        }
+
+        .details-table tr.lunch-detail td:first-child {
+            background: #f5f5f5;
+            color: #555;
+        }
+
+        .details-table tr.lunch-total td {
+            background: #fff8e1;
+            font-weight: 600;
+            border-top: 2px dashed #ffd54f;
+        }
+
+        .details-table tr.lunch-total td:first-child {
+            background: #fff3cd;
+        }
+
+        .details-table tr.subtotal-row td {
+            background: #e3f2fd;
+            font-weight: 600;
+            border-top: 2px solid #bbdefb;
+        }
+
+        .details-table tr.subtotal-row td:first-child {
+            background: #bbdefb;
+        }
+
+        .details-table tr.total-row td {
+            font-weight: bold;
+            background: #fff !important;
+            border-top: 2px solid #ff6b35;
+            font-size: 14px;
+            position: relative;
+            z-index: 11;
+        }
+
+        .details-table tr.total-row td:last-child {
+            color: #ff6b35;
+            font-size: 15px;
+            position: relative;
+        }
+
+        .details-table tr.total-row {
+            position: relative;
+            z-index: 10;
+            page-break-inside: avoid;
+            page-break-before: avoid;
+            page-break-after: avoid;
+        }
+
+        /* ===== STATUS BADGE ===== */
         .status-badge {
             display: inline-block;
-            padding: 3px 10px;
+            padding: 4px 12px;
             border-radius: 12px;
-            font-size: 9px;
+            font-size: 11px;
             font-weight: bold;
+            margin-left: 10px;
             text-transform: uppercase;
+            vertical-align: middle;
         }
-        
-        .status-paid {
+
+        .status-badge.status-settlement {
             background: #10b981;
             color: white;
         }
-        
-        .status-pending {
-            background: #fbbf24;
-            color: #78350f;
+
+        .status-badge.status-pending {
+            background: #f59e0b;
+            color: white;
         }
-        
-        .status-failed {
+
+        .status-badge.status-expire {
             background: #ef4444;
             color: white;
         }
-        
-        .pkp-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 10px;
-            font-size: 9px;
-            font-weight: bold;
+
+        /* ===== TERMS SECTION ===== */
+        .terms-section {
+            margin-top: 120px;
+            clear: both;
+            position: relative;
+            z-index: 1;
+            page-break-before: always;
         }
-        
-        .pkp-yes {
-            background: #d1fae5;
-            color: #065f46;
-        }
-        
-        .pkp-no {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        
-        /* Summary Table */
-        .summary-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 12px;
-            border: 1px solid #ddd;
-        }
-        
-        .summary-table thead th {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            color: white;
-            padding: 8px 12px;
-            font-weight: 600;
-            font-size: 11px;
-        }
-        
-        .summary-table thead th:first-child {
-            text-align: left;
-        }
-        
-        .summary-table thead th:last-child {
-            text-align: right;
-        }
-        
-        .summary-table tbody td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #e5e5e5;
-        }
-        
-        .summary-table tbody tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .service-name {
-            font-weight: 600;
-            color: #333;
-            font-size: 11px;
-        }
-        
-        .service-detail {
-            font-size: 9px;
-            color: #666;
-            margin-top: 3px;
-        }
-        
-        .total-row {
-            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
-        }
-        
-        .total-label {
-            font-weight: bold;
-            color: #333;
-            font-size: 12px;
-        }
-        
-        .total-amount {
-            font-weight: bold;
+
+        .terms-title {
             color: #ff6b35;
+            font-weight: bold;
             font-size: 14px;
-            text-align: right;
+            margin-bottom: 10px;
         }
-        
-        /* Footer */
-        .footer {
-            text-align: center;
-            padding-top: 12px;
-            border-top: 1px solid #e5e5e5;
-            font-size: 9px;
-            color: #888;
-            line-height: 1.6;
+
+        .terms-content {
+            font-size: 12px;
+            color: #333;
+            line-height: 1.8;
         }
-        
-        .footer-contact {
+
+        .terms-subtitle {
+            font-weight: bold;
             margin-top: 8px;
-            color: #666;
-            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .terms-content ul {
+            margin-left: 20px;
+            margin-top: 5px;
+        }
+
+        .terms-content li {
+            margin-bottom: 5px;
+        }
+
+        /* ===== SIGNATURE SECTION ===== */
+        .signature-section {
+            margin-top: 50px;
+            text-align: right;
+            position: relative;
+        }
+
+        .signature-box {
+            display: inline-block;
+            text-align: center;
+            padding: 20px;
+            min-width: 250px;
+        }
+
+        .signature-image {
+            margin: 15px 0;
+            padding: 10px;
+            display: inline-block;
+        }
+
+        /* ===== PAGE 2 ===== */
+        .page-break-avoid {
+            page-break-inside: avoid;
+        }
+
+        .page-continuation {
+            page-break-before: always;
+            position: relative;
+        }
+
+        .page-2 .content-wrapper {
+            padding: 180px 50px 150px 50px !important;
+        }
+
+        .page-2 .invoice-details {
+            margin-top: 0 !important;
         }
     </style>
 </head>
 <body>
+
+    {{-- BACKGROUND IMAGE (base64 dari controller) --}}
+    @if($hasBackground)
+    <div class="background-fixed">
+        <img src="{{ $backgroundImage }}" alt="Background">
+    </div>
+    @endif
+
     <div class="print-container">
-        <!-- Header -->
-        <div class="header">
-            <div class="logo-section">
-                <img src="{{ public_path('assets/LOGO_URBAN_OFFICE.png') }}" alt="Urban Office" class="logo">
-                <div class="company-info">
-                    <div class="company-name">Urban Office</div>
-                    {{-- PERUBAHAN: Menggunakan relasi city dari city_id --}}
-                    <div>{{ $transaction->city->name ?? 'Jakarta' }}</div>
-                </div>
-            </div>
-            <div class="invoice-title-section">
-                <div class="invoice-title">INVOICE</div>
-                <div class="invoice-meta">
-                    <div><strong>#{{ $transaction->order_id }}</strong></div>
-                    <div>{{ date('d F Y', strtotime($transaction->created_at ?? now())) }}</div>
-                </div>
-            </div>
-        </div>
+        <div class="content-wrapper">
 
-        <!-- Info Table -->
-        <table class="info-table">
-            <thead>
+            {{-- ===== INFO SECTION ===== --}}
+            <table class="info-section-table">
                 <tr>
-                    <th style="width: 25%;">INFORMASI PELANGGAN</th>
-                    <th style="width: 25%;">DETAIL BOOKING</th>
-                    <th style="width: 25%;">LAYANAN</th>
-                    <th style="width: 25%;">STATUS</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <!-- Customer Info -->
-                    <td>
-                        <div class="info-item">
-                            <div class="info-label">Nama Lengkap</div>
-                            <div class="info-value">{{ $transaction->nama_lengkap }}</div>
+                    {{-- KIRI: Info Pembeli --}}
+                    <td class="buyer-info">
+                        <div class="info-row">
+                            <span class="info-label">Nama Pembeli</span>
+                            <span class="colon-separator"> : </span>
+                            <span class="info-value">{{ $transaction->nama_lengkap }}</span>
                         </div>
-                        <div class="info-item">
-                            <div class="info-label">No. Telepon</div>
-                            <div class="info-value">{{ $transaction->phone ?? '-' }}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Kota</div>
-                            {{-- PERUBAHAN: Menggunakan relasi city dari city_id --}}
-                            <div class="info-value">{{ $transaction->city->name ?? '-' }}</div>
-                        </div>
-                    </td>
 
-                    <!-- Booking Info -->
-                    <td>
-                        <div class="info-item">
-                            <div class="info-label">Tipe Ruangan</div>
-                            <div class="info-value">{{ $transaction->room_type ?? '-' }}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Jumlah Orang</div>
-                            <div class="info-value">{{ $transaction->jumlah_orang ?? '-' }} orang</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Tanggal Booking</div>
-                            <div class="info-value">{{ $transaction->booking_date ? date('d M Y', strtotime($transaction->booking_date)) : '-' }}</div>
-                        </div>
-                        @if(isset($transaction->jam))
-                        <div class="info-item">
-                            <div class="info-label">Jam</div>
-                            <div class="info-value">{{ $transaction->jam }}</div>
+                        @if($transaction->company_name)
+                        <div class="info-row">
+                            <span class="info-label">Perusahaan</span>
+                            <span class="colon-separator"> : </span>
+                            <span class="info-value">{{ $transaction->company_name }}</span>
                         </div>
                         @endif
+
+                        <div class="info-row">
+                            <span class="info-label">Alamat</span>
+                            <span class="colon-separator"> : </span>
+                            <span class="info-value" style="word-wrap: break-word; line-height: 1.4;">
+                                {{ $transaction->location->address ?? '-' }}
+                            </span>
+                        </div>
                     </td>
 
-                    <!-- Service Info -->
+                    {{-- SPACER --}}
+                    <td style="width: 5%;"></td>
+
+                    {{-- KANAN: Detail Invoice --}}
+                    <td class="invoice-details">
+                        <div class="info-row">
+                            <span class="info-label">No</span>
+                            <span class="colon-separator"> : </span>
+                            <span class="info-value">
+                                {{ $invoice->invoice_number ?? $transaction->invoice->invoice_number ?? $transaction->order_id }}
+                            </span>
+                        </div>
+
+                        <div class="info-row">
+                            <span class="info-label">Metode Pembayaran</span>
+                            <span class="colon-separator"> : </span>
+                            <span class="info-value">{{ $transaction->payment_type ?? 'Belum Dibayar' }}</span>
+                        </div>
+
+                        <div class="info-row">
+                            <span class="info-label">Tanggal</span>
+                            <span class="colon-separator"> : </span>
+                            <span class="info-value">
+                                {{ date('d F Y', strtotime($transaction->created_at ?? now())) }}
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            {{-- ===== SERVICE TITLE ===== --}}
+            <div class="service-title" style="text-align: center;">
+                @php
+                    $roomType = $transaction->room_type ?? '';
+                    $serviceCategoryName = '';
+
+                    if ($transaction->serviceCategory && !empty($transaction->serviceCategory->name)) {
+                        $name = trim($transaction->serviceCategory->name);
+                        if (!in_array(strtolower($name), ['tanpa kategori', '(tanpa kategori)', '-', ''])) {
+                            $serviceCategoryName = $name;
+                        }
+                    }
+
+                    $finalText = $roomType;
+                    if (!empty($serviceCategoryName) && strtolower($roomType) !== strtolower($serviceCategoryName)) {
+                        $finalText .= " ({$serviceCategoryName})";
+                    }
+
+                    $locationName = $transaction->location->name ?? $transaction->city->name ?? 'MERR';
+                @endphp
+
+                Pembayaran Sewa <strong>{{ $finalText }}</strong>
+                <span>di {{ $locationName }}</span>
+            </div>
+
+            {{-- ===== DETAILS TABLE ===== --}}
+            <table class="details-table">
+
+                <tr>
+                    <td>Perjanjian Sewa</td>
+                    <td>{{ $transaction->order_id }}</td>
+                </tr>
+
+                @if($transaction->room_id && $transaction->room)
+                <tr>
+                    <td>Nomor Ruangan</td>
                     <td>
-                        @if($transaction->room_type == 'Virtual Office')
-                            @if(isset($transaction->paket))
-                            <div class="info-item">
-                                <div class="info-label">Paket</div>
-                                <div class="info-value">{{ $transaction->paket }}</div>
-                            </div>
-                            @endif
-                            
-                            @if(isset($transaction->bulan))
-                            <div class="info-item">
-                                <div class="info-label">Durasi</div>
-                                <div class="info-value">{{ $transaction->bulan }} Bulan</div>
-                            </div>
-                            @elseif(isset($transaction->tahun))
-                            <div class="info-item">
-                                <div class="info-label">Durasi</div>
-                                <div class="info-value">{{ $transaction->tahun }} Tahun</div>
-                            </div>
-                            @endif
-                            
-                            @if(isset($transaction->status_pkp))
-                            <div class="info-item">
-                                <div class="info-label">Status PKP</div>
-                                <div class="info-value">
-                                    <span class="pkp-badge {{ $transaction->status_pkp == 'Ya' ? 'pkp-yes' : 'pkp-no' }}">
-                                        {{ $transaction->status_pkp == 'Ya' ? 'PKP' : 'Non-PKP' }}
-                                    </span>
-                                </div>
-                            </div>
+                        {{ $transaction->room->room_number ?? '-' }}
+                        @if($transaction->room->room_name)
+                            ({{ $transaction->room->room_name }})
+                        @endif
+                    </td>
+                </tr>
+                @endif
+
+                {{-- Tanggal & Waktu Mulai --}}
+                <tr>
+                    <td>Tanggal dan Waktu Mulai</td>
+                    <td>
+                        @php
+                            $startDate = $transaction->booking_date ?? now();
+                            $startTime = $transaction->start_time ?? null;
+                            $startFormatted = date('d F Y', strtotime($startDate));
+                            if ($startTime) {
+                                $startFormatted .= ' ' . date('H:i', strtotime($startTime));
+                            }
+                        @endphp
+                        {{ $startFormatted }}
+                    </td>
+                </tr>
+
+                {{-- Durasi Sewa --}}
+                <tr>
+                    <td>Durasi Sewa</td>
+                    <td>
+                        @php
+                            $duration     = 0;
+                            $durationUnit = '';
+                            $durationText = '';
+
+                            if ($transaction->tahun && $transaction->tahun > 0) {
+                                $duration     = $transaction->tahun;
+                                $durationUnit = 'Tahun';
+                            } elseif ($transaction->bulan && $transaction->bulan > 0) {
+                                $duration     = $transaction->bulan;
+                                $durationUnit = 'Bulan';
+                            } elseif ($transaction->minggu && $transaction->minggu > 0) {
+                                $duration     = $transaction->minggu;
+                                $durationUnit = 'Minggu';
+                            } elseif ($transaction->hari && $transaction->hari > 0) {
+                                $duration     = $transaction->hari;
+                                $durationUnit = 'Hari';
+                            } elseif ($transaction->jam && $transaction->jam > 0) {
+                                $duration     = $transaction->jam;
+                                $durationUnit = 'Jam';
+                            }
+
+                            $endDate           = $startDate;
+                            $endTimeFormatted  = '';
+
+                            if ($duration > 0 && $durationUnit) {
+                                switch ($durationUnit) {
+                                    case 'Tahun':
+                                        $endDate = date('d F Y', strtotime($startDate . " + {$duration} years"));
+                                        break;
+                                    case 'Bulan':
+                                        $endDate = date('d F Y', strtotime($startDate . " + {$duration} months"));
+                                        break;
+                                    case 'Minggu':
+                                        $endDate = date('d F Y', strtotime($startDate . " + {$duration} weeks"));
+                                        break;
+                                    case 'Hari':
+                                        $endDate = date('d F Y', strtotime($startDate . " + {$duration} days"));
+                                        break;
+                                    case 'Jam':
+                                        if ($startTime) {
+                                            $endTime          = date('H:i', strtotime($startTime . " + {$duration} hours"));
+                                            $endTimeFormatted = ' ' . $endTime;
+                                        }
+                                        $endDate = date('d F Y', strtotime($startDate)) . $endTimeFormatted;
+                                        break;
+                                }
+
+                                $durationText = "{$duration} {$durationUnit}";
+                            }
+                        @endphp
+
+                        @if($duration > 0)
+                            {{ $durationText }}
+                            @if($durationUnit != 'Jam')
+                                <br>
+                                <small style="color: #666; font-size: 11px;">
+                                    (Berakhir: {{ $endDate }})
+                                </small>
                             @endif
                         @else
-                            <div style="color: #ccc; font-style: italic;">-</div>
+                            Tidak ditentukan
                         @endif
                     </td>
+                </tr>
 
-                    <!-- Status -->
+                {{-- Catatan & Coffee Break --}}
+                @if($transaction->coffee_break || $transaction->notes)
+                <tr>
+                    <td>Keterangan Tambahan</td>
                     <td>
-                        <div class="info-item">
-                            <div class="info-label">Pembayaran</div>
-                            <div class="info-value">
-                                @if($transaction->status == 'paid' || $transaction->status == 'settlement')
-                                    <span class="status-badge status-paid">Lunas</span>
-                                @elseif($transaction->status == 'pending')
-                                    <span class="status-badge status-pending">Pending</span>
-                                @else
-                                    <span class="status-badge status-failed">Gagal</span>
-                                @endif
-                            </div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Order ID</div>
-                            <div class="info-value" style="font-family: monospace; font-size: 10px;">{{ $transaction->order_id }}</div>
-                        </div>
+                        @if($transaction->coffee_break)
+                            <strong>Coffee Break:</strong> {{ $transaction->coffee_break }}<br>
+                        @endif
+                        @if($transaction->notes)
+                            <strong>Catatan:</strong> {{ $transaction->notes }}
+                        @endif
                     </td>
                 </tr>
-            </tbody>
-        </table>
+                @endif
 
-        <!-- Summary Table -->
-        <table class="summary-table">
-            <thead>
+                {{-- ===== LUNCH ITEMS ===== --}}
+                @if($transaction->lunches && $transaction->lunches->count() > 0)
+                    @foreach($transaction->lunches as $lunch)
+                        @php
+                            $lunchName       = $lunch->lunchOption->name ?? 'Paket Lunch';
+                            $quantity        = $lunch->quantity ?? 1;
+                            $unitPrice       = $lunch->unit_price ?? 0;
+                            $subtotal        = $lunch->subtotal ?? ($quantity * $unitPrice);
+                            $formattedUnit   = 'Rp. ' . number_format($unitPrice, 0, ',', '.');
+                            $formattedSub    = 'Rp. ' . number_format($subtotal, 0, ',', '.');
+                        @endphp
+
+                        <tr>
+                            <td>Lunch Item</td>
+                            <td>{{ $lunchName }} - {{ $formattedUnit }}</td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td style="padding-left: 20px; color: #666; font-size: 12px;">
+                                {{ $quantity }} porsi x {{ $formattedUnit }} = {{ $formattedSub }}
+                            </td>
+                        </tr>
+                    @endforeach
+
+                    @php $totalLunch = $transaction->lunches->sum('subtotal'); @endphp
+
+                    @if($transaction->lunches->count() > 1)
+                    <tr>
+                        <td style="font-weight: 600;">Total Lunch</td>
+                        <td style="font-weight: 600;">Rp. {{ number_format($totalLunch, 0, ',', '.') }}</td>
+                    </tr>
+                    @endif
+                @endif
+
+                {{-- Biaya Sewa --}}
                 <tr>
-                    <th>KETERANGAN</th>
-                    <th style="width: 30%;">JUMLAH</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
+                    <td>Total Biaya Sewa</td>
                     <td>
-                        <div class="service-name">{{ $transaction->room_type ?? 'Layanan' }}</div>
-                        @if($transaction->room_type == 'Virtual Office' && isset($transaction->paket))
-                            <div class="service-detail">Paket: {{ $transaction->paket }}</div>
-                        @endif
-                        @if(isset($transaction->booking_date))
-                            <div class="service-detail">{{ date('d F Y', strtotime($transaction->booking_date)) }}</div>
-                        @endif
+                        @php
+                            $sewaAmount = $transaction->gross_amount - ($transaction->deposit ?? 0);
+                            if (($transaction->lunch_total ?? 0) > 0) {
+                                $sewaAmount = $transaction->gross_amount - ($transaction->deposit ?? 0) - $transaction->lunch_total;
+                            }
+                            $sewaAmount = max(0, $sewaAmount);
+                        @endphp
+                        Rp. {{ number_format($sewaAmount, 0, ',', '.') }}
                     </td>
-                    <td style="text-align: right; color: #555;">Rp {{ number_format($transaction->gross_amount, 0, ',', '.') }}</td>
                 </tr>
+
+                {{-- Deposit (hanya Virtual Office / Private Office) --}}
+                @php
+                    $showDeposit  = false;
+                    $roomTypeLower = strtolower($transaction->room_type ?? '');
+
+                    if (in_array($roomTypeLower, ['virtual office', 'private office', 'virtual', 'private'])) {
+                        $showDeposit = true;
+                    }
+
+                    if ($transaction->serviceCategory) {
+                        $categoryName = strtolower($transaction->serviceCategory->name ?? '');
+                        if (strpos($categoryName, 'virtual') !== false || strpos($categoryName, 'private') !== false) {
+                            $showDeposit = true;
+                        }
+                    }
+                @endphp
+
+                @if($showDeposit && ($transaction->deposit ?? 0) > 0)
+                <tr>
+                    <td>Uang Jaminan (Deposit)</td>
+                    <td>Rp. {{ number_format($transaction->deposit, 0, ',', '.') }}</td>
+                </tr>
+                @endif
+
+                {{-- Subtotal --}}
+                <tr class="subtotal-row">
+                    <td>Subtotal</td>
+                    <td>
+                        @php
+                            $subtotalAmount = $sewaAmount + ($transaction->lunch_total ?? 0);
+                        @endphp
+                        Rp. {{ number_format($subtotalAmount, 0, ',', '.') }}
+                    </td>
+                </tr>
+
+                {{-- Total Final --}}
                 <tr class="total-row">
-                    <td class="total-label">TOTAL PEMBAYARAN</td>
-                    <td class="total-amount">Rp {{ number_format($transaction->gross_amount, 0, ',', '.') }}</td>
-                </tr>
-            </tbody>
-        </table>
+                    <td>Total Yang Perlu Dibayar</td>
+                    <td>
+                        @php
+                            $totalFinal = $subtotalAmount;
+                            if ($showDeposit) {
+                                $totalFinal += ($transaction->deposit ?? 0);
+                            }
+                        @endphp
 
-        <!-- Footer -->
-        <div class="footer">
-            <div>Terima kasih telah menggunakan layanan Urban Office</div>
-            <div style="color: #aaa; margin-top: 3px;">Invoice ini dibuat secara otomatis dan sah tanpa tanda tangan</div>
-            <div class="footer-contact">
-                Urban Office • info@urbanoffice.com • www.urbanoffice.com
+                        Rp. {{ number_format($totalFinal, 0, ',', '.') }}
+
+                        <span class="status-badge status-{{ strtolower($transaction->status) }}">
+                            {{ ucfirst(str_replace('_', ' ', $transaction->status)) }}
+                        </span>
+                    </td>
+                </tr>
+
+            </table>
+
+            {{-- ===== TERMS & CONDITIONS ===== --}}
+            <div class="terms-section">
+                <div class="terms-title">Syarat dan Ketentuan</div>
+                <div class="terms-content">
+                    <div class="terms-subtitle">Masa Berlaku & Penggunaan</div>
+                    <ul>
+                        <li>Berlaku sesuai periode invoice dan hanya untuk keperluan bisnis yang sah.</li>
+                        @if($duration > 0)
+                        <li>Durasi sewa: {{ $durationText }} mulai dari {{ $startFormatted }}.</li>
+                        @endif
+                    </ul>
+
+                    <div class="terms-subtitle">Pembayaran & Jaminan</div>
+                    <ul>
+                        <li>Biaya dinyatakan lunas, jaminan dikembalikan setelah masa sewa berakhir sesuai ketentuan.</li>
+                        @if($showDeposit && ($transaction->deposit ?? 0) > 0)
+                        <li>Deposit sebesar Rp. {{ number_format($transaction->deposit, 0, ',', '.') }} akan dikembalikan setelah masa sewa berakhir dengan kondisi ruangan sesuai perjanjian.</li>
+                        @endif
+                    </ul>
+                </div>
             </div>
+
+            {{-- ===== SIGNATURE SECTION ===== --}}
+            @if($hasTTD && $ttdImage)
+            <div class="signature-section">
+                <div class="signature-box">
+                    <div class="signature-image">
+                        <img src="{{ $ttdImage }}" alt="Tanda Tangan" style="max-width: 150px; height: auto;">
+                    </div>
+                </div>
+            </div>
+            @endif
+
         </div>
     </div>
 </body>
